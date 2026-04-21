@@ -21,7 +21,7 @@ export default function ScreenerPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(false);
 
-  async function scan(params: Record<string, number | string>) {
+  async function scan(params: Record<string, number | string | undefined>) {
     setLoading(true);
     const qs = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => { if (v !== "" && v != null) qs.set(k, String(v)); });
