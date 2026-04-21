@@ -5,6 +5,7 @@ import { sma, rsi } from "@/lib/analysis/indicators";
 import { calcTechScore, computeHealthScore } from "@/lib/analysis/health-check";
 import KLineChart from "@/components/charts/KLineChart";
 import WatchlistButton from "@/components/stock/WatchlistButton";
+import StockNews from "@/components/stock/StockNews";
 import Link from "next/link";
 
 export default async function StockDetail({ params }: { params: Promise<{ code: string }> }) {
@@ -133,7 +134,7 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
         )}
       </section>
 
-      <section className="grid md:grid-cols-2 gap-4">
+      <section className="grid md:grid-cols-2 gap-4 mb-6">
         <div className="p-4 rounded-xl bg-card border border-border">
           <h3 className="font-semibold mb-2">📈 技術訊號</h3>
           <ul className="space-y-1 text-sm">
@@ -150,6 +151,11 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
               : "訊號中性，等待明確方向。"}
           </p>
         </div>
+      </section>
+
+      <section className="p-4 rounded-xl bg-card border border-border">
+        <h3 className="font-semibold mb-3">📰 相關新聞</h3>
+        <StockNews symbol={code} />
       </section>
     </main>
   );
