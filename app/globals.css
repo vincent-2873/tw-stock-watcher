@@ -35,4 +35,13 @@
   .price-up { @apply text-up font-semibold; }
   .price-down { @apply text-down font-semibold; }
   .price-flat { @apply text-muted-fg; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0); }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { scrollbar-width: none; }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import BottomNav from "@/components/BottomNav";
 
 export const metadata: Metadata = {
   title: "TW Stock Watcher — 台股分析看盤",
@@ -19,7 +20,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-TW" className="dark">
-      <body>{children}</body>
+      <body className="pb-16 md:pb-0">
+        {children}
+        <BottomNav />
+      </body>
     </html>
   );
 }
