@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { fetchStockDailyHistory } from "@/lib/data-sources/twse";
-import { sma, rsi, macd, kd } from "@/lib/analysis/indicators";
-import { calcTechScore, computeHealthScore, grade } from "@/lib/analysis/health-check";
+import { sma, rsi } from "@/lib/analysis/indicators";
+import { calcTechScore, computeHealthScore } from "@/lib/analysis/health-check";
+import KLineChart from "@/components/charts/KLineChart";
 import Link from "next/link";
 
 export default async function StockDetail({ params }: { params: Promise<{ code: string }> }) {
@@ -14,7 +15,9 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
   const now = new Date();
   const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
 
+  type Candle = { time: string; open: number; high: number; low: number; close: number; volume: number };
   let closes: number[] = [];
+  let candles: Candle[] = [];
   let stockName = code;
   let latest = 0;
   let change = 0;
@@ -22,7 +25,21 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
     const data = await fetchStockDailyHistory(code, ym) as { data: string[][]; title?: string };
     if (data?.data?.length) {
       // data.data rows: [日期, 成交股數, 成交金額, 開盤, 高, 低, 收盤, 漲跌, 筆數]
-      closes = data.data.map((r: string[]) => parseFloat(r[6].replace(/,/g, ""))).filter((n) => !isNaN(n));
+      candles = data.data.map((r: string[]) => {
+        // 日期格式：115/04/21（民國）→ 轉西元
+        const [roc, m, d] = r[0].split("/").map(Number);
+        const yyyy = roc + 1911;
+        const time = `${yyyy}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        return {
+          time,
+          volume: parseInt((r[1] ?? "0").replace(/,/g, ""), 10) / 1000,
+          open: parseFloat((r[3] ?? "0").replace(/,/g, "")),
+          high: parseFloat((r[4] ?? "0").replace(/,/g, "")),
+          low: parseFloat((r[5] ?? "0").replace(/,/g, "")),
+          close: parseFloat((r[6] ?? "0").replace(/,/g, "")),
+        };
+      }).filter((c) => !isNaN(c.close) && c.close > 0);
+      closes = candles.map((c) => c.close);
       latest = closes.at(-1) ?? 0;
       const prev = closes.at(-2) ?? latest;
       change = prev ? ((latest - prev) / prev) * 100 : 0;
@@ -84,17 +101,12 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
       </section>
 
       <section className="p-4 rounded-xl bg-card border border-border mb-6">
-        <h2 className="font-semibold mb-3">K 線圖</h2>
-        <p className="text-sm text-muted-fg">
-          K 線互動圖表待 lightweight-charts 接入（下一輪迭代）。目前顯示最近 {closes.length} 筆收盤。
-        </p>
-        <div className="mt-3 flex flex-wrap gap-1 text-xs font-mono">
-          {closes.slice(-30).map((c, i) => (
-            <span key={i} className="px-2 py-1 rounded bg-muted">
-              {c.toFixed(1)}
-            </span>
-          ))}
-        </div>
+        <h2 className="font-semibold mb-3">K 線圖（MA5 / MA20 / MA60）</h2>
+        {candles.length > 0 ? (
+          <KLineChart data={candles} height={500} />
+        ) : (
+          <p className="text-sm text-muted-fg">本月尚無交易資料</p>
+        )}
       </section>
 
       <section className="grid md:grid-cols-2 gap-4">
