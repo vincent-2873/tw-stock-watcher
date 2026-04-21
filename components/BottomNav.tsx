@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/dashboard", label: "大盤", icon: "📊" },
+  { href: "/briefing", label: "報告", icon: "📰" },
   { href: "/stock", label: "個股", icon: "🔍" },
   { href: "/watchlist", label: "自選", icon: "⭐" },
-  { href: "/news", label: "新聞", icon: "📰" },
   { href: "/chips", label: "籌碼", icon: "💰" },
 ];
 
