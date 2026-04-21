@@ -4,9 +4,11 @@ import { fetchStockDailyHistory } from "@/lib/data-sources/twse";
 import { sma, rsi } from "@/lib/analysis/indicators";
 import { calcTechScore, computeHealthScore } from "@/lib/analysis/health-check";
 import KLineChart from "@/components/charts/KLineChart";
+import IndicatorsChart from "@/components/charts/IndicatorsChart";
 import WatchlistButton from "@/components/stock/WatchlistButton";
 import StockNews from "@/components/stock/StockNews";
 import ChipPanel from "@/components/stock/ChipPanel";
+import { macd } from "@/lib/analysis/indicators";
 import Link from "next/link";
 
 export default async function StockDetail({ params }: { params: Promise<{ code: string }> }) {
@@ -129,7 +131,21 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
       <section className="p-4 rounded-xl bg-card border border-border mb-6">
         <h2 className="font-semibold mb-3">K 線圖（MA5 / MA20 / MA60）</h2>
         {candles.length > 0 ? (
-          <KLineChart data={candles} height={500} />
+          <>
+            <KLineChart data={candles} height={400} />
+            {(() => {
+              const { diff, dea, hist } = macd(closes);
+              const rsiArr = rsi(closes);
+              const rsiPoints = candles.map((c, i) => rsiArr[i] != null ? { time: c.time, value: rsiArr[i] as number } : null).filter((p): p is { time: string; value: number } => p !== null);
+              const histPoints = candles.map((c, i) => hist[i] != null ? { time: c.time, value: hist[i] as number } : null).filter((p): p is { time: string; value: number } => p !== null);
+              return (
+                <div className="grid md:grid-cols-2 gap-3 mt-4">
+                  <IndicatorsChart title="RSI (14)" data={rsiPoints} color="#a78bfa" />
+                  <IndicatorsChart title="MACD 柱狀體" data={histPoints} type="histogram" zeroLine />
+                </div>
+              );
+            })()}
+          </>
         ) : (
           <p className="text-sm text-muted-fg">本月尚無交易資料</p>
         )}
