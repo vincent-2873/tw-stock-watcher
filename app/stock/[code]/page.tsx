@@ -6,6 +6,7 @@ import { calcTechScore, computeHealthScore } from "@/lib/analysis/health-check";
 import KLineChart from "@/components/charts/KLineChart";
 import WatchlistButton from "@/components/stock/WatchlistButton";
 import StockNews from "@/components/stock/StockNews";
+import ChipPanel from "@/components/stock/ChipPanel";
 import Link from "next/link";
 
 export default async function StockDetail({ params }: { params: Promise<{ code: string }> }) {
@@ -153,10 +154,16 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
         </div>
       </section>
 
-      <section className="p-4 rounded-xl bg-card border border-border">
-        <h3 className="font-semibold mb-3">📰 相關新聞</h3>
-        <StockNews symbol={code} />
-      </section>
+      <div className="grid md:grid-cols-2 gap-4">
+        <section className="p-4 rounded-xl bg-card border border-border">
+          <h3 className="font-semibold mb-3">💰 三大法人買賣超（10 日）</h3>
+          <ChipPanel symbol={code} />
+        </section>
+        <section className="p-4 rounded-xl bg-card border border-border">
+          <h3 className="font-semibold mb-3">📰 相關新聞</h3>
+          <StockNews symbol={code} />
+        </section>
+      </div>
     </main>
   );
 }
