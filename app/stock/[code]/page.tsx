@@ -13,39 +13,61 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const now = new Date();
-  const ym = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}`;
-
   type Candle = { time: string; open: number; high: number; low: number; close: number; volume: number };
   let closes: number[] = [];
   let candles: Candle[] = [];
   let stockName = code;
   let latest = 0;
   let change = 0;
+
+  // 抓最近 3 個月資料（合併當月 + 前兩月）
+  const now = new Date();
+  const months: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
   try {
-    const data = await fetchStockDailyHistory(code, ym) as { data: string[][]; title?: string };
-    if (data?.data?.length) {
-      // data.data rows: [日期, 成交股數, 成交金額, 開盤, 高, 低, 收盤, 漲跌, 筆數]
-      candles = data.data.map((r: string[]) => {
-        // 日期格式：115/04/21（民國）→ 轉西元
-        const [roc, m, d] = r[0].split("/").map(Number);
-        const yyyy = roc + 1911;
-        const time = `${yyyy}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-        return {
-          time,
-          volume: parseInt((r[1] ?? "0").replace(/,/g, ""), 10) / 1000,
-          open: parseFloat((r[3] ?? "0").replace(/,/g, "")),
-          high: parseFloat((r[4] ?? "0").replace(/,/g, "")),
-          low: parseFloat((r[5] ?? "0").replace(/,/g, "")),
-          close: parseFloat((r[6] ?? "0").replace(/,/g, "")),
-        };
-      }).filter((c) => !isNaN(c.close) && c.close > 0);
-      closes = candles.map((c) => c.close);
-      latest = closes.at(-1) ?? 0;
-      const prev = closes.at(-2) ?? latest;
-      change = prev ? ((latest - prev) / prev) * 100 : 0;
-      stockName = data.title?.replace(/\d+年\d+月\s*/, "").replace(/日成交資訊/, "") ?? code;
+    const monthData = await Promise.all(
+      months.map(async (ym) => {
+        try {
+          const d = await fetchStockDailyHistory(code, ym) as { data: string[][]; title?: string };
+          return d;
+        } catch {
+          return { data: [], title: "" };
+        }
+      }),
+    );
+
+    // 合併並去重
+    const allRows: string[][] = [];
+    const seen = new Set<string>();
+    for (const md of monthData.reverse()) {
+      if (md.title) stockName = md.title.replace(/\d+年\d+月\s*/, "").replace(/日成交資訊/, "") || stockName;
+      for (const r of md.data ?? []) {
+        if (!seen.has(r[0])) { seen.add(r[0]); allRows.push(r); }
+      }
     }
+
+    candles = allRows.map((r) => {
+      const [roc, m, d] = r[0].split("/").map(Number);
+      const yyyy = roc + 1911;
+      return {
+        time: `${yyyy}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+        volume: parseInt((r[1] ?? "0").replace(/,/g, ""), 10) / 1000,
+        open: parseFloat((r[3] ?? "0").replace(/,/g, "")),
+        high: parseFloat((r[4] ?? "0").replace(/,/g, "")),
+        low: parseFloat((r[5] ?? "0").replace(/,/g, "")),
+        close: parseFloat((r[6] ?? "0").replace(/,/g, "")),
+      };
+    }).filter((c) => !isNaN(c.close) && c.close > 0)
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    closes = candles.map((c) => c.close);
+    latest = closes.at(-1) ?? 0;
+    const prev = closes.at(-2) ?? latest;
+    change = prev ? ((latest - prev) / prev) * 100 : 0;
   } catch (e) {
     console.error(e);
   }
