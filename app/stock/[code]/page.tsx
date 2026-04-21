@@ -4,6 +4,7 @@ import { fetchStockDailyHistory } from "@/lib/data-sources/twse";
 import { sma, rsi } from "@/lib/analysis/indicators";
 import { calcTechScore, computeHealthScore } from "@/lib/analysis/health-check";
 import KLineChart from "@/components/charts/KLineChart";
+import WatchlistButton from "@/components/stock/WatchlistButton";
 import Link from "next/link";
 
 export default async function StockDetail({ params }: { params: Promise<{ code: string }> }) {
@@ -66,11 +67,12 @@ export default async function StockDetail({ params }: { params: Promise<{ code: 
           <div className="text-muted-fg font-mono">{code}</div>
           <h1 className="text-4xl font-bold">{stockName}</h1>
         </div>
-        <div className="text-right">
+        <div className="text-right space-y-2">
           <div className="text-4xl font-mono">{latest.toFixed(2)}</div>
           <div className={change >= 0 ? "price-up" : "price-down"}>
             {change >= 0 ? "+" : ""}{change.toFixed(2)}%
           </div>
+          <WatchlistButton symbol={code} />
         </div>
       </header>
 

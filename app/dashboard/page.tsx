@@ -41,11 +41,12 @@ export default async function Dashboard() {
         <MarketTicker initial={indices} />
       </div>
 
-      <nav className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+      <nav className="max-w-7xl mx-auto grid grid-cols-3 md:grid-cols-6 gap-2 mb-6">
         {[
           { href: "/dashboard", label: "📊 大盤", current: true },
           { href: "/stock", label: "🔍 個股" },
-          { href: "/news", label: "📰 新聞情緒" },
+          { href: "/watchlist", label: "⭐ 自選" },
+          { href: "/news", label: "📰 新聞" },
           { href: "/chips", label: "💰 籌碼" },
           { href: "/health", label: "🔬 健檢" },
         ].map((l) => (
