@@ -56,12 +56,20 @@ export default async function Home() {
             </div>
           ))}
         </div>
-        <Link
-          href="/login"
-          className="inline-block px-8 py-4 rounded-xl bg-primary text-primary-fg font-semibold text-lg hover:opacity-90 transition"
-        >
-          登入開始使用 →
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <Link
+            href="/login"
+            className="inline-block px-8 py-4 rounded-xl bg-primary text-primary-fg font-semibold text-lg hover:opacity-90 transition"
+          >
+            登入開始使用 →
+          </Link>
+          <Link
+            href="/capabilities"
+            className="inline-block px-8 py-4 rounded-xl bg-card border border-border font-semibold text-lg hover:bg-muted transition"
+          >
+            看看能做什麼
+          </Link>
+        </div>
         <p className="text-sm text-muted-fg">免費使用 · Google / Email 登入 · 無需信用卡</p>
       </div>
     </main>
