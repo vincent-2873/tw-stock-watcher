@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 0 0% 100%;
+    --fg: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-fg: 215 16% 47%;
+    --border: 214 32% 91%;
+    --card: 0 0% 100%;
+    --primary: 222 47% 11%;
+    --primary-fg: 210 40% 98%;
+    --success: 142 76% 36%;
+    --danger: 0 84% 60%;
+    --warning: 38 92% 50%;
+  }
+  .dark {
+    --bg: 222 47% 4%;
+    --fg: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-fg: 215 20% 65%;
+    --border: 217 33% 17%;
+    --card: 222 47% 6%;
+    --primary: 210 40% 98%;
+    --primary-fg: 222 47% 11%;
+  }
+  html { font-feature-settings: "rlig" 1, "calt" 1; }
+  body { @apply bg-bg text-fg antialiased; }
+  * { @apply border-border; }
+}
+
+@layer utilities {
+  .price-up { @apply text-up font-semibold; }
+  .price-down { @apply text-down font-semibold; }
+  .price-flat { @apply text-muted-fg; }
+}
