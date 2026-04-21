@@ -1,21 +1,44 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { fetchAllIndices } from "@/lib/data-sources/markets";
+
+export const revalidate = 60;
 
 export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user) redirect("/dashboard");
 
+  const indices = await fetchAllIndices();
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="max-w-2xl text-center space-y-6">
+      <div className="max-w-3xl text-center space-y-6">
         <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-br from-up via-warning to-success bg-clip-text text-transparent">
           TW Stock Watcher
         </h1>
-        <p className="text-xl text-muted-fg">
+        <p className="text-lg md:text-xl text-muted-fg">
           台股分析看盤平台 — 即時報價、技術分析、籌碼追蹤、AI 個股健檢
         </p>
+
+        {indices.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-w-2xl mx-auto">
+            {indices.slice(0, 8).map((q) => {
+              const up = q.change >= 0;
+              return (
+                <div key={q.symbol} className="p-3 rounded-lg bg-card border border-border">
+                  <div className="text-xs text-muted-fg">{q.label}</div>
+                  <div className="font-mono font-semibold">{q.price.toFixed(2)}</div>
+                  <div className={`text-xs font-mono ${up ? "text-up" : "text-down"}`}>
+                    {up ? "▲" : "▼"} {q.changePercent.toFixed(2)}%
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-lg mx-auto">
           {[
             ["📊", "即時看盤"],
@@ -39,7 +62,7 @@ export default async function Home() {
         >
           登入開始使用 →
         </Link>
-        <p className="text-sm text-muted-fg">免費使用 · Google 登入 · 無需信用卡</p>
+        <p className="text-sm text-muted-fg">免費使用 · Google / Email 登入 · 無需信用卡</p>
       </div>
     </main>
   );
