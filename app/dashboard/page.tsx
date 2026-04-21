@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { fetchTwseDailyAll } from "@/lib/data-sources/twse";
+import { fetchAllIndices } from "@/lib/data-sources/markets";
+import MarketTicker from "@/components/MarketTicker";
 import Link from "next/link";
 
 export default async function Dashboard() {
@@ -21,6 +23,8 @@ export default async function Dashboard() {
     console.error("TWSE fetch failed:", e);
   }
 
+  const indices = await fetchAllIndices();
+
   return (
     <main className="min-h-screen p-4 md:p-6">
       <header className="max-w-7xl mx-auto flex items-center justify-between mb-6">
@@ -32,6 +36,10 @@ export default async function Dashboard() {
           </form>
         </div>
       </header>
+
+      <div className="max-w-7xl mx-auto mb-4">
+        <MarketTicker initial={indices} />
+      </div>
 
       <nav className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-2 mb-6">
         {[
