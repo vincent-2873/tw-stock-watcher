@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from backend.services.finmind_service import FinMindService
 from backend.services.fmp_service import FMPService
+from backend.services.yahoo_service import US_INDICES, get_index_quote
 from backend.utils.logger import get_logger
 from backend.utils.time_utils import now_tpe
 
@@ -135,26 +136,23 @@ async def get_futures(
 
 @router.get("/market/us")
 async def get_us_indices():
-    """美股主要指數(SPY/QQQ/DIA 當作 proxy,FMP free plan)"""
-    svc = FMPService()
+    """美股主要指數 — Yahoo Finance ^GSPC / ^IXIC / ^DJI / ^VIX(免費無限制)"""
     results: dict[str, Any] = {}
-    for sym, label in [("SPY", "S&P 500"), ("QQQ", "Nasdaq 100"), ("DIA", "Dow Jones 30")]:
-        try:
-            data, meta = svc.get_quote(sym)
-            q = data[0] if isinstance(data, list) and data else data
+    for sym, label in US_INDICES:
+        q = get_index_quote(sym)
+        if q:
             results[sym] = {
                 "label": label,
-                "price": q.get("price") if q else None,
-                "change": q.get("change") if q else None,
-                "changes_pct": q.get("changesPercentage") if q else None,
-                "volume": q.get("volume") if q else None,
-                "day_low": q.get("dayLow") if q else None,
-                "day_high": q.get("dayHigh") if q else None,
-                "meta": {"source": meta.source, "fetched_at": meta.fetched_at.isoformat()} if meta else None,
+                "price": q["price"],
+                "change": q.get("change"),
+                "changes_pct": q.get("change_pct"),
+                "volume": q.get("volume"),
+                "day_low": q.get("day_low"),
+                "day_high": q.get("day_high"),
+                "prev_close": q.get("prev_close"),
             }
-        except Exception as e:
-            log.warning(f"FMP {sym} 失敗: {e}")
-            results[sym] = {"label": label, "error": str(e)[:100]}
+        else:
+            results[sym] = {"label": label, "error": "Yahoo fetch 失敗"}
     return {"items": results, "tpe_now": now_tpe().isoformat()}
 
 
@@ -220,22 +218,18 @@ async def get_market_overview():
     except Exception as e:
         overview["futures_error"] = str(e)[:100]
 
-    # 美股三大指數 proxy
+    # 美股主要指數 — Yahoo Finance
     try:
         us: dict[str, Any] = {}
-        for sym, label in [("SPY", "S&P 500"), ("QQQ", "Nasdaq 100"), ("DIA", "Dow Jones 30")]:
-            try:
-                data, _ = fmp.get_quote(sym)
-                q = data[0] if isinstance(data, list) and data else data
-                if q:
-                    us[sym] = {
-                        "label": label,
-                        "price": q.get("price"),
-                        "change": q.get("change"),
-                        "changes_pct": q.get("changesPercentage"),
-                    }
-            except Exception:
-                continue
+        for sym, label in US_INDICES:
+            q = get_index_quote(sym)
+            if q:
+                us[sym] = {
+                    "label": label,
+                    "price": q["price"],
+                    "change": q.get("change"),
+                    "changes_pct": q.get("change_pct"),
+                }
         overview["us"] = us
     except Exception as e:
         overview["us_error"] = str(e)[:100]

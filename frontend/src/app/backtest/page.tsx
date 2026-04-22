@@ -70,15 +70,11 @@ export default function BacktestPage() {
   };
 
   const equityData =
-    result?.equity_curve?.map((p, i) => ({
+    result?.equity_curve?.map((p) => ({
       date: p.date,
-      資產: p.equity,
-      股價: p.close,
-      idx: i,
+      equity: p.equity,
+      close: p.close,
     })) ?? [];
-
-  const buyPoints = result?.trades.filter((t) => t.action === "buy") ?? [];
-  const sellPoints = result?.trades.filter((t) => t.action === "sell") ?? [];
 
   return (
     <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
@@ -223,27 +219,35 @@ export default function BacktestPage() {
                     tick={{ fontSize: 10 }}
                   />
                   <Tooltip
-                    formatter={(value: number, name: string) =>
-                      name === "資產"
-                        ? [`${fmt(value, 0)} 元`, name]
-                        : [`${fmt(value, 2)} 元`, name]
-                    }
+                    formatter={(value: number, name: string) => {
+                      const label = name === "equity" ? "資產" : "股價";
+                      return [
+                        name === "equity"
+                          ? `${fmt(value, 0)} 元`
+                          : `${fmt(value, 2)} 元`,
+                        label,
+                      ];
+                    }}
                   />
                   <Line
                     type="monotone"
-                    dataKey="資產"
-                    stroke="#a25243"
+                    dataKey="equity"
+                    name="資產"
+                    stroke="#B44F3E"
                     strokeWidth={2}
                     dot={false}
                     yAxisId="left"
+                    isAnimationActive={false}
                   />
                   <Line
                     type="monotone"
-                    dataKey="股價"
-                    stroke="#7a8471"
+                    dataKey="close"
+                    name="股價"
+                    stroke="#7A8471"
                     strokeWidth={1.5}
                     dot={false}
                     yAxisId="right"
+                    isAnimationActive={false}
                   />
                   <ReferenceLine
                     y={result.initial_cash}
