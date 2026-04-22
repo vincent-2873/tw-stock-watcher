@@ -46,6 +46,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 掛載分析 API 路由(Phase 4 給前端用)
+from backend.routes import analysis as _analysis_routes  # noqa: E402
+
+app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
+
 
 @app.get("/")
 async def root():

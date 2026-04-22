@@ -4,6 +4,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "VSIS — Vincent Stock Intelligence System",
   description: "個人金融情報系統 — 夥伴 + 教練",
+  manifest: "/manifest.json",
+  applicationName: "VSIS",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VSIS",
+  },
 };
 
 export const viewport: Viewport = {
