@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { fetchTwseDailyAll } from "@/lib/data-sources/twse";
 import { fetchAllIndices } from "@/lib/data-sources/markets";
 import MarketTicker from "@/components/MarketTicker";
+import InteractiveIndexChart from "@/components/InteractiveIndexChart";
 import Link from "next/link";
 
 type Row = {
@@ -126,6 +127,12 @@ export default async function Dashboard() {
       <div className="max-w-screen-2xl mx-auto px-4 md:px-6 py-4 space-y-4">
         {/* 指數 Ticker */}
         <MarketTicker initial={indices} />
+
+        {/* 互動圖：台股 + 美股主要指數 */}
+        <div className="grid lg:grid-cols-2 gap-4">
+          <InteractiveIndexChart symbol="^TWII" label="加權指數" />
+          <InteractiveIndexChart symbol="^IXIC" label="NASDAQ" />
+        </div>
 
         {/* 市場摘要 */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
