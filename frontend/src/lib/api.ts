@@ -316,3 +316,113 @@ export async function fetchBrokerSummary(stockId: string, days = 5) {
     top_sellers: BrokerRow[];
   }>(`/api/brokers/${stockId}/summary?days=${days}`);
 }
+
+// ===== 回測 =====
+export interface BacktestTrade {
+  action: string;
+  date: string;
+  price: number;
+  shares: number;
+  cash_after: number;
+}
+
+export interface BacktestResponse {
+  stock_id: string;
+  strategy: string;
+  start_date: string;
+  end_date: string;
+  initial_cash: number;
+  final_value: number;
+  total_return_pct: number;
+  cagr_pct: number;
+  max_drawdown_pct: number;
+  win_rate_pct: number;
+  trades_count: number;
+  sharpe: number;
+  trades: BacktestTrade[];
+  equity_curve?: { date: string; equity: number; close: number }[];
+  equity_curve_sample?: { date: string; equity: number; close: number }[];
+}
+
+export async function runBacktest(body: {
+  stock_id: string;
+  strategy?: string;
+  start: string;
+  end?: string;
+  initial_cash?: number;
+}): Promise<BacktestResponse> {
+  return request("/api/backtest", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchBacktestStrategies(): Promise<{
+  strategies: string[];
+  descriptions: Record<string, string>;
+}> {
+  return request("/api/backtest/strategies");
+}
+
+// ===== 模擬交易 =====
+export interface PaperPosition {
+  stock_id: string;
+  shares: number;
+  avg_cost: number;
+  current_price: number;
+  market_value: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+}
+
+export interface PaperAccount {
+  user_id: string;
+  account_id?: string;
+  cash: number;
+  market_value: number;
+  total: number;
+  initial_capital: number;
+  total_return_pct: number;
+  total_pnl: number;
+  closed_trades: number;
+  winning_trades: number;
+  positions: PaperPosition[];
+  tpe_now: string;
+  error?: string;
+}
+
+export async function fetchPaperAccount(user_id = "vincent"): Promise<PaperAccount> {
+  return request(`/api/paper/account?user_id=${user_id}`);
+}
+
+export async function fetchPaperTrades(user_id = "vincent", limit = 50) {
+  return request<{ items: Record<string, unknown>[]; tpe_now: string }>(
+    `/api/paper/trades?user_id=${user_id}&limit=${limit}`,
+  );
+}
+
+export async function placePaperOrder(body: {
+  stock_id: string;
+  action: "buy" | "sell";
+  shares: number;
+  price?: number;
+  user_id?: string;
+  notes?: string;
+}) {
+  return request<{
+    ok: boolean;
+    message: string;
+    trade: Record<string, unknown>;
+    cash_after: number;
+  }>("/api/paper/order", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function resetPaperAccount(user_id = "vincent") {
+  return request<{ ok: boolean; user_id: string; cash: number }>(
+    `/api/paper/reset?user_id=${user_id}`,
+    { method: "POST" },
+  );
+}

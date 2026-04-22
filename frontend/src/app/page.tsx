@@ -104,6 +104,18 @@ export default async function Dashboard() {
             💬 AI 夥伴
           </Link>
           <Link
+            href="/backtest"
+            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
+          >
+            📊 回測
+          </Link>
+          <Link
+            href="/paper"
+            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
+          >
+            📓 模擬交易
+          </Link>
+          <Link
             href="/reports"
             className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
           >
