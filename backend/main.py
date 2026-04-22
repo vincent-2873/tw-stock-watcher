@@ -12,6 +12,9 @@ from __future__ import annotations
 
 import os
 
+# 載入 .env(必須在其他 import 前)
+from backend import load_env  # noqa: F401
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
