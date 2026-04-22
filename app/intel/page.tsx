@@ -17,11 +17,14 @@ export default async function IntelPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [usNews, scNews, indices] = await Promise.all([
+  const [usNewsRes, scNewsRes, indicesRes] = await Promise.allSettled([
     fetchUSMarketIntel(20),
     fetchSupplyChain(30),
     fetchAllIndices(),
   ]);
+  const usNews = usNewsRes.status === "fulfilled" ? usNewsRes.value : [];
+  const scNews = scNewsRes.status === "fulfilled" ? scNewsRes.value : [];
+  const indices = indicesRes.status === "fulfilled" ? indicesRes.value : [];
 
   const hasAI = !!(process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY);
 
