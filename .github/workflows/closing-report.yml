@@ -1,0 +1,55 @@
+name: 📊 Closing Report (14:30 TPE)
+
+# 14:20 TPE = 06:20 UTC
+on:
+  schedule:
+    - cron: '20 6 * * 1-5'   # Mon-Fri 06:20 UTC = 14:20 TPE
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run'
+        type: boolean
+        default: false
+      force:
+        description: 'Force'
+        type: boolean
+        default: false
+      use_ai:
+        description: '啟用 AI 分析(較貴)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: closing-report
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Closing Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      TZ: Asia/Taipei
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+      VINCENT_USER_ID: ${{ secrets.VINCENT_USER_ID }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+      FORCE: ${{ github.event.inputs.force || '0' }}
+      CLOSING_USE_AI: ${{ github.event.inputs.use_ai || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Run Closing Report (wait_until 14:30:00)
+        run: python scripts/run_closing_report.py

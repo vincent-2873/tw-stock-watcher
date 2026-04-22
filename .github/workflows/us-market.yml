@@ -1,0 +1,66 @@
+name: 🇺🇸 US Market Tracker
+
+# 三個切點:
+#   premarket 21:00 TPE = 13:00 UTC
+#   midday    00:00 TPE = 16:00 UTC (前一日)
+#   close     05:00 TPE = 21:00 UTC (前一日)
+on:
+  schedule:
+    - cron: '55 12 * * 1-5'   # 20:55 TPE → premarket 21:00
+    - cron: '55 15 * * 0-4'   # 23:55 TPE → midday 00:00
+    - cron: '55 20 * * 0-4'   # 04:55 TPE → close 05:00
+  workflow_dispatch:
+    inputs:
+      session:
+        description: 'Session (premarket / midday / close)'
+        type: choice
+        options: [premarket, midday, close]
+        default: close
+      dry_run:
+        description: 'Dry-run'
+        type: boolean
+        default: false
+
+concurrency:
+  group: us-market-${{ github.event.schedule || github.event.inputs.session }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: US Market Tracker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Asia/Taipei
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Resolve session from cron
+        id: sess
+        run: |
+          case "${{ github.event.schedule }}" in
+            "55 12 * * 1-5") echo "session=premarket" >> $GITHUB_OUTPUT; echo "t=21:00:00" >> $GITHUB_OUTPUT;;
+            "55 15 * * 0-4") echo "session=midday" >> $GITHUB_OUTPUT;    echo "t=00:00:00" >> $GITHUB_OUTPUT;;
+            "55 20 * * 0-4") echo "session=close" >> $GITHUB_OUTPUT;     echo "t=05:00:00" >> $GITHUB_OUTPUT;;
+            *)               echo "session=${{ github.event.inputs.session || 'close' }}" >> $GITHUB_OUTPUT; echo "t=" >> $GITHUB_OUTPUT;;
+          esac
+      - name: Run US Market (${{ steps.sess.outputs.session }})
+        run: |
+          python scripts/run_us_market.py \
+            --session=${{ steps.sess.outputs.session }} \
+            ${{ steps.sess.outputs.t && format('--time={0}', steps.sess.outputs.t) || '--now' }}

@@ -1,0 +1,52 @@
+name: 📅 Morning Report (08:00 TPE)
+
+# Zero-lag 排程(spec 10):提早 10 分鐘觸發,內部 wait_until("08:00:00")
+# cron 時間是 UTC,07:50 TPE = 23:50 UTC(前一日)
+on:
+  schedule:
+    - cron: '50 23 * * 0-4'   # Sun-Thu 23:50 UTC = Mon-Fri 07:50 TPE
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run (no LINE/DB writes)'
+        type: boolean
+        default: false
+      force:
+        description: 'Force run (skip weekday check)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: morning-report
+  cancel-in-progress: false
+
+jobs:
+  run:
+    name: Morning Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TZ: Asia/Taipei
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+      VINCENT_USER_ID: ${{ secrets.VINCENT_USER_ID }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+      FORCE: ${{ github.event.inputs.force || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+      - name: Run Morning Report (wait_until 08:00:00)
+        run: python scripts/run_morning_report.py
