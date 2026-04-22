@@ -16,7 +16,7 @@ from __future__ import annotations
 from datetime import date as dt_date, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 from backend.services.finmind_service import FinMindService
 from backend.utils.logger import get_logger
@@ -57,6 +57,14 @@ def _aggregate_rows(rows: list[dict]) -> list[dict]:
     return result
 
 
+def _safe_broker_trades(svc: FinMindService, stock_id: str, d: str):
+    try:
+        return svc.get_broker_trades(stock_id, d)
+    except Exception as e:
+        log.warning(f"broker_trades 抓取失敗: {e}")
+        return [], None
+
+
 @router.get("/brokers/{stock_id}")
 async def get_broker_flow(
     stock_id: str,
@@ -66,18 +74,29 @@ async def get_broker_flow(
     svc = FinMindService()
     tpe = now_tpe()
     query_date = date or tpe.date().isoformat()
-    rows, meta = svc.get_broker_trades(stock_id, query_date)
+    rows, meta = _safe_broker_trades(svc, stock_id, query_date)
     if not rows:
-        # 往前找最近有資料的日期(最多回推 7 日)
         base = tpe.date()
         for back in range(1, 8):
             d = (base - timedelta(days=back)).isoformat()
-            rows, meta = svc.get_broker_trades(stock_id, d)
+            rows, meta = _safe_broker_trades(svc, stock_id, d)
             if rows:
                 query_date = d
                 break
     if not rows:
-        raise HTTPException(404, detail=f"{stock_id} {query_date} 無分點資料(可能該日未開盤)")
+        # 優雅回應:分點進出可能需 FinMind 付費版
+        return {
+            "stock_id": stock_id,
+            "date": query_date,
+            "total_brokers": 0,
+            "top_buyers": [],
+            "top_sellers": [],
+            "meta": {
+                "source": "finmind",
+                "fetched_at": now_tpe().isoformat(),
+                "note": "分點進出需 FinMind 付費版(NT$390/月),或該日無開盤",
+            },
+        }
 
     aggregated = _aggregate_rows(rows)
     buyers = sorted(aggregated, key=lambda x: -x["net"])[:top]
@@ -88,7 +107,7 @@ async def get_broker_flow(
         "total_brokers": len(aggregated),
         "top_buyers": buyers,
         "top_sellers": sellers,
-        "meta": {"source": meta.source, "fetched_at": meta.fetched_at.isoformat()},
+        "meta": {"source": meta.source, "fetched_at": meta.fetched_at.isoformat()} if meta else {},
     }
 
 
@@ -104,10 +123,10 @@ async def get_broker_summary(
 
     all_agg: dict[str, dict] = {}
     found_dates: list[str] = []
-    # 往回掃到拿滿 N 個有資料的交易日(最多掃 2*days+5 天避開假日)
-    for back in range(0, days * 2 + 5):
+    max_scan = min(days * 2 + 5, 15)  # 免費版失敗會直接回空,別掃太久
+    for back in range(0, max_scan):
         d = (base - timedelta(days=back)).isoformat()
-        rows, _ = svc.get_broker_trades(stock_id, d)
+        rows, _ = _safe_broker_trades(svc, stock_id, d)
         if not rows:
             continue
         agg = _aggregate_rows(rows)
@@ -124,7 +143,14 @@ async def get_broker_summary(
             break
 
     if not found_dates:
-        raise HTTPException(404, detail=f"{stock_id} 近期無分點資料")
+        return {
+            "stock_id": stock_id,
+            "days": 0,
+            "dates": [],
+            "top_buyers": [],
+            "top_sellers": [],
+            "note": "分點進出需 FinMind 付費版(NT$390/月);或近期無資料",
+        }
 
     items = list(all_agg.values())
     return {

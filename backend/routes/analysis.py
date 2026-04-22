@@ -53,13 +53,23 @@ async def get_latest_report(
         sb = get_service_client()
         res = (
             sb.table("reports")
-            .select("id, report_type, report_date, content, summary, generated_at")
+            .select(
+                "id, report_type, report_date, title, content_short, content_full, "
+                "sent_to_line, sent_to_email, metadata, created_at"
+            )
             .eq("report_type", report_type)
             .order("report_date", desc=True)
             .limit(limit)
             .execute()
         )
-        return {"reports": res.data or []}
+        # 相容舊 API 客端: 把 content_short 當 summary
+        items = []
+        for r in res.data or []:
+            r["summary"] = r.get("content_short")
+            r["content"] = r.get("content_full")
+            r["generated_at"] = r.get("created_at")
+            items.append(r)
+        return {"reports": items}
     except Exception as e:
         log.exception("reports 讀取失敗")
         raise HTTPException(status_code=500, detail=str(e))

@@ -60,12 +60,19 @@ class FinMindService:
     # 內部:通用 fetch
     # ==========================================
     @retry(
-        retry=retry_if_exception_type((httpx.RequestError, httpx.HTTPStatusError)),
+        retry=retry_if_exception_type(httpx.RequestError),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         stop=stop_after_attempt(3),
         reraise=False,
     )
     def _fetch(self, dataset: str, params: dict[str, Any]) -> list[dict]:
+        """
+        取 FinMind 資料。錯誤處理:
+          - network error -> retry(tenacity)
+          - 4xx (400/401/402 需付費/403) -> 不 retry,直接回 [] 並 log
+          - 5xx -> retry 一次後回 []
+          - status != 200 in JSON -> 回 [] + log warn
+        """
         query = {
             "dataset": dataset,
             **params,
@@ -73,15 +80,22 @@ class FinMindService:
         }
         try:
             r = httpx.get(FINMIND_BASE, params=query, timeout=self.timeout)
+            if 400 <= r.status_code < 500:
+                # 免費版限制 / request 錯誤,不 retry
+                snippet = r.text[:200] if r.text else ""
+                log.warning(
+                    f"FinMind {dataset} HTTP {r.status_code} (不 retry) — "
+                    f"可能免費版不支援或參數錯: {snippet}"
+                )
+                return []
             r.raise_for_status()
             j = r.json()
             if j.get("status") != 200:
                 log.warning(f"FinMind {dataset} 非成功: {j.get('msg')}")
                 return []
             return j.get("data", []) or []
-        except httpx.HTTPStatusError as e:
-            log.error(f"FinMind {dataset} HTTP {e.response.status_code}")
-            raise
+        except httpx.RequestError:
+            raise  # 網路錯誤,讓 tenacity retry
         except Exception as e:
             log.error(f"FinMind {dataset} 例外: {e}")
             return []
