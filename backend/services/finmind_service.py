@@ -35,6 +35,12 @@ log = get_logger(__name__)
 FINMIND_BASE = "https://api.finmindtrade.com/api/v4/data"
 DEFAULT_TIMEOUT = 15.0
 
+# 快取:某些 dataset 免費版 400,快取 3600s 避免反覆打浪費時間
+import time as _time
+
+_DATASET_BLACKLIST: dict[str, float] = {}
+_BLACKLIST_TTL = 3600  # 1 小時
+
 
 @dataclass
 class FetchMeta:
@@ -69,10 +75,15 @@ class FinMindService:
         """
         取 FinMind 資料。錯誤處理:
           - network error -> retry(tenacity)
-          - 4xx (400/401/402 需付費/403) -> 不 retry,直接回 [] 並 log
+          - 4xx (400/401/402 需付費/403) -> 不 retry,加黑名單 1hr
           - 5xx -> retry 一次後回 []
           - status != 200 in JSON -> 回 [] + log warn
         """
+        # 黑名單短路:免費版不支援的 dataset 直接回空,不再打 API
+        blacklisted_until = _DATASET_BLACKLIST.get(dataset)
+        if blacklisted_until and _time.time() < blacklisted_until:
+            return []
+
         query = {
             "dataset": dataset,
             **params,
@@ -81,11 +92,12 @@ class FinMindService:
         try:
             r = httpx.get(FINMIND_BASE, params=query, timeout=self.timeout)
             if 400 <= r.status_code < 500:
-                # 免費版限制 / request 錯誤,不 retry
                 snippet = r.text[:200] if r.text else ""
+                # 加黑名單避免 1hr 內反覆打
+                _DATASET_BLACKLIST[dataset] = _time.time() + _BLACKLIST_TTL
                 log.warning(
-                    f"FinMind {dataset} HTTP {r.status_code} (不 retry) — "
-                    f"可能免費版不支援或參數錯: {snippet}"
+                    f"FinMind {dataset} HTTP {r.status_code} → 黑名單 1hr — "
+                    f"可能免費版不支援: {snippet}"
                 )
                 return []
             r.raise_for_status()
@@ -95,7 +107,7 @@ class FinMindService:
                 return []
             return j.get("data", []) or []
         except httpx.RequestError:
-            raise  # 網路錯誤,讓 tenacity retry
+            raise
         except Exception as e:
             log.error(f"FinMind {dataset} 例外: {e}")
             return []
