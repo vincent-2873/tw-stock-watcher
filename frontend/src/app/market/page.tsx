@@ -29,11 +29,11 @@ export default async function MarketPage() {
   ]);
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-[var(--bg)] text-[var(--fg)]">
+    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
       <header className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">🌏 大盤監測</h1>
-          <p className="text-sm text-[var(--muted-fg)]">
+          <h1 className="font-serif text-3xl md:text-4xl font-semibold">大盤監測</h1>
+          <p className="text-sm text-[var(--muted-fg)] font-serif italic mt-1">
             台股 · 台指期 · 美股主要指數 · 跨市場連動
           </p>
           {overview?.tpe_now && (

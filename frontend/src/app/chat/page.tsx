@@ -5,11 +5,11 @@ export const dynamic = "force-dynamic";
 
 export default function ChatPage() {
   return (
-    <main className="mx-auto flex h-[100dvh] max-w-4xl flex-col px-4 py-4 md:py-6 bg-[var(--bg)] text-[var(--fg)]">
+    <main className="mx-auto flex h-[100dvh] max-w-4xl flex-col px-4 py-4 md:py-6 wabi-enter">
       <header className="mb-3 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold md:text-2xl">💬 AI 夥伴</h1>
-          <p className="text-xs text-[var(--muted-fg)]">
+          <h1 className="font-serif text-2xl md:text-3xl font-semibold">AI 夥伴</h1>
+          <p className="text-xs text-[var(--muted-fg)] font-serif italic">
             Claude Sonnet 4.5 · 強制多空平衡 · 會質疑你的情緒化決策
           </p>
         </div>

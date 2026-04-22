@@ -81,12 +81,12 @@ export default function BacktestPage() {
   const sellPoints = result?.trades.filter((t) => t.action === "sell") ?? [];
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-[var(--bg)] text-[var(--fg)]">
+    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
       <header className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">📊 歷史回測</h1>
-          <p className="text-sm text-[var(--muted-fg)]">
-            用歷史資料測試策略,含手續費 + 證交稅
+          <h1 className="font-serif text-3xl md:text-4xl font-semibold">歷史回測</h1>
+          <p className="text-sm text-[var(--muted-fg)] font-serif italic mt-1">
+            用歷史資料測試策略 · 含手續費與證交稅
           </p>
         </div>
         <Link

@@ -84,12 +84,12 @@ export default function PaperPage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-[var(--bg)] text-[var(--fg)]">
+    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
       <header className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">📓 模擬交易</h1>
-          <p className="text-sm text-[var(--muted-fg)]">
-            虛擬 100 萬資金練手 · 含手續費 0.1425% + 證交稅 0.3%
+          <h1 className="font-serif text-3xl md:text-4xl font-semibold">模擬交易</h1>
+          <p className="text-sm text-[var(--muted-fg)] font-serif italic mt-1">
+            虛擬百萬資金練手 · 含手續費 0.1425% 與證交稅 0.3%
           </p>
         </div>
         <div className="flex gap-2">

@@ -107,7 +107,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   const last = priceRes?.data?.[priceRes.data.length - 1];
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-[var(--bg)] text-[var(--fg)]">
+    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
       <nav className="mb-4 text-sm">
         <Link href="/" className="text-blue-600 hover:underline">
           ← 回主頁
@@ -117,8 +117,8 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
       {/* Header */}
       <header className="mb-6">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-3xl font-bold font-mono">{analysis.stock_id}</h1>
-          <span className="text-2xl font-semibold">{analysis.stock_name}</span>
+          <h1 className="font-mono text-3xl font-bold">{analysis.stock_id}</h1>
+          <span className="font-serif text-3xl">{analysis.stock_name}</span>
           <span
             className={`px-3 py-1 rounded-full font-semibold text-sm ${recoClass(
               analysis.recommendation,
