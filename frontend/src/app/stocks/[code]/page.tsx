@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchAnalysis, fetchTwStock, type AnalysisResult } from "@/lib/api";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -266,6 +267,30 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
         </section>
       )}
+
+      {/* AI 對話(spec 18 + 19)— 帶個股 context */}
+      <section className="h-[600px]">
+        <ChatPanel
+          stockContext={{
+            stock_id: analysis.stock_id,
+            stock_name: analysis.stock_name,
+            recommendation: analysis.recommendation,
+            total_score: analysis.total_score,
+            confidence: analysis.confidence,
+            fundamental_score: analysis.evidence.fundamental.score,
+            chip_score: analysis.evidence.chip.score,
+            technical_score: analysis.evidence.technical.score,
+            catalyst_score: analysis.evidence.catalyst.score,
+            bull_case: analysis.bull_case,
+            bear_case: analysis.bear_case,
+            entry_price: analysis.risk?.entry_price,
+            stop_loss_price: analysis.risk?.stop_loss_price,
+            take_profit_price: analysis.risk?.take_profit_price,
+          }}
+          greeting={`我看到你在看 ${analysis.stock_id} ${analysis.stock_name}，目前系統給 ${analysis.recommendation}(${analysis.total_score}/95，信心 ${analysis.confidence}%)。問我任何事 — 我會強制給你反對論點。`}
+          placeholder={`問我關於 ${analysis.stock_id} 的事...`}
+        />
+      </section>
 
       {/* 免責 */}
       <footer className="text-xs text-[var(--muted-fg)] text-center">

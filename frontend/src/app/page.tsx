@@ -92,6 +92,12 @@ export default async function Dashboard() {
             2330 台積電
           </Link>
           <Link
+            href="/chat"
+            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
+          >
+            💬 AI 夥伴
+          </Link>
+          <Link
             href="/reports"
             className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
           >
