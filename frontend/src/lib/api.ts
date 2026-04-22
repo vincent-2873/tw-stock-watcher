@@ -204,3 +204,115 @@ export async function fetchRecentRecommendations(
   if (reportType) params.set("report_type", reportType);
   return request(`/api/recommendations/recent?${params}`);
 }
+
+// ===== 大盤 =====
+export interface MarketQuote {
+  date?: string;
+  close?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  turnover_twd?: number;
+  day_change?: number | null;
+  day_change_pct?: number | null;
+}
+
+export interface MarketOverview {
+  tpe_now: string;
+  taiex?: MarketQuote;
+  taiex_error?: string;
+  futures_tx?: MarketQuote & { contract?: string };
+  futures_error?: string;
+  us?: Record<string, {
+    label?: string;
+    price?: number;
+    change?: number;
+    changes_pct?: number;
+  }>;
+  us_error?: string;
+}
+
+export async function fetchMarketOverview(): Promise<MarketOverview> {
+  return request("/api/market/overview");
+}
+
+export async function fetchTaiex(days = 60) {
+  return request<{
+    index: string;
+    latest: MarketQuote;
+    history: { date: string; close: number; volume: number }[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/market/taiex?days=${days}`);
+}
+
+export async function fetchFutures(contract = "TX", days = 30) {
+  return request<{
+    contract: string;
+    near_month?: string;
+    latest: MarketQuote;
+    history: { date: string; close: number; volume: number }[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/market/futures?contract=${contract}&days=${days}`);
+}
+
+// ===== 新聞 =====
+export interface NewsItem {
+  date?: string;
+  title?: string;
+  description?: string;
+  link?: string;
+  source?: string;
+  stock_id?: string;
+}
+
+export async function fetchStockNews(stockId: string, days = 7) {
+  return request<{
+    stock_id: string;
+    count: number;
+    items: NewsItem[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/news/stock/${stockId}?days=${days}`);
+}
+
+export async function fetchRecentNews(days = 2, limit = 30) {
+  return request<{
+    count: number;
+    items: NewsItem[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/news/recent?days=${days}&limit=${limit}`);
+}
+
+// ===== 分點進出 =====
+export interface BrokerRow {
+  broker: string;
+  buy: number;
+  sell: number;
+  net: number;
+  avg_buy_price?: number | null;
+  avg_sell_price?: number | null;
+  days?: number;
+}
+
+export async function fetchBrokerFlow(stockId: string, date?: string, top = 20) {
+  const params = new URLSearchParams({ top: String(top) });
+  if (date) params.set("date", date);
+  return request<{
+    stock_id: string;
+    date: string;
+    total_brokers: number;
+    top_buyers: BrokerRow[];
+    top_sellers: BrokerRow[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/brokers/${stockId}?${params}`);
+}
+
+export async function fetchBrokerSummary(stockId: string, days = 5) {
+  return request<{
+    stock_id: string;
+    days: number;
+    dates: string[];
+    top_buyers: BrokerRow[];
+    top_sellers: BrokerRow[];
+  }>(`/api/brokers/${stockId}/summary?days=${days}`);
+}

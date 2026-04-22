@@ -86,6 +86,12 @@ export default async function Dashboard() {
         </div>
         <nav className="flex gap-2 text-sm">
           <Link
+            href="/market"
+            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
+          >
+            🌏 大盤
+          </Link>
+          <Link
             href="/stocks/2330"
             className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
           >

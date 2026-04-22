@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchAnalysis, fetchTwStock, type AnalysisResult } from "@/lib/api";
+import {
+  fetchAnalysis,
+  fetchTwStock,
+  fetchStockNews,
+  fetchBrokerSummary,
+  type AnalysisResult,
+} from "@/lib/api";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
 export const dynamic = "force-dynamic";
@@ -93,7 +99,11 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
   });
   if (!analysis) return notFound();
 
-  const priceRes = await fetchTwStock(code, 60).catch(() => null);
+  const [priceRes, newsRes, brokerRes] = await Promise.all([
+    fetchTwStock(code, 60).catch(() => null),
+    fetchStockNews(code, 7).catch(() => null),
+    fetchBrokerSummary(code, 5).catch(() => null),
+  ]);
   const last = priceRes?.data?.[priceRes.data.length - 1];
 
   return (
@@ -267,6 +277,83 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
         </section>
       )}
+
+      {/* 近 7 日新聞 */}
+      <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+        <h3 className="font-semibold mb-3">📰 近 7 日新聞</h3>
+        {newsRes && newsRes.count > 0 ? (
+          <ul className="space-y-2 text-sm">
+            {newsRes.items.slice(0, 10).map((n, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="text-xs text-[var(--muted-fg)] font-mono w-24 shrink-0">
+                  {n.date?.slice(0, 10) || "-"}
+                </span>
+                <a
+                  href={n.link || "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 hover:underline flex-1 truncate"
+                >
+                  {n.title}
+                </a>
+                <span className="text-xs text-[var(--muted-fg)] shrink-0">
+                  {n.source}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-[var(--muted-fg)]">近期無新聞或資料源暫時不可用。</p>
+        )}
+      </section>
+
+      {/* 5 日主力分點 */}
+      <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+        <h3 className="font-semibold mb-3">
+          🏦 5 日分點主力(累計買賣超)
+        </h3>
+        {brokerRes && (brokerRes.top_buyers.length > 0 || brokerRes.top_sellers.length > 0) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="text-xs text-[var(--muted-fg)] mb-1">Top 買超</h4>
+              <table className="w-full">
+                <tbody>
+                  {brokerRes.top_buyers.slice(0, 8).map((b) => (
+                    <tr key={b.broker} className="border-b border-[var(--border)]">
+                      <td className="py-1">{b.broker}</td>
+                      <td className="text-right font-mono text-rose-600">
+                        +{fmt(b.net, 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h4 className="text-xs text-[var(--muted-fg)] mb-1">Top 賣超</h4>
+              <table className="w-full">
+                <tbody>
+                  {brokerRes.top_sellers.slice(0, 8).map((b) => (
+                    <tr key={b.broker} className="border-b border-[var(--border)]">
+                      <td className="py-1">{b.broker}</td>
+                      <td className="text-right font-mono text-emerald-600">
+                        {fmt(b.net, 0)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-[var(--muted-fg)]">近期無分點資料。</p>
+        )}
+        {brokerRes?.dates && brokerRes.dates.length > 0 && (
+          <p className="text-xs text-[var(--muted-fg)] mt-2">
+            彙總日期: {brokerRes.dates.join(", ")}
+          </p>
+        )}
+      </section>
 
       {/* AI 對話(spec 18 + 19)— 帶個股 context */}
       <section className="h-[600px]">
