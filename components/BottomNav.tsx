@@ -17,7 +17,7 @@ export default function BottomNav() {
   if (hide) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur border-t border-border">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur border-t border-border shadow-card-hover">
       <div className="grid grid-cols-5 gap-1 p-1 pb-safe">
         {ITEMS.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -26,11 +26,11 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center gap-0.5 py-2 rounded-lg transition ${
-                active ? "bg-primary/10 text-primary-fg" : "text-muted-fg"
+                active ? "bg-primary/10 text-primary" : "text-muted-fg hover:text-fg"
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <span className="text-[10px]">{item.label}</span>
+              <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
         })}

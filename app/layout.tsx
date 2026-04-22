@@ -39,7 +39,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-TW" className="dark">
+    <html lang="zh-TW">
       <body className="pb-16 md:pb-0">
         {children}
         <BottomNav />

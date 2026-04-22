@@ -22,8 +22,12 @@ const config: Config = {
         success: "hsl(var(--success))",
         danger: "hsl(var(--danger))",
         warning: "hsl(var(--warning))",
-        up: "hsl(0 85% 55%)",     // 紅漲
-        down: "hsl(142 76% 40%)", // 綠跌（台股風格）
+        up: "hsl(0 75% 50%)",      // 紅漲（淺色配色）
+        down: "hsl(142 60% 35%)",  // 綠跌
+      },
+      boxShadow: {
+        "card": "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
+        "card-hover": "0 4px 12px -2px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.06)",
       },
       fontFamily: {
         sans: ["Inter", "Noto Sans TC", "sans-serif"],
