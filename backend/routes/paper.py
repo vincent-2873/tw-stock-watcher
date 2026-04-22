@@ -76,12 +76,19 @@ async def reset_paper_account(user_id: str = Query(DEFAULT_USER_ID)):
     svc = PaperTradingService()
     try:
         sb = svc.sb
-        sb.table("paper_positions").delete().eq("user_id", user_id).execute()
-        sb.table("paper_trades").delete().eq("user_id", user_id).execute()
+        # 取得帳戶 id
+        acc = svc._ensure_account(user_id)
+        account_id = acc.get("id")
+        if account_id:
+            sb.table("paper_trades").delete().eq("account_id", account_id).execute()
         from backend.services.paper_trading_service import DEFAULT_INITIAL_CASH
-        tpe = now_tpe().isoformat()
         sb.table("paper_accounts").update(
-            {"cash": DEFAULT_INITIAL_CASH, "updated_at": tpe}
+            {
+                "current_cash": DEFAULT_INITIAL_CASH,
+                "total_trades": 0,
+                "winning_trades": 0,
+                "total_pnl": 0,
+            }
         ).eq("user_id", user_id).execute()
         return {"ok": True, "user_id": user_id, "cash": DEFAULT_INITIAL_CASH}
     except Exception as e:
