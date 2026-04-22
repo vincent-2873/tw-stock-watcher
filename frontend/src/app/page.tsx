@@ -7,49 +7,64 @@ import {
   type Recommendation,
   type WatchlistItem,
 } from "@/lib/api";
+import { LiveTicker } from "@/components/LiveTicker";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function recoColor(rec?: Recommendation): string {
+function recoClass(rec?: Recommendation): string {
   switch (rec) {
     case "strong_buy":
-      return "bg-emerald-600 text-white";
+      return "wabi-reco-strong_buy";
     case "buy":
-      return "bg-emerald-500 text-white";
+      return "wabi-reco-buy";
     case "watch":
-      return "bg-amber-400 text-zinc-900";
+      return "wabi-reco-watch";
     case "hold":
-      return "bg-zinc-400 text-white";
+      return "wabi-reco-hold";
     case "avoid":
-      return "bg-rose-500 text-white";
+      return "wabi-reco-avoid";
     default:
-      return "bg-zinc-300 text-zinc-700";
+      return "wabi-pill";
   }
 }
 
-function confColor(c?: number): string {
-  if (!c) return "bg-zinc-100 text-zinc-500";
-  if (c >= 90) return "bg-emerald-100 text-emerald-800";
-  if (c >= 75) return "bg-green-100 text-green-800";
-  if (c >= 60) return "bg-yellow-100 text-yellow-800";
-  if (c >= 45) return "bg-orange-100 text-orange-800";
-  return "bg-zinc-100 text-zinc-500";
+function confClass(c?: number): string {
+  if (!c) return "wabi-conf-low";
+  if (c >= 90) return "wabi-conf-90";
+  if (c >= 75) return "wabi-conf-75";
+  if (c >= 60) return "wabi-conf-60";
+  if (c >= 45) return "wabi-conf-45";
+  return "wabi-conf-low";
 }
 
 function confEmoji(c?: number): string {
-  if (!c) return "❓";
-  if (c >= 90) return "🔥";
-  if (c >= 75) return "✅";
-  if (c >= 60) return "⚡";
-  if (c >= 45) return "⚠️";
-  return "❓";
+  if (!c) return "";
+  if (c >= 90) return "熾";
+  if (c >= 75) return "確";
+  if (c >= 60) return "可";
+  if (c >= 45) return "惑";
+  return "疑";
 }
+
+const NAV_LINKS = [
+  { href: "/market", label: "大盤", icon: "盤" },
+  { href: "/stocks/2330", label: "台積電", icon: "2330" },
+  { href: "/chat", label: "AI 夥伴", icon: "談" },
+  { href: "/backtest", label: "回測", icon: "驗" },
+  { href: "/paper", label: "模擬", icon: "練" },
+  { href: "/reports", label: "報告", icon: "報" },
+  { href: "/alerts", label: "警示", icon: "警" },
+];
 
 export default async function Dashboard() {
   const [health, watchlist, alertsRes, closingReports] = await Promise.all([
     fetchBackendHealth().catch(() => null),
-    fetchWatchlist(true).catch(() => ({ items: [] as WatchlistItem[], count: 0, tpe_now: "" })),
+    fetchWatchlist(true).catch(() => ({
+      items: [] as WatchlistItem[],
+      count: 0,
+      tpe_now: "",
+    })),
     fetchRecentAlerts(3, 20).catch(() => ({ alerts: [] })),
     fetchLatestReports("closing", 1).catch(() => ({ reports: [] })),
   ]);
@@ -59,229 +74,230 @@ export default async function Dashboard() {
   );
   const alerts = alertsRes.alerts ?? [];
   const closing = closingReports.reports?.[0];
+  const now = watchlist.tpe_now
+    ? new Date(watchlist.tpe_now)
+    : null;
 
   return (
-    <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 bg-[var(--bg)] text-[var(--fg)]">
-      {/* Header */}
-      <header className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">
-            🧠 Vincent Stock Intelligence
-          </h1>
-          <p className="text-sm text-[var(--muted-fg)]">
-            {watchlist.tpe_now && (
-              <>最後刷新 {new Date(watchlist.tpe_now).toLocaleString("zh-TW", { hour12: false })} TPE</>
-            )}
-            {" · "}
-            <span
-              className={
-                health?.status === "ok"
-                  ? "text-emerald-600"
-                  : "text-amber-600"
-              }
-            >
-              {health?.status === "ok" ? "● 系統正常" : `⚠ ${health?.status ?? "離線"}`}
-            </span>
-          </p>
-        </div>
-        <nav className="flex gap-2 text-sm">
-          <Link
-            href="/market"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            🌏 大盤
-          </Link>
-          <Link
-            href="/stocks/2330"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            2330 台積電
-          </Link>
-          <Link
-            href="/chat"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            💬 AI 夥伴
-          </Link>
-          <Link
-            href="/backtest"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            📊 回測
-          </Link>
-          <Link
-            href="/paper"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            📓 模擬交易
-          </Link>
-          <Link
-            href="/reports"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            📊 報告
-          </Link>
-          <Link
-            href="/alerts"
-            className="px-3 py-1.5 rounded-md border border-[var(--border)] hover:bg-[var(--muted)]"
-          >
-            🔔 警示
-          </Link>
-        </nav>
-      </header>
+    <main className="min-h-screen">
+      {/* LIVE 跑馬燈 */}
+      <LiveTicker />
 
-      {/* 核心:watchlist 表格 */}
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden mb-6">
-        <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-          <h2 className="font-semibold">📈 自選股 / 分析總覽</h2>
-          <span className="text-xs text-[var(--muted-fg)]">
-            {items.length} 檔 · 量化分析(skip AI)
-          </span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-xs text-[var(--muted-fg)] bg-[var(--muted)]">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium">代號</th>
-                <th className="text-left px-4 py-2 font-medium">推薦</th>
-                <th className="text-right px-4 py-2 font-medium">總分</th>
-                <th className="text-right px-4 py-2 font-medium">信心度</th>
-                <th className="text-left px-4 py-2 font-medium">加入時間</th>
-                <th className="text-right px-4 py-2 font-medium">詳細</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
+        {/* Header */}
+        <header className="mb-10 wabi-enter">
+          <div className="flex items-start justify-between flex-wrap gap-4">
+            <div>
+              <div className="flex items-baseline gap-3">
+                <h1 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight">
+                  Vincent
+                </h1>
+                <span className="text-xs text-[var(--muted-fg)] tracking-widest uppercase">
+                  Stock Intelligence
+                </span>
+              </div>
+              <p className="text-sm text-[var(--muted-fg)] mt-2 font-serif italic">
+                「教我思考,不是給我答案。」
+              </p>
+              <p className="text-xs text-[var(--muted-fg)] mt-1">
+                {now && (
+                  <>
+                    最後更新{" "}
+                    <span className="wabi-num">
+                      {now.toLocaleString("zh-TW", { hour12: false })}
+                    </span>{" "}
+                    TPE
+                  </>
+                )}
+                {"  ·  "}
+                <span
+                  className={
+                    health?.status === "ok" ? "text-moss" : "text-gold"
+                  }
+                >
+                  {health?.status === "ok" ? "● 系統正常" : `◌ ${health?.status ?? "離線"}`}
+                </span>
+              </p>
+            </div>
+            {/* Nav */}
+            <nav className="flex gap-1 flex-wrap">
+              {NAV_LINKS.map((n) => (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className="wabi-btn text-xs"
+                >
+                  <span className="font-serif opacity-60 text-[10px]">{n.icon}</span>
+                  <span>{n.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </header>
+
+        <div className="wabi-divider" />
+
+        {/* 自選股 / 分析表格 */}
+        <section className="wabi-card p-0 mb-8 wabi-enter wabi-enter-delay-1">
+          <div className="flex items-baseline justify-between px-5 py-4 border-b border-[var(--border)]">
+            <div className="flex items-baseline gap-3">
+              <h2 className="font-serif text-xl">自選股</h2>
+              <span className="text-xs text-[var(--muted-fg)]">
+                {items.length} 檔 · VSIS 四象限分析
+              </span>
+            </div>
+            <Link
+              href="/stocks/2330"
+              className="text-xs text-[var(--muted-fg)] hover:text-[var(--fg)]"
+            >
+              查個股 →
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="wabi-table">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="text-center py-8 text-[var(--muted-fg)]"
-                  >
-                    自選股是空的。預設會載入 watchlist 表或回退清單。
-                  </td>
+                  <th>代號</th>
+                  <th>推薦</th>
+                  <th className="text-right">總分</th>
+                  <th className="text-right">信心</th>
+                  <th>加入時間</th>
+                  <th className="text-right"></th>
                 </tr>
-              )}
-              {items.map((it) => {
-                const a = it.analysis;
-                return (
-                  <tr
-                    key={it.stock_id}
-                    className="border-t border-[var(--border)] hover:bg-[var(--muted)]/40"
-                  >
-                    <td className="px-4 py-2 font-mono font-semibold">
-                      {it.stock_id}
-                    </td>
-                    <td className="px-4 py-2">
-                      {a ? (
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${recoColor(a.recommendation)}`}
-                        >
-                          {a.recommendation_emoji} {a.recommendation}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[var(--muted-fg)]">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right font-mono">
-                      {a?.total_score ?? "-"}
-                      <span className="text-xs text-[var(--muted-fg)]">/95</span>
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${confColor(a?.confidence)}`}
-                      >
-                        {confEmoji(a?.confidence)} {a?.confidence ?? "-"}%
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-xs text-[var(--muted-fg)]">
-                      {it.added_at
-                        ? new Date(it.added_at).toLocaleDateString("zh-TW")
-                        : "-"}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <Link
-                        href={`/stocks/${it.stock_id}`}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        深度分析 →
-                      </Link>
+              </thead>
+              <tbody>
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-[var(--muted-fg)] font-serif italic">
+                      ——   自選股尚無記錄   ——
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* 最近盤後報告 */}
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)]">
-            <h2 className="font-semibold">📊 最新盤後</h2>
-            {closing && (
-              <p className="text-xs text-[var(--muted-fg)]">
-                {new Date(closing.generated_at).toLocaleString("zh-TW", { hour12: false })} TPE
-              </p>
-            )}
-          </div>
-          <div className="p-4 text-sm">
-            {closing?.summary ? (
-              <pre className="whitespace-pre-wrap font-mono text-xs">
-                {closing.summary}
-              </pre>
-            ) : (
-              <p className="text-[var(--muted-fg)]">
-                尚無盤後報告。14:30 TPE 後自動產出。
-              </p>
-            )}
+                )}
+                {items.map((it) => {
+                  const a = it.analysis;
+                  return (
+                    <tr key={it.stock_id}>
+                      <td className="wabi-num font-semibold">{it.stock_id}</td>
+                      <td>
+                        {a ? (
+                          <span
+                            className={`wabi-pill ${recoClass(a.recommendation)}`}
+                          >
+                            {a.recommendation}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[var(--muted-fg)]">-</span>
+                        )}
+                      </td>
+                      <td className="text-right wabi-num">
+                        {a?.total_score ?? "-"}
+                        <span className="text-xs text-[var(--muted-fg)]">/95</span>
+                      </td>
+                      <td className="text-right">
+                        <span className={`wabi-pill ${confClass(a?.confidence)}`}>
+                          {confEmoji(a?.confidence)} {a?.confidence ?? "-"}%
+                        </span>
+                      </td>
+                      <td className="text-xs text-[var(--muted-fg)] wabi-num">
+                        {it.added_at
+                          ? new Date(it.added_at).toLocaleDateString("zh-TW")
+                          : "-"}
+                      </td>
+                      <td className="text-right">
+                        <Link
+                          href={`/stocks/${it.stock_id}`}
+                          className="text-xs underline decoration-[var(--border-strong)] underline-offset-2 hover:decoration-[var(--fg)]"
+                        >
+                          深度分析
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </section>
 
-        {/* 最近 alerts */}
-        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] overflow-hidden">
-          <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-            <h2 className="font-semibold">🔔 近 3 日警示</h2>
-            <span className="text-xs text-[var(--muted-fg)]">{alerts.length}</span>
-          </div>
-          <ul className="divide-y divide-[var(--border)]">
-            {alerts.length === 0 && (
-              <li className="p-4 text-sm text-[var(--muted-fg)]">
-                近 3 日無警示。盤中監控每 5 分鐘 scan。
-              </li>
-            )}
-            {alerts.slice(0, 8).map((a) => (
-              <li key={a.id} className="p-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded ${
-                      a.severity === "urgent"
-                        ? "bg-rose-500 text-white"
+        {/* 下排:最新盤後 + 警示 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          <section className="wabi-card p-0 wabi-enter wabi-enter-delay-2">
+            <div className="px-5 py-4 border-b border-[var(--border)]">
+              <h2 className="font-serif text-xl">最新盤後</h2>
+              {closing && (
+                <p className="text-xs text-[var(--muted-fg)] mt-1 wabi-num">
+                  {new Date(closing.generated_at).toLocaleString("zh-TW", { hour12: false })} TPE
+                </p>
+              )}
+            </div>
+            <div className="p-5 text-sm leading-relaxed">
+              {closing?.summary ? (
+                <pre className="whitespace-pre-wrap font-sans text-[13px]">
+                  {closing.summary}
+                </pre>
+              ) : (
+                <p className="text-[var(--muted-fg)] font-serif italic">
+                  ——   尚無盤後報告,14:30 TPE 後自動產出   ——
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="wabi-card p-0 wabi-enter wabi-enter-delay-3">
+            <div className="px-5 py-4 border-b border-[var(--border)] flex items-baseline justify-between">
+              <h2 className="font-serif text-xl">近日警示</h2>
+              <span className="text-xs text-[var(--muted-fg)]">
+                近 3 日 · {alerts.length}
+              </span>
+            </div>
+            <ul className="divide-y divide-[var(--border)]">
+              {alerts.length === 0 && (
+                <li className="p-5 text-sm text-[var(--muted-fg)] font-serif italic">
+                  ——   近 3 日無警示   ——
+                </li>
+              )}
+              {alerts.slice(0, 8).map((a) => (
+                <li key={a.id} className="p-4 hover:bg-[var(--ink-wash)]">
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className={`wabi-pill text-[10px] ${
+                        a.severity === "urgent"
+                          ? "bg-up"
+                          : a.severity === "warning"
+                            ? "text-gold border-[var(--gold)]"
+                            : "text-down"
+                      }`}
+                    >
+                      {a.severity === "urgent"
+                        ? "急"
                         : a.severity === "warning"
-                          ? "bg-amber-400 text-zinc-900"
-                          : "bg-sky-400 text-white"
-                    }`}
-                  >
-                    {a.severity}
-                  </span>
-                  <span className="font-mono font-semibold">{a.stock_id}</span>
-                  <span className="text-xs">{a.alert_type}</span>
-                </div>
-                <div className="text-xs text-[var(--muted-fg)] mt-0.5">
-                  {a.message}
-                </div>
-                <div className="text-[10px] text-[var(--muted-fg)] mt-0.5">
-                  {new Date(a.triggered_at).toLocaleString("zh-TW", { hour12: false })}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
+                          ? "警"
+                          : "記"}
+                    </span>
+                    <span className="wabi-num font-semibold">{a.stock_id}</span>
+                    <span className="text-xs text-[var(--muted-fg)]">
+                      {a.alert_type}
+                    </span>
+                  </div>
+                  <div className="text-xs mt-1">{a.message}</div>
+                  <div className="text-[11px] text-[var(--muted-fg)] mt-1 wabi-num">
+                    {new Date(a.triggered_at).toLocaleString("zh-TW", {
+                      hour12: false,
+                    })}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
 
-      <footer className="text-xs text-[var(--muted-fg)] text-center mt-8">
-        ⚠️ 本系統為資訊整理與量化評分,非投資建議。股市有風險,投資需謹慎,請自行負責。
-      </footer>
+        <footer className="text-center py-6">
+          <div className="wabi-divider" />
+          <p className="text-xs text-[var(--muted-fg)] font-serif italic">
+            ⚠ 本系統為資訊整理與量化評分,非投資建議。股市有風險,投資需謹慎。
+          </p>
+        </footer>
+      </div>
     </main>
   );
 }
