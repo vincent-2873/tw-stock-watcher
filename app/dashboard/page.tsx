@@ -94,13 +94,12 @@ export default async function Dashboard() {
             <nav className="hidden md:flex items-center gap-1 text-sm">
               {[
                 { href: "/dashboard", label: "大盤", icon: "📊" },
-                { href: "/briefing", label: "報告", icon: "📰" },
+                { href: "/intel", label: "情報", icon: "🧠" },
+                { href: "/news", label: "新聞", icon: "📰" },
                 { href: "/stock", label: "個股", icon: "🔍" },
-                { href: "/screener", label: "選股", icon: "🎯" },
                 { href: "/sectors", label: "類股", icon: "🗂️" },
                 { href: "/watchlist", label: "自選", icon: "⭐" },
-                { href: "/trades", label: "紀錄", icon: "📒" },
-                { href: "/holdings", label: "持倉", icon: "💼" },
+                { href: "/screener", label: "選股", icon: "🎯" },
               ].map((l) => (
                 <Link
                   key={l.href}

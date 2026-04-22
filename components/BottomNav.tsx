@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/dashboard", label: "大盤", icon: "📊" },
-  { href: "/briefing", label: "報告", icon: "📰" },
-  { href: "/screener", label: "選股", icon: "🎯" },
+  { href: "/intel", label: "情報", icon: "🧠" },
+  { href: "/news", label: "新聞", icon: "📰" },
+  { href: "/stock", label: "個股", icon: "🔍" },
   { href: "/watchlist", label: "自選", icon: "⭐" },
-  { href: "/trades", label: "紀錄", icon: "📒" },
 ];
 
 export default function BottomNav() {
