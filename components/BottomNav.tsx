@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const ITEMS = [
-  { href: "/dashboard", label: "大盤", icon: "📊" },
+  { href: "/dashboard", label: "大盤", icon: "🐰" },
   { href: "/intel", label: "情報", icon: "🧠" },
+  { href: "/brokers", label: "券商", icon: "🏦" },
   { href: "/news", label: "新聞", icon: "📰" },
-  { href: "/stock", label: "個股", icon: "🔍" },
   { href: "/watchlist", label: "自選", icon: "⭐" },
 ];
 

@@ -5,8 +5,8 @@ import BottomNav from "@/components/BottomNav";
 export const metadata: Metadata = {
   metadataBase: new URL("https://tw-stock-watcher.zeabur.app"),
   title: {
-    default: "TW Stock Watcher — 台股分析看盤平台",
-    template: "%s · TW Stock Watcher",
+    default: "🐰 烏薩奇看盤 — 台股情報平台",
+    template: "%s · 🐰 烏薩奇看盤",
   },
   description: "免費台股即時看盤、K 線技術分析、三大法人籌碼、AI 新聞情緒、個股健檢、跨市場（台股/美股/期貨）聯動追蹤。",
   manifest: "/manifest.json",

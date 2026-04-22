@@ -88,18 +88,19 @@ export default async function Dashboard() {
         <div className="max-w-screen-2xl mx-auto px-4 md:px-6">
           <div className="flex items-center justify-between h-14">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <span className="text-2xl">📈</span>
-              <span className="font-bold text-lg hidden sm:inline">TW Stock Watcher</span>
+              <span className="text-2xl">🐰</span>
+              <span className="font-bold text-lg hidden sm:inline">烏薩奇看盤</span>
+              <span className="text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded hidden md:inline">情報版</span>
             </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm">
               {[
-                { href: "/dashboard", label: "大盤", icon: "📊" },
+                { href: "/dashboard", label: "大盤", icon: "🐰" },
                 { href: "/intel", label: "情報", icon: "🧠" },
                 { href: "/news", label: "新聞", icon: "📰" },
+                { href: "/brokers", label: "券商", icon: "🏦" },
                 { href: "/stock", label: "個股", icon: "🔍" },
                 { href: "/sectors", label: "類股", icon: "🗂️" },
                 { href: "/watchlist", label: "自選", icon: "⭐" },
-                { href: "/screener", label: "選股", icon: "🎯" },
               ].map((l) => (
                 <Link
                   key={l.href}
