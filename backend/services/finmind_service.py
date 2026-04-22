@@ -188,3 +188,38 @@ class FinMindService:
         params = {"data_id": contract, "start_date": s}
         data = self._fetch("TaiwanFuturesDaily", params)
         return data, FetchMeta("finmind", now_tpe(), "TaiwanFuturesDaily", params)
+
+    # ==========================================
+    # 大盤指數
+    # ==========================================
+    def get_taiex_daily(
+        self,
+        start_date: str | date | None = None,
+    ) -> tuple[list[dict], FetchMeta]:
+        """台股加權指數(TAIEX)日線"""
+        s = (
+            (start_date.isoformat() if isinstance(start_date, date) else start_date)
+            or (now_tpe().date() - timedelta(days=60)).isoformat()
+        )
+        params = {"data_id": "TAIEX", "start_date": s}
+        data = self._fetch("TaiwanStockPrice", params)
+        return data, FetchMeta("finmind", now_tpe(), "TaiwanStockPrice(TAIEX)", params)
+
+    # ==========================================
+    # 新聞(每股票 / 每日)
+    # ==========================================
+    def get_stock_news(
+        self,
+        stock_id: str | None = None,
+        start_date: str | date | None = None,
+    ) -> tuple[list[dict], FetchMeta]:
+        """股票新聞(FinMind 聚合多家來源)。stock_id 不給 → 抓全市場。"""
+        s = (
+            (start_date.isoformat() if isinstance(start_date, date) else start_date)
+            or (now_tpe().date() - timedelta(days=7)).isoformat()
+        )
+        params: dict[str, Any] = {"start_date": s}
+        if stock_id:
+            params["data_id"] = stock_id
+        data = self._fetch("TaiwanStockNews", params)
+        return data, FetchMeta("finmind", now_tpe(), "TaiwanStockNews", params)

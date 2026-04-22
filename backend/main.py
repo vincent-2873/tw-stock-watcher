@@ -46,12 +46,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 掛載分析 API 路由(Phase 4 給前端用)
+# 掛載 API 路由
 from backend.routes import analysis as _analysis_routes  # noqa: E402
+from backend.routes import brokers as _brokers_routes  # noqa: E402
 from backend.routes import chat as _chat_routes  # noqa: E402
+from backend.routes import market as _market_routes  # noqa: E402
+from backend.routes import news as _news_routes  # noqa: E402
+from backend.routes import notify as _notify_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
+app.include_router(_market_routes.router, prefix="/api", tags=["market"])
+app.include_router(_news_routes.router, prefix="/api", tags=["news"])
+app.include_router(_brokers_routes.router, prefix="/api", tags=["brokers"])
+app.include_router(_notify_routes.router, prefix="/api", tags=["notify"])
 
 
 @app.get("/")

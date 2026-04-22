@@ -255,6 +255,90 @@ def format_alert(alert: dict) -> str:
 
 
 # ==========================================
+# Discord Webhook
+# ==========================================
+class DiscordNotifier:
+    """極簡 Discord webhook。"""
+
+    def __init__(self, webhook_url: Optional[str] = None):
+        self.webhook = webhook_url or os.getenv("DISCORD_WEBHOOK_URL", "")
+
+    def push_text(self, text: str, username: str = "VSIS") -> NotifyResult:
+        if not self.webhook:
+            return NotifyResult(False, 0, "DISCORD_WEBHOOK_URL 未設定")
+        try:
+            r = httpx.post(
+                self.webhook,
+                json={"content": text[:1900], "username": username},
+                timeout=10.0,
+            )
+            if r.status_code in (200, 204):
+                log.info(f"Discord push ok len={len(text)}")
+                return NotifyResult(True, r.status_code)
+            return NotifyResult(False, r.status_code, r.text[:300])
+        except Exception as e:
+            log.error(f"Discord push 失敗: {e}")
+            return NotifyResult(False, 0, str(e))
+
+
+# ==========================================
+# Email (SMTP)
+# ==========================================
+class EmailNotifier:
+    """SMTP Email(Gmail App Password 或其他 SMTP server)。"""
+
+    def __init__(self):
+        self.host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        self.port = int(os.getenv("SMTP_PORT", "587"))
+        self.user = os.getenv("SMTP_USER", "")
+        self.password = os.getenv("SMTP_PASS", "")
+        self.default_to = os.getenv("EMAIL_TO", self.user)
+
+    def push(self, subject: str, body: str, to: Optional[str] = None) -> NotifyResult:
+        recipient = to or self.default_to
+        if not self.user or not self.password or not recipient:
+            return NotifyResult(
+                False,
+                0,
+                "SMTP_USER / SMTP_PASS / EMAIL_TO 至少一個未設定",
+            )
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+
+        try:
+            msg = MIMEMultipart()
+            msg["From"] = self.user
+            msg["To"] = recipient
+            msg["Subject"] = subject
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+            with smtplib.SMTP(self.host, self.port, timeout=15) as s:
+                s.starttls()
+                s.login(self.user, self.password)
+                s.sendmail(self.user, recipient, msg.as_string())
+            log.info(f"Email ok to={recipient}")
+            return NotifyResult(True, 200)
+        except Exception as e:
+            log.warning(f"Email 失敗: {e}")
+            return NotifyResult(False, 0, str(e)[:300])
+
+
+# ==========================================
+# 聚合(同時發 LINE / Discord / Email)
+# ==========================================
+def broadcast_all(subject: str, message: str) -> dict[str, NotifyResult]:
+    """一次發到所有可用的通道 — 會把 subject + message 拼在一起給 LINE/Discord。"""
+    full = f"{subject}\n\n{message}" if subject else message
+    line_r = get_line_notifier().push_text(full)
+    discord_r = DiscordNotifier().push_text(full)
+    email_r = EmailNotifier().push(subject, message)
+    log.info(
+        f"broadcast '{subject}' → line={line_r.ok} discord={discord_r.ok} email={email_r.ok}"
+    )
+    return {"line": line_r, "discord": discord_r, "email": email_r}
+
+
+# ==========================================
 # 全域實例
 # ==========================================
 _notifier: Optional[LineNotifier] = None
