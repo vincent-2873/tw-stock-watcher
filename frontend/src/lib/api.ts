@@ -168,7 +168,7 @@ export async function fetchRecentAlerts(
 export interface WatchlistItem {
   stock_id: string;
   added_at: string;
-  note: string | null;
+  notes: string | null;
   analysis?: {
     recommendation: Recommendation;
     recommendation_emoji: string;

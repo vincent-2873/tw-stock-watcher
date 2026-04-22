@@ -96,7 +96,11 @@ async def get_watchlist(
     """取自選股(可選帶即時分析結果)。"""
     try:
         sb = get_service_client()
-        q = sb.table("watchlist").select("stock_id, added_at, note").order("added_at", desc=True)
+        q = (
+            sb.table("watchlist")
+            .select("stock_id, added_at, notes")
+            .order("added_at", desc=True)
+        )
         if user_id:
             q = q.eq("user_id", user_id)
         res = q.execute()
