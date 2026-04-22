@@ -133,4 +133,50 @@ API 文件       https://vsis-api.zeabur.app/docs
 
 **一夜總結**: 幫你從「Phase 5 剛做完」推進到「Phase 1-6 全做完、UI 大改版、所有 API live、華邦電致命 bug 修掉」。花費約 3 小時 Claude 時間,你一覺起來看到的網站應該完全不同了 🫡
 
+---
+
+## 🧪 睡前驗收通過(2026-04-22 23:31 TPE)
+
+### ✅ 華邦電致命 bug 修復實測
+問 AI: 「現在華邦電價位大概多少?給我當下的,不要訓練資料的舊值」
+
+AI 回:
+> ## 華邦電 (2344) 即時狀態
+> **最新交易日**: 2026-04-22 (今天)
+> **收盤價**: **90.6 元**
+> **漲跌**: -0.5 元 (-0.55%)
+> **成交量**: 9,469 萬股
+>
+> ### 快速判斷
+> - **位置**: 在 5 日均價 88.96 **上方** (+1.8%)
+> - **法人動向**(今日):
+>   - 外資:賣超 331 萬股 ❌
+>   - 投信:賣超 83 萬股 ❌
+>   - 自營商:小買 30 萬股
+>
+> **你問價位是想做什麼?**
+> - 想進場?先說你的理由
+> - 想加碼?告訴我你現在成本
+> - 純好奇?那現在你知道了 😏
+
+→ **不再用訓練資料** + **給當下即時數字** + **法人買賣超** + **AI 主動質疑你的意圖**(spec 19 鐵律生效)
+
+### ✅ 模擬交易實測
+下單買 2344 1 張 → 成交價 90.6,扣除手續費後剩餘現金 909,271。持倉正確記錄。
+
+### ✅ 全面 API 驗收
+所有 10+ endpoint HTTP 200:
+- `/health` / `/api/chat/health` / `/api/market/overview`
+- `/api/analyze/{stock}` / `/api/news/stock/{id}` / `/api/news/recent`
+- `/api/brokers/{id}` / `/api/brokers/{id}/summary`
+- `/api/backtest/strategies` / `/api/paper/account`
+- `/api/reports/latest` / `/api/watchlist` / `/api/alerts/recent`
+
+### 🩺 自動健康檢查
+Monitor session 已啟動,每 30 分鐘自動檢查:
+- backend health + Supabase 連線
+- 所有主要 API endpoint
+- 所有前端頁面載入
+- 華邦電股價合理性(避免資料源突然跑偏)
+
 有問題直接問我。
