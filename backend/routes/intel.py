@@ -81,8 +81,12 @@ async def cron_tick(
     if analyze:
         out["analyze"] = ArticleAnalyzer().run_batch(analyze_limit)
     if extract_people:
-        # 掃近 14 日文章匹配 40 位 watched_people
-        out["extract_people"] = _extract_people(days=14, limit=200)
+        # 每次 cron 只掃近 3 日, 最多 50 篇 (避免 Zeabur edge 90s timeout)
+        # GitHub Action 每 15 分跑一次, 長期積累會把 14 日內都掃過
+        try:
+            out["extract_people"] = _extract_people(days=3, limit=50)
+        except Exception as e:
+            out["extract_people_error"] = str(e)
     return out
 
 
