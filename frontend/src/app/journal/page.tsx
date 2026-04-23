@@ -290,7 +290,7 @@ export default function JournalPage() {
                     className="text-[11px] mt-3 font-mono"
                     style={{ color: "var(--muted-fg)", fontFamily: "var(--font-mono)" }}
                   >
-                    {new Date(it.created_at).toLocaleDateString("zh-TW")}
+                    {new Date(it.created_at).toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })}
                   </div>
                 </article>
               </Link>

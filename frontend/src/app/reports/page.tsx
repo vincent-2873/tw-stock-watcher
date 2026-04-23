@@ -60,8 +60,7 @@ export default async function ReportsPage() {
                         </span>
                         <span className="text-xs text-[var(--muted-fg)]">
                           {new Date(r.generated_at).toLocaleString("zh-TW", {
-                            hour12: false,
-                          })}{" "}
+                            hour12: false, timeZone: "Asia/Taipei" })}{" "}
                           TPE
                         </span>
                       </div>

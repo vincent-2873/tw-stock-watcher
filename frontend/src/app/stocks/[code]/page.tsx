@@ -88,7 +88,7 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           )}
         </div>
         <div className="mt-2 text-sm text-[var(--muted-fg)]">
-          最後更新 {new Date(analysis.timestamp).toLocaleString("zh-TW", { hour12: false })} TPE
+          最後更新 {new Date(analysis.timestamp).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })} TPE
           {last && (
             <>
               {" · "}收盤 <span className="font-mono">{last.close}</span>

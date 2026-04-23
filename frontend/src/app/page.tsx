@@ -107,7 +107,7 @@ export default async function Dashboard() {
                 {now && (
                   <>
                     <span className="wabi-num">
-                      {now.toLocaleString("zh-TW", { hour12: false })}
+                      {now.toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })}
                     </span>{" "}
                     TPE
                   </>
@@ -218,7 +218,7 @@ export default async function Dashboard() {
                       </td>
                       <td className="text-xs text-[var(--muted-fg)] wabi-num">
                         {it.added_at
-                          ? new Date(it.added_at).toLocaleDateString("zh-TW")
+                          ? new Date(it.added_at).toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" })
                           : "-"}
                       </td>
                       <td className="text-right">
@@ -244,7 +244,7 @@ export default async function Dashboard() {
               <h2 className="font-serif text-xl">最新盤後</h2>
               {closing && (
                 <p className="text-xs text-[var(--muted-fg)] mt-1 wabi-num">
-                  {new Date(closing.generated_at).toLocaleString("zh-TW", { hour12: false })} TPE
+                  {new Date(closing.generated_at).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })} TPE
                 </p>
               )}
             </div>
@@ -300,8 +300,7 @@ export default async function Dashboard() {
                   <div className="text-xs mt-1">{a.message}</div>
                   <div className="text-[11px] text-[var(--muted-fg)] mt-1 wabi-num">
                     {new Date(a.triggered_at).toLocaleString("zh-TW", {
-                      hour12: false,
-                    })}
+                      hour12: false, timeZone: "Asia/Taipei" })}
                   </div>
                 </li>
               ))}

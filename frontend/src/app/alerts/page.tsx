@@ -22,7 +22,7 @@ export default async function AlertsPage() {
 
   // 按日分組
   const byDate = alerts.reduce<Record<string, AlertRow[]>>((acc, a) => {
-    const d = new Date(a.triggered_at).toLocaleDateString("zh-TW");
+    const d = new Date(a.triggered_at).toLocaleDateString("zh-TW", { timeZone: "Asia/Taipei" });
     (acc[d] ||= []).push(a);
     return acc;
   }, {});
@@ -70,8 +70,7 @@ export default async function AlertsPage() {
                       <span className="text-sm">{a.alert_type}</span>
                       <span className="ml-auto text-[10px] text-[var(--muted-fg)]">
                         {new Date(a.triggered_at).toLocaleTimeString("zh-TW", {
-                          hour12: false,
-                        })}
+                          hour12: false, timeZone: "Asia/Taipei" })}
                       </span>
                     </div>
                     <div className="text-xs text-[var(--muted-fg)] mt-1">

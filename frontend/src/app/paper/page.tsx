@@ -294,8 +294,7 @@ export default function PaperPage() {
                               month: "2-digit",
                               day: "2-digit",
                               hour: "2-digit",
-                              minute: "2-digit",
-                            })
+                              minute: "2-digit", timeZone: "Asia/Taipei" })
                           : "-"}
                       </td>
                       <td className="px-4 py-2 font-mono">{t.stock_id as string}</td>

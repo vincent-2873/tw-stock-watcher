@@ -38,7 +38,7 @@ export default async function MarketPage() {
           </p>
           {overview?.tpe_now && (
             <p className="text-xs text-[var(--muted-fg)] mt-1">
-              最後更新 {new Date(overview.tpe_now).toLocaleString("zh-TW", { hour12: false })} TPE
+              最後更新 {new Date(overview.tpe_now).toLocaleString("zh-TW", { hour12: false, timeZone: "Asia/Taipei" })} TPE
             </p>
           )}
         </div>
