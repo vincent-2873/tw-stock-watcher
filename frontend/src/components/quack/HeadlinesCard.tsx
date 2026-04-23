@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchHeadlines, type HeadlineItem } from "@/lib/api";
 import { QuackAvatar } from "./QuackAvatar";
@@ -33,51 +36,7 @@ function ImportanceBar({ v }: { v: number }) {
   );
 }
 
-export async function HeadlinesCard() {
-  let items: HeadlineItem[] = [];
-  try {
-    const r = await fetchHeadlines(1, 8);
-    items = r.headlines ?? [];
-  } catch (e) {
-    console.error("headlines fetch failed", e);
-  }
-
-  if (items.length === 0) {
-    return (
-      <section
-        className="wabi-card"
-        style={{
-          background: "var(--card)",
-          border: "1px solid var(--border)",
-          padding: "22px 24px",
-        }}
-      >
-        <div className="flex items-baseline justify-between mb-3">
-          <h2
-            style={{
-              fontFamily: "var(--font-serif)",
-              fontSize: "16px",
-              fontWeight: 500,
-              color: "var(--fg)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            今日重點
-          </h2>
-        </div>
-        <div className="flex items-center gap-3 py-4">
-          <QuackAvatar state="sleeping" size="md" />
-          <p
-            className="text-sm font-serif italic"
-            style={{ color: "var(--muted-fg)" }}
-          >
-            ——  還沒收到新聞。(FinMind 免費版不含新聞,升級後自動帶入)  ——
-          </p>
-        </div>
-      </section>
-    );
-  }
-
+function CardShell({ children }: { children: React.ReactNode }) {
   return (
     <section
       className="wabi-card"
@@ -103,6 +62,74 @@ export async function HeadlinesCard() {
           近 24 小時 · 按重要度排序
         </span>
       </div>
+      {children}
+    </section>
+  );
+}
+
+export function HeadlinesCard() {
+  const [items, setItems] = useState<HeadlineItem[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetchHeadlines(1, 8);
+        if (!cancelled) setItems(r.headlines ?? []);
+      } catch (e) {
+        if (!cancelled) setErr(e instanceof Error ? e.message : "讀取失敗");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (items === null && !err) {
+    return (
+      <CardShell>
+        <div className="flex items-center gap-3 py-4">
+          <QuackAvatar state="studying" size="md" />
+          <p
+            className="text-sm font-serif italic"
+            style={{ color: "var(--muted-fg)" }}
+          >
+            呱呱正在讀新聞⋯⋯(Claude 分類中,首次約 5-10 秒)
+          </p>
+        </div>
+      </CardShell>
+    );
+  }
+
+  if (err) {
+    return (
+      <CardShell>
+        <p className="text-xs" style={{ color: "var(--muted-fg)" }}>
+          讀取失敗:{err}
+        </p>
+      </CardShell>
+    );
+  }
+
+  if (!items || items.length === 0) {
+    return (
+      <CardShell>
+        <div className="flex items-center gap-3 py-4">
+          <QuackAvatar state="sleeping" size="md" />
+          <p
+            className="text-sm font-serif italic"
+            style={{ color: "var(--muted-fg)" }}
+          >
+            ——  近期無重要新聞  ——
+          </p>
+        </div>
+      </CardShell>
+    );
+  }
+
+  return (
+    <CardShell>
       <ul className="space-y-3">
         {items.map((h, i) => {
           const color = SENTIMENT_COLOR[h.sentiment || "neutral"];
@@ -193,7 +220,7 @@ export async function HeadlinesCard() {
           );
         })}
       </ul>
-    </section>
+    </CardShell>
   );
 }
 
