@@ -10,6 +10,7 @@ import {
   USConnectLive,
   FocusStocksLive,
   InstitutionalLive,
+  PeopleStatementsLive,
 } from "./home-data";
 
 export const dynamic = "force-dynamic";
@@ -252,11 +253,11 @@ export default function Home() {
           </Link>
           <nav className={styles.navLinks}>
             <Link className={cx(styles.navLink, styles.active)} href="/">🏠 首頁</Link>
+            <Link className={styles.navLink} href="/intel">📰 情報</Link>
             <Link className={styles.navLink} href="/pond">🔥 題材熱度</Link>
             <Link className={styles.navLink} href="/map">🗺️ 產業分類</Link>
             <Link className={styles.navLink} href="/stocks">🔍 查個股</Link>
             <Link className={styles.navLink} href="/chat">💬 AI 問答</Link>
-            <Link className={styles.navLink} href="/alerts">🔔 警示</Link>
           </nav>
         </div>
       </div>
@@ -289,6 +290,14 @@ export default function Home() {
 
         {/* 🦆 呱呱今日功課(即時資料生成) */}
         <QuackMorningLive />
+
+        {/* 🎤 今日關鍵發言(重點人物 Intel Hub) */}
+        <div className={styles.sectionTitle}>
+          <h2>🎤 今日關鍵發言</h2>
+          <div className={styles.divider}></div>
+          <Link className={styles.moreLink} href="/intel">所有情報 →</Link>
+        </div>
+        <PeopleStatementsLive />
 
         {/* 🔥 題材熱度 + 右欄 */}
         <div className={styles.sectionTitle}>

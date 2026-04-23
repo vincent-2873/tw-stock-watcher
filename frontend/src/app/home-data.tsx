@@ -851,6 +851,126 @@ export function InstitutionalLive() {
 }
 
 // ============================================
+// 7.9 今日關鍵發言(重點人物 Phase 1 Day 6-7 空殼)
+// ============================================
+type Statement = {
+  id: number;
+  said_at?: string;
+  source?: string;
+  source_url?: string;
+  statement_text?: string;
+  statement_translated?: string;
+  ai_summary?: string;
+  ai_topic?: string;
+  ai_urgency?: number;
+  ai_market_impact?: string;
+  ai_affected_stocks?: Array<{ code: string; name?: string; impact?: string }>;
+  person?: {
+    id: number;
+    name: string;
+    name_zh?: string;
+    role?: string;
+    category?: string;
+    priority?: number;
+    affected_stocks?: string[];
+  };
+};
+
+export function PeopleStatementsLive() {
+  const [items, setItems] = useState<Statement[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/intel/people/statements?limit=3`, { cache: "no-store" });
+        const j = await r.json();
+        if (!cancelled) setItems(j.statements ?? []);
+      } catch {
+        if (!cancelled) setItems([]);
+      }
+    }
+    load();
+  }, []);
+
+  if (items === null) {
+    return (
+      <div
+        style={{
+          padding: "18px 22px",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 8,
+          color: "var(--muted-fg)",
+          fontStyle: "italic",
+        }}
+      >
+        呱呱在聽全世界⋯
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div
+        style={{
+          padding: "28px 22px",
+          background: "var(--card)",
+          border: "1px dashed var(--border)",
+          borderRadius: 8,
+          textAlign: "center",
+          color: "var(--muted-fg)",
+        }}
+      >
+        <div style={{ fontSize: 28, opacity: 0.5, marginBottom: 6 }}>🎤💤</div>
+        <div style={{ fontFamily: "var(--font-serif)", fontSize: 14 }}>
+          今天關鍵人物暫無重要發言
+        </div>
+        <div style={{ fontSize: 11, marginTop: 6 }}>
+          呱呱正監測 40+ 位人物(馬斯克 / 黃仁勳 / Powell / 魏哲家⋯)
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      {items.map((s) => (
+        <div
+          key={s.id}
+          style={{
+            padding: "14px 16px",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+            <span style={{ fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 500, color: "var(--fg)" }}>
+              👤 {s.person?.name_zh || s.person?.name} · {s.person?.role || "—"}
+            </span>
+            {s.ai_urgency != null && (
+              <span style={{ fontSize: 11, color: s.ai_urgency >= 8 ? "var(--up)" : "var(--muted-fg)", fontFamily: "var(--font-mono)" }}>
+                {s.ai_urgency >= 8 ? "🔥 " : ""}緊急度 {s.ai_urgency}/10
+              </span>
+            )}
+          </div>
+          {(s.ai_summary || s.statement_translated || s.statement_text) && (
+            <div style={{ fontFamily: "var(--font-serif)", fontSize: 15, color: "var(--fg-soft)", lineHeight: 1.6, marginBottom: 6 }}>
+              「{s.ai_summary || s.statement_translated || s.statement_text}」
+            </div>
+          )}
+          {s.ai_market_impact && (
+            <div style={{ fontSize: 12, color: "var(--muted-fg)" }}>
+              📊 {s.ai_market_impact}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================
 // 8. 今日重點(AI 分類新聞)
 // ============================================
 type Headline = {
