@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Serif_TC, Noto_Sans_TC, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { QuackFloating } from "@/components/quack/QuackFloating";
 
 const serif = Noto_Serif_TC({
   subsets: ["latin"],
@@ -24,14 +25,14 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VSIS — Vincent Stock Intelligence",
-  description: "個人金融情報系統 · 夥伴 + 教練",
+  title: "呱呱投資招待所 · Quack House",
+  description: "一隻呱呱,陪你想清楚每一筆。",
   manifest: "/manifest.json",
-  applicationName: "VSIS",
+  applicationName: "呱呱投資招待所",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "VSIS",
+    title: "呱呱招待所",
   },
 };
 
@@ -47,7 +48,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="zh-TW"
       className={`${serif.variable} ${sans.variable} ${mono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <QuackFloating />
+      </body>
     </html>
   );
 }

@@ -8,6 +8,9 @@ import {
   type WatchlistItem,
 } from "@/lib/api";
 import { LiveTicker } from "@/components/LiveTicker";
+import { WeatherCard } from "@/components/quack/WeatherCard";
+import { QuackTodayCard } from "@/components/quack/QuackTodayCard";
+import { TopicsHeatSection } from "@/components/quack/TopicsHeatSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -48,13 +51,12 @@ function confEmoji(c?: number): string {
 }
 
 const NAV_LINKS = [
-  { href: "/market", label: "大盤", icon: "盤" },
-  { href: "/stocks/2330", label: "台積電", icon: "2330" },
-  { href: "/chat", label: "AI 夥伴", icon: "談" },
-  { href: "/backtest", label: "回測", icon: "驗" },
-  { href: "/paper", label: "模擬", icon: "練" },
-  { href: "/reports", label: "報告", icon: "報" },
-  { href: "/alerts", label: "警示", icon: "警" },
+  { href: "/", label: "今日", icon: "🏠" },
+  { href: "/pond", label: "池塘", icon: "🦆" },
+  { href: "/journal", label: "筆記", icon: "📓" },
+  { href: "/market", label: "全景", icon: "📊" },
+  { href: "/chat", label: "呱呱", icon: "💬" },
+  { href: "/alerts", label: "鈴鐺", icon: "🔔" },
 ];
 
 export default async function Dashboard() {
@@ -85,24 +87,23 @@ export default async function Dashboard() {
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         {/* Header */}
-        <header className="mb-10 wabi-enter">
+        <header className="mb-8 wabi-enter">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <div className="flex items-baseline gap-3">
-                <h1 className="font-serif text-4xl md:text-5xl font-semibold tracking-tight">
-                  Vincent
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <h1 className="font-serif text-3xl md:text-4xl font-semibold tracking-tight">
+                  呱呱投資招待所
                 </h1>
                 <span className="text-xs text-[var(--muted-fg)] tracking-widest uppercase">
-                  Stock Intelligence
+                  Quack House
                 </span>
               </div>
               <p className="text-sm text-[var(--muted-fg)] mt-2 font-serif italic">
-                「教我思考,不是給我答案。」
+                「一隻呱呱,陪你想清楚每一筆。」
               </p>
               <p className="text-xs text-[var(--muted-fg)] mt-1">
                 {now && (
                   <>
-                    最後更新{" "}
                     <span className="wabi-num">
                       {now.toLocaleString("zh-TW", { hour12: false })}
                     </span>{" "}
@@ -115,7 +116,7 @@ export default async function Dashboard() {
                     health?.status === "ok" ? "text-moss" : "text-gold"
                   }
                 >
-                  {health?.status === "ok" ? "● 系統正常" : `◌ ${health?.status ?? "離線"}`}
+                  {health?.status === "ok" ? "● 茶室已開" : `◌ ${health?.status ?? "離線"}`}
                 </span>
               </p>
             </div>
@@ -127,7 +128,7 @@ export default async function Dashboard() {
                   href={n.href}
                   className="wabi-btn text-xs"
                 >
-                  <span className="font-serif opacity-60 text-[10px]">{n.icon}</span>
+                  <span className="text-[11px]">{n.icon}</span>
                   <span>{n.label}</span>
                 </Link>
               ))}
@@ -136,6 +137,16 @@ export default async function Dashboard() {
         </header>
 
         <div className="wabi-divider" />
+
+        {/* 呱呱招待所 · 今日三塊 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8 wabi-enter wabi-enter-delay-1">
+          <WeatherCard />
+          <QuackTodayCard />
+        </div>
+
+        <div className="mb-8 wabi-enter wabi-enter-delay-2">
+          <TopicsHeatSection />
+        </div>
 
         {/* 自選股 / 分析表格 */}
         <section className="wabi-card p-0 mb-8 wabi-enter wabi-enter-delay-1">
