@@ -47,6 +47,7 @@ app.add_middleware(
 )
 
 # 掛載 API 路由
+from backend.routes import admin as _admin_routes  # noqa: E402
 from backend.routes import analysis as _analysis_routes  # noqa: E402
 from backend.routes import backtest as _backtest_routes  # noqa: E402
 from backend.routes import brokers as _brokers_routes  # noqa: E402
@@ -64,6 +65,7 @@ app.include_router(_brokers_routes.router, prefix="/api", tags=["brokers"])
 app.include_router(_notify_routes.router, prefix="/api", tags=["notify"])
 app.include_router(_backtest_routes.router, prefix="/api", tags=["backtest"])
 app.include_router(_paper_routes.router, prefix="/api", tags=["paper"])
+app.include_router(_admin_routes.router, prefix="/api", tags=["admin"])
 
 
 @app.get("/")

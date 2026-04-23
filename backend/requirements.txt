@@ -16,6 +16,9 @@ httpx>=0.27
 requests>=2.32
 tenacity>=9.0
 
+# PostgreSQL direct connection(admin DDL / seed)
+psycopg2-binary>=2.9
+
 # AI
 anthropic>=0.39
 
