@@ -587,7 +587,169 @@ export function SupplyChainLive() {
 }
 
 // ============================================
-// 6. 今日重點(AI 分類新聞)
+// 6. 昨夜美股 → 今日台股(用 market overview 的 us 欄位)
+// ============================================
+export function USConnectLive() {
+  const [d, setD] = useState<MarketOverview | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/market/overview`, { cache: "no-store" });
+        const j = await r.json();
+        if (!cancelled) setD(j);
+      } catch {/* */}
+    }
+    load();
+  }, []);
+  const us = d?.us ?? {};
+  const events: Array<{ icon: string; dir: "rise" | "fall" | "neutral"; title: string; impact: string; stocks: string }> = [];
+  const ixic = us["^IXIC"];
+  const gspc = us["^GSPC"];
+  const sox = us["^SOX"];
+  const vix = us["^VIX"];
+  if (sox) {
+    const pct = sox.changes_pct ?? 0;
+    events.push({
+      icon: pct >= 0 ? "📈" : "📉",
+      dir: pct >= 0 ? "rise" : "fall",
+      title: `費半 ${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+      impact: pct >= 0 ? "→ 半導體權值開高" : "→ 半導體權值開低",
+      stocks: "台積電、聯發科、聯電",
+    });
+  }
+  if (ixic) {
+    const pct = ixic.changes_pct ?? 0;
+    events.push({
+      icon: pct >= 0 ? "📈" : "📉",
+      dir: pct >= 0 ? "rise" : "fall",
+      title: `NASDAQ ${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+      impact: pct >= 0 ? "→ 科技股情緒偏多" : "→ 科技股開低",
+      stocks: "廣達、鴻海、緯穎",
+    });
+  }
+  if (gspc) {
+    const pct = gspc.changes_pct ?? 0;
+    events.push({
+      icon: pct >= 0 ? "📈" : "📉",
+      dir: pct >= 0 ? "rise" : "fall",
+      title: `S&P 500 ${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`,
+      impact: pct >= 0 ? "→ 整體風險偏好回升" : "→ 外資態度保守",
+      stocks: "",
+    });
+  }
+  if (vix) {
+    const v = vix.price ?? 0;
+    events.push({
+      icon: v > 20 ? "⚠️" : "✓",
+      dir: v > 20 ? "rise" : "neutral",
+      title: `VIX ${v.toFixed(2)} ${(vix.changes_pct ?? 0) > 0 ? "+" : ""}${(vix.changes_pct ?? 0).toFixed(2)}%`,
+      impact: v > 20 ? "→ 外資賣壓升溫,防禦優先" : "→ 市場情緒平穩",
+      stocks: "",
+    });
+  }
+
+  if (events.length === 0) {
+    return (
+      <div style={{ padding: "16px 0", color: "var(--text-muted)", fontStyle: "italic" }}>
+        呱呱在看美股⋯
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {events.map((e, i) => (
+        <div key={i} className={styles.usEvent}>
+          <div className={styles.usEventTitle}>
+            <span className={e.dir === "rise" ? styles.rise : e.dir === "fall" ? styles.fall : ""}>{e.icon}</span>
+            {e.title}
+          </div>
+          <div className={styles.usImpactArrow}>{e.impact}</div>
+          {e.stocks && <div className={styles.usStocks}>{e.stocks}</div>}
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ============================================
+// 7. 焦點股(從最熱 2 題材 tier_1 / tier_2 抽出)
+// ============================================
+type FocusItem = {
+  ticker: string;
+  topic_name: string;
+  heat: number;
+  stage: string | null;
+};
+
+export function FocusStocksLive() {
+  const [items, setItems] = useState<FocusItem[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/topics?status=active&order=heat&limit=3`, { cache: "no-store" });
+        const j = await r.json();
+        const topics: Topic[] = j.topics ?? [];
+        const out: FocusItem[] = [];
+        for (const t of topics) {
+          const sc = t.supply_chain || {};
+          for (const tier of Object.values(sc)) {
+            for (const s of tier.stocks || []) {
+              if (!/^\d{4,6}$/.test(s)) continue;
+              if (out.find((x) => x.ticker === s)) continue;
+              out.push({
+                ticker: s,
+                topic_name: t.name,
+                heat: t.heat_score ?? 0,
+                stage: t.stage,
+              });
+              if (out.length >= 5) break;
+            }
+            if (out.length >= 5) break;
+          }
+          if (out.length >= 5) break;
+        }
+        if (!cancelled) setItems(out);
+      } catch {/* */}
+    }
+    load();
+  }, []);
+
+  if (items === null) {
+    return (
+      <div style={{ padding: 12, color: "var(--text-muted)", fontStyle: "italic", fontSize: 13 }}>
+        呱呱挑焦點中⋯
+      </div>
+    );
+  }
+  if (items.length === 0) {
+    return <div style={{ padding: 12, color: "var(--text-muted)", fontSize: 13 }}>無焦點股</div>;
+  }
+
+  return (
+    <>
+      {items.map((f) => (
+        <Link key={f.ticker} href={`/stocks/${f.ticker}`} className={styles.focusStockItem}>
+          <div>
+            <div className={styles.focusStockName}>{f.ticker}</div>
+            <div className={styles.focusStockTag}>{f.topic_name}</div>
+          </div>
+          <div className={styles.focusStockPrice}>
+            <div className="px" style={{ fontSize: 13, color: "var(--accent-gold)" }}>{f.heat}°</div>
+            <div className="chg" style={{ fontSize: 11, color: "var(--text-muted)" }}>
+              {f.stage === "main_rally" ? "主升段" : f.stage === "starting" ? "起動" : f.stage}
+            </div>
+          </div>
+        </Link>
+      ))}
+    </>
+  );
+}
+
+// ============================================
+// 8. 今日重點(AI 分類新聞)
 // ============================================
 type Headline = {
   title?: string;

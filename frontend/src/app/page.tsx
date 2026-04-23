@@ -7,6 +7,8 @@ import {
   HeadlinesLive,
   QuackMorningLive,
   SupplyChainLive,
+  USConnectLive,
+  FocusStocksLive,
 } from "./home-data";
 
 export const dynamic = "force-dynamic";
@@ -301,41 +303,22 @@ export default function Home() {
 
           {/* 右欄 */}
           <div>
-            {/* 美股連動 */}
+            {/* 美股連動(即時) */}
             <div className={styles.usConnect} style={{ marginBottom: 16 }}>
               <div className={styles.flowTitle} style={{ marginBottom: 10 }}>
                 🌏 昨夜美股 → 今日台股
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>4/22 盤後</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>即時</span>
               </div>
-              {US_EVENTS.map((e, i) => (
-                <div key={i} className={styles.usEvent}>
-                  <div className={styles.usEventTitle}>
-                    <span className={styles[e.iconClass]}>{e.icon}</span> {e.title}
-                  </div>
-                  <div className={styles.usImpactArrow}>{e.impact}</div>
-                  {e.stocks && <div className={styles.usStocks}>{e.stocks}</div>}
-                </div>
-              ))}
+              <USConnectLive />
             </div>
 
-            {/* 焦點股 */}
+            {/* 焦點股(從題材抽出) */}
             <div className={styles.focusStocks}>
               <div className={styles.flowTitle} style={{ marginBottom: 10 }}>
                 💎 今日焦點
-                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>點擊看分析</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)" }}>來自熱門題材 · 點擊看分析</span>
               </div>
-              {FOCUS.map((f) => (
-                <Link key={f.code} href={`/stocks/${f.code}`} className={styles.focusStockItem}>
-                  <div>
-                    <div className={styles.focusStockName}>{f.name} {f.code}</div>
-                    <div className={styles.focusStockTag}>{f.tag}</div>
-                  </div>
-                  <div className={styles.focusStockPrice}>
-                    <div className="px">{f.px}</div>
-                    <div className={cx("chg", styles[f.dir])}>{f.chg}</div>
-                  </div>
-                </Link>
-              ))}
+              <FocusStocksLive />
             </div>
           </div>
         </div>
