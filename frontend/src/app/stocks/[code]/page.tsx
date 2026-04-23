@@ -5,9 +5,9 @@ import {
   fetchTwStock,
   fetchStockNews,
   fetchBrokerSummary,
-  type AnalysisResult,
 } from "@/lib/api";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { DimCard } from "@/components/stocks/DimCard";
 
 export const dynamic = "force-dynamic";
 
@@ -17,75 +17,26 @@ interface Props {
 }
 
 function recoClass(r: string) {
+  // 侘寂 palette:買多=赭紅 / 觀望=金粟 / 避開=松藍
   switch (r) {
     case "strong_buy":
-      return "bg-emerald-600 text-white";
+      return "wabi-reco-strong_buy";
     case "buy":
-      return "bg-emerald-500 text-white";
+      return "wabi-reco-buy";
     case "watch":
-      return "bg-amber-400 text-zinc-900";
+      return "wabi-reco-watch";
     case "hold":
-      return "bg-zinc-400 text-white";
+      return "wabi-reco-hold";
     case "avoid":
-      return "bg-rose-500 text-white";
+      return "wabi-reco-avoid";
     default:
-      return "bg-zinc-300";
+      return "wabi-pill";
   }
 }
 
 function fmt(n?: number | null, digits = 2) {
   if (n == null) return "-";
   return n.toLocaleString("zh-TW", { maximumFractionDigits: digits });
-}
-
-function DimCard({
-  label,
-  dim,
-  max,
-}: {
-  label: string;
-  dim: AnalysisResult["evidence"]["fundamental"];
-  max: number;
-}) {
-  const pct = (dim.score / max) * 100;
-  return (
-    <div className="rounded-lg border border-[var(--border)] p-4">
-      <div className="flex items-baseline justify-between mb-2">
-        <h3 className="font-semibold">{label}</h3>
-        <div className="text-right">
-          <span className="text-2xl font-bold">{dim.score}</span>
-          <span className="text-sm text-[var(--muted-fg)]">/{max}</span>
-        </div>
-      </div>
-      <div className="h-1.5 bg-[var(--muted)] rounded-full overflow-hidden mb-3">
-        <div
-          className="h-full bg-blue-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <ul className="text-xs text-[var(--muted-fg)] space-y-1">
-        {Object.entries(dim.details)
-          .slice(0, 6)
-          .map(([k, v]) => (
-            <li key={k} className="flex justify-between gap-2">
-              <span className="truncate">{k}</span>
-              <span className="font-mono text-right">
-                {typeof v === "object" ? JSON.stringify(v).slice(0, 30) : String(v).slice(0, 30)}
-              </span>
-            </li>
-          ))}
-      </ul>
-      {dim.warnings.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-1">
-          {dim.warnings.map((w, i) => (
-            <div key={i} className="text-xs text-amber-600">
-              ⚠️ {w}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default async function StockDetailPage({ params, searchParams }: Props) {
