@@ -94,7 +94,12 @@ async def extract_people_now(
 ) -> dict[str, Any]:
     """手動觸發:掃 intel_articles 萃取重點人物發言(Phase 2.1)"""
     _require_admin(x_admin_token)
-    return _extract_people(days=days, limit=limit)
+    import traceback
+    try:
+        return _extract_people(days=days, limit=limit)
+    except Exception as e:
+        log.error(f"people extract 失敗: {e}\n{traceback.format_exc()}")
+        raise HTTPException(500, detail=f"{type(e).__name__}: {e}")
 
 
 @router.post("/intel/refresh/{source_id}")
