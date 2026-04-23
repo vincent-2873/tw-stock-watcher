@@ -56,6 +56,7 @@ from backend.routes import market as _market_routes  # noqa: E402
 from backend.routes import news as _news_routes  # noqa: E402
 from backend.routes import notify as _notify_routes  # noqa: E402
 from backend.routes import paper as _paper_routes  # noqa: E402
+from backend.routes import vsis as _vsis_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
@@ -66,6 +67,7 @@ app.include_router(_notify_routes.router, prefix="/api", tags=["notify"])
 app.include_router(_backtest_routes.router, prefix="/api", tags=["backtest"])
 app.include_router(_paper_routes.router, prefix="/api", tags=["paper"])
 app.include_router(_admin_routes.router, prefix="/api", tags=["admin"])
+app.include_router(_vsis_routes.router, prefix="/api", tags=["vsis"])
 
 
 @app.get("/")
