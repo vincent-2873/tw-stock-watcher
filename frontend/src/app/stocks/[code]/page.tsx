@@ -9,6 +9,8 @@ import {
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { DimCard } from "@/components/stocks/DimCard";
 import { InstitutionalBanner } from "@/components/stocks/InstitutionalBanner";
+import { TierBadge } from "@/components/stocks/TierBadge";
+import { scoreToTier, tierText } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +73,8 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="font-mono text-3xl font-bold">{analysis.stock_id}</h1>
           <span className="font-serif text-3xl">{analysis.stock_name}</span>
+          {/* Bug 6 修:顯示 C/N/R/SR/SSR 評級(單一來源真理) */}
+          <TierBadge score={analysis.total_score} size="lg" showText />
           <span
             className={`px-3 py-1 rounded-full font-semibold text-sm ${recoClass(
               analysis.recommendation,
@@ -115,14 +119,15 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
-          <div className="text-xs text-[var(--muted-fg)]">信心度</div>
-          <div className="text-3xl font-bold">{analysis.confidence}%</div>
+          <div className="text-xs text-[var(--muted-fg)]">評級</div>
+          <div className="text-3xl font-bold flex items-center gap-2">
+            <TierBadge score={analysis.total_score} size="md" />
+            <span className="text-base font-normal text-[var(--muted-fg)]">
+              {tierText(scoreToTier(analysis.total_score))}
+            </span>
+          </div>
           <div className="text-xs text-[var(--muted-fg)] mt-1">
-            {analysis.confidence >= 75
-              ? "✅ 高信心"
-              : analysis.confidence >= 60
-                ? "⚡ 中等信心"
-                : "⚠️ 低信心"}
+            AI 分析信心度 {analysis.confidence}%
           </div>
         </div>
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">

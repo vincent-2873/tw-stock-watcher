@@ -217,11 +217,15 @@ type Pick = {
   chain_tier: string | null;
 };
 
-function confidenceBand(heat: number): { label: string; color: string; suffix: string } {
-  if (heat >= 90) return { label: "高信心", color: "var(--accent-gold)", suffix: "" };
-  if (heat >= 75) return { label: "中高信心", color: "var(--heat-medium, #C9A961)", suffix: "" };
-  if (heat >= 60) return { label: "中等信心", color: "var(--neutral)", suffix: "" };
-  return { label: "⚠ 低信心,僅供參考", color: "var(--fall)", suffix: "" };
+/**
+ * Bug 6 修:這裡的 heat 是「題材熱度」(0-100),不是個股 AI 信心度
+ * 避免跟個股頁的 confidence % 混淆,這裡只標示題材強度不冠「信心」二字
+ */
+function topicHeatBand(heat: number): { label: string; color: string } {
+  if (heat >= 90) return { label: "題材熾熱", color: "var(--heat-extreme, #A84836)" };
+  if (heat >= 75) return { label: "題材升溫", color: "var(--heat-high, #C9754D)" };
+  if (heat >= 60) return { label: "題材穩定", color: "var(--heat-medium, #D4A05C)" };
+  return { label: "題材轉冷", color: "var(--heat-low, #A89878)" };
 }
 
 export function QuackPicksLive() {
@@ -252,7 +256,7 @@ export function QuackPicksLive() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
       {picks.map((p) => {
-        const band = confidenceBand(p.heat_score);
+        const band = topicHeatBand(p.heat_score);
         return (
           <Link
             key={p.ticker}
