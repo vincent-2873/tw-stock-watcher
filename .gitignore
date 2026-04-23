@@ -101,3 +101,7 @@ test-data/
 sample-data/
 .pytest_cache/
 inbox/files_unzipped/
+
+# scoring worker logs
+scoring_*.log
+scoring_run.log
