@@ -194,3 +194,45 @@ GitHub: `https://github.com/vincent-2873/tw-stock-watcher` main
 - 點進去個股頁,分數完全一致(單一真理來源)
 
 **不再是 seed 出來的幻覺清單。1815 再也不會冒出來當推薦。**
+
+---
+
+## 📝 2026-04-24 凌晨插曲 — 對話 AI 診斷 + cache 強化(merge `10d07f4`)
+
+### 起因
+Vincent 回報「對話 AI 時間錯位 / 拿到舊股價 / 分析全錯」,要求修。
+
+### 診斷過程(沒下架,先驗證)
+1. **後端實測**:打了 4 個 query 打線上 `vsis-api.zeabur.app/api/chat`
+   - 「今天幾月幾日?」→ 「2026年4月24日,星期五」✅
+   - 「華邦電股價有沒有 20 元?」→ AI 主動反駁「股價 87.8 元,別用過時印象做決策」✅
+   - 「現在大盤?」→ 誠實拒答「沒有即時大盤數據」✅
+   - meta event 每次都帶 `tpe_now` + `latest_date` ✅
+2. **code 審視**:`backend/routes/chat.py` 已有 `_build_system()` 注入 `now_tpe()`,`_fetch_live_stock_snapshot()` 用即時日期打 FinMind,BASE_SYSTEM 鐵律明寫「訓練資料股價禁用」。
+3. **結論**:**後端沒壞**,Vincent 看到的「不準」可能是:
+   - (a) 更早 commit 的歷史問題,後續已被修掉
+   - (b) 那個 session 的特殊 query path
+
+### 第二次懷疑 cache(也沒壞)
+Vincent 提「一般瀏覽器舊、無痕新」→ 實測 HTTP headers:
+- HTML `Cache-Control: private, no-cache, no-store, must-revalidate` ✅
+- 靜態資源 content-hash + `immutable` ✅
+- `/sw.js` 404,且 `frontend/` 找不到任何 SW 註冊代碼
+- ChatPanel 沒用 localStorage 存對話 → 排除 client storage 殘留
+
+Vincent 親自 F12 也確認**無 SW 殘留**。問題消失。
+
+### 實際做了什麼(防禦性加強,非修 bug)
+- ✅ `backend/routes/chat.py:358` `Cache-Control: no-cache` → `no-store`(語意更嚴格)
+- ✅ `git rm next.config.ts`(根目錄殘留檔,內含 `s-maxage=60` 設定,雖然沒部署用到但是地雷)
+
+### 給下一輪 Claude 的提醒
+- **對話 AI 的時間/股價注入機制是 OK 的** — `chat.py` 的 `_build_system()` + `_fetch_live_stock_snapshot()` + `extract_stocks()` 三件套,別亂修
+- **如果 Vincent 又說「AI 拿到舊資料」,先實測再下手**,不要一聽就開分支改 system prompt
+- **下次出現「一般瀏覽器看到舊版」現象,優先懷疑「使用者那個 tab 是舊 tab 沒 reload」,不要先猜 SW**(因為現在確認沒 SW)
+
+### 本次 commits
+- `93ec8ae` chore(cache): 收緊 chat API cache-control + 清理殘留 config
+- `10d07f4` Merge branch 'hotfix/cache-hardening-2026-04-24'
+- 回滾基準點:`fa9d257`(merge 前的 main HEAD)
+
