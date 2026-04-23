@@ -171,7 +171,7 @@ export default async function Dashboard() {
               </span>
             </div>
             <Link
-              href="/stocks/2330"
+              href="/stocks"
               className="text-xs text-[var(--muted-fg)] hover:text-[var(--fg)]"
             >
               查個股 →

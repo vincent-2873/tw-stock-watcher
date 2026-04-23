@@ -161,7 +161,7 @@ export default function JournalPage() {
                 🦆 逛池塘
               </Link>
               <Link
-                href="/stocks/2330"
+                href="/stocks"
                 className="wabi-btn inline-block"
                 style={{
                   padding: "8px 20px",
