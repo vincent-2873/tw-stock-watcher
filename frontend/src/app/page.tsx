@@ -13,6 +13,7 @@ import {
   PeopleStatementsLive,
 } from "./home-data";
 import { HeroDate } from "@/components/hero/HeroDate";
+import { HeroFloats } from "@/components/hero/HeroFloats";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -306,18 +307,7 @@ export default function Home() {
                 🦆
               </span>
             </div>
-            <span className={`${styles.floatNum} ${styles.floatN1}`}>
-              TAIEX <span className="num">37,612</span>
-            </span>
-            <span className={`${styles.floatNum} ${styles.floatN2}`}>
-              VIX <span className="num">22.15</span>
-            </span>
-            <span className={`${styles.floatNum} ${styles.floatN3}`}>
-              台指期 <span className="num">37,520</span>
-            </span>
-            <span className={`${styles.floatNum} ${styles.floatN4}`}>
-              費半 <span className="num">-2.45%</span>
-            </span>
+            <HeroFloats />
           </div>
         </section>
 
