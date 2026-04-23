@@ -12,6 +12,7 @@ import { WeatherCard } from "@/components/quack/WeatherCard";
 import { QuackTodayCard } from "@/components/quack/QuackTodayCard";
 import { TopicsHeatSection } from "@/components/quack/TopicsHeatSection";
 import { MarketPanorama } from "@/components/quack/MarketPanorama";
+import { HeadlinesCard } from "@/components/quack/HeadlinesCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -149,6 +150,11 @@ export default async function Dashboard() {
         {/* 大盤全景 (30s 即時更新) */}
         <div className="mb-5 wabi-enter wabi-enter-delay-1">
           <MarketPanorama />
+        </div>
+
+        {/* 今日重點(AI 分類新聞 利多/中立/利空) */}
+        <div className="mb-5 wabi-enter wabi-enter-delay-2">
+          <HeadlinesCard />
         </div>
 
         <div className="mb-8 wabi-enter wabi-enter-delay-2">

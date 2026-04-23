@@ -283,6 +283,22 @@ export async function fetchRecentNews(days = 2, limit = 30) {
   }>(`/api/news/recent?days=${days}&limit=${limit}`);
 }
 
+export interface HeadlineItem extends NewsItem {
+  sentiment?: "bull" | "bear" | "neutral";
+  importance?: number;
+  affected_tickers?: string[];
+  affected_topics?: string[];
+  one_line?: string;
+}
+
+export async function fetchHeadlines(days = 1, limit = 8) {
+  return request<{
+    count: number;
+    headlines: HeadlineItem[];
+    meta: { source: string; fetched_at: string };
+  }>(`/api/news/headlines?days=${days}&limit=${limit}`);
+}
+
 // ===== 分點進出 =====
 export interface BrokerRow {
   broker: string;
