@@ -94,7 +94,8 @@ export default function Home() {
             <Link className={styles.navLink} href="/stocks">自選股</Link>
             <Link className={styles.navLink} href="/map">產業地圖</Link>
             <Link className={styles.navLink} href="/chat">AI 對話</Link>
-            <Link className={styles.navLink} href="/intel">更多 ⋯</Link>
+            <Link className={styles.navLink} href="/intel">情報</Link>
+            <Link className={styles.navLink} href="/settings">設定</Link>
           </nav>
         </div>
       </div>
@@ -258,21 +259,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 🔔 小鈴鐺 */}
-        <div className={styles.sectionTitle}>
-          <h2>🔔 小鈴鐺</h2>
-          <div className={styles.divider}></div>
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>近 3 日 · 0 則</span>
-        </div>
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🔕</div>
-          <div className={styles.emptyTitle}>近 3 日市場平穩,無警示觸發</div>
-          <div className={styles.emptySubtitle}>設定自選股後,呱呱會幫你盯著</div>
-          <div className={styles.emptyActions}>
-            <Link className={styles.btn} href="/alerts">⚙️ 設定警示規則</Link>
-            <Link className={styles.btn} href="/alerts">📜 看歷史警示</Link>
-          </div>
-        </div>
+        {/* 🔔 小鈴鐺 — 階段 1 刪 (CLAUDE.md 鐵則 4: 空狀態整塊隱藏)
+             Phase 3 接 /api/quack/alerts 有資料時再整塊 return 出來 */}
 
         {/* footer */}
         <div className={styles.footer}>
