@@ -11,6 +11,7 @@ import { DimCard } from "@/components/stocks/DimCard";
 import { InstitutionalBanner } from "@/components/stocks/InstitutionalBanner";
 import { TierBadge } from "@/components/stocks/TierBadge";
 import { scoreToTier, tierText } from "@/lib/scoring";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,8 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
 
   return (
     <main className="min-h-screen px-4 py-6 md:px-6 md:py-8 wabi-enter">
+      {/* Bug 7:強制停在頁面頂部 */}
+      <ScrollToTop deps={[code]} />
       <nav className="mb-4 text-sm">
         <Link href="/" className="text-blue-600 hover:underline">
           ← 回主頁

@@ -26,8 +26,12 @@ export function ChatPanel({
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // Bug 7 修(CLAUDE.md 鐵則 7):
+  //   ChatPanel 掛載在個股頁底部, 若無條件 scrollIntoView 會害整頁開啟就滾到底。
+  //   規則: 「AI 對話框放頁面底部,使用者主動滑下去」— 只在「使用者已經送過訊息」才跟著捲。
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, streaming]);
 
   const send = useCallback(async () => {
