@@ -39,7 +39,7 @@ DEFAULT_TIMEOUT = 15.0
 import time as _time
 
 _DATASET_BLACKLIST: dict[str, float] = {}
-_BLACKLIST_TTL = 3600  # 1 小時
+_BLACKLIST_TTL = 300  # 5 分鐘(縮短 — 避免鎖死 Sponsor dataset)
 
 
 @dataclass
@@ -75,30 +75,50 @@ class FinMindService:
         """
         取 FinMind 資料。錯誤處理:
           - network error -> retry(tenacity)
-          - 4xx (400/401/402 需付費/403) -> 不 retry,加黑名單 1hr
+          - 4xx -> 不 retry,加短黑名單(5 分鐘)避免反覆打
           - 5xx -> retry 一次後回 []
           - status != 200 in JSON -> 回 [] + log warn
+
+        Bug 2 修(21_FINAL_MASTER_PLAN):
+          - 用 Authorization: Bearer {token} header(master plan 指定方式)
+          - 同時保留 ?token= 作為 fallback(defense-in-depth)
+          - 黑名單從 1hr 縮成 5 分鐘(不會把 Sponsor dataset 一整個小時鎖死)
+          - 401/402 不上黑名單(代表 token 問題,要修不是繞開)
         """
         # 黑名單短路:免費版不支援的 dataset 直接回空,不再打 API
         blacklisted_until = _DATASET_BLACKLIST.get(dataset)
         if blacklisted_until and _time.time() < blacklisted_until:
             return []
 
+        # 同時帶 query ?token= 與 header(Sponsor 端點優先讀 header)
         query = {
             "dataset": dataset,
             **params,
             **({"token": self.token} if self.token else {}),
         }
+        headers = (
+            {"Authorization": f"Bearer {self.token}"} if self.token else {}
+        )
         try:
-            r = httpx.get(FINMIND_BASE, params=query, timeout=self.timeout)
+            r = httpx.get(
+                FINMIND_BASE,
+                params=query,
+                headers=headers,
+                timeout=self.timeout,
+            )
             if 400 <= r.status_code < 500:
                 snippet = r.text[:200] if r.text else ""
-                # 加黑名單避免 1hr 內反覆打
-                _DATASET_BLACKLIST[dataset] = _time.time() + _BLACKLIST_TTL
-                log.warning(
-                    f"FinMind {dataset} HTTP {r.status_code} → 黑名單 1hr — "
-                    f"可能免費版不支援: {snippet}"
-                )
+                # 401 / 402 是 token 問題(付費未生效),不黑名單,每次都要嘗試
+                if r.status_code in (401, 402):
+                    log.error(
+                        f"FinMind {dataset} HTTP {r.status_code} — 🔑 token 問題,"
+                        f"檢查 FINMIND_TOKEN env(應為 Sponsor level 3): {snippet}"
+                    )
+                else:
+                    _DATASET_BLACKLIST[dataset] = _time.time() + _BLACKLIST_TTL
+                    log.warning(
+                        f"FinMind {dataset} HTTP {r.status_code} → 黑名單 5 分鐘: {snippet}"
+                    )
                 return []
             r.raise_for_status()
             j = r.json()
@@ -111,6 +131,37 @@ class FinMindService:
         except Exception as e:
             log.error(f"FinMind {dataset} 例外: {e}")
             return []
+
+    # ==========================================
+    # 診斷:user_info — 回 level / level_title / 用量
+    # ==========================================
+    def get_user_info(self) -> dict:
+        """
+        呼叫 FinMind user_info 端點,回傳 Sponsor 狀態。
+        用途:/api/diag/finmind 路由顯示
+        """
+        if not self.token:
+            return {"ok": False, "error": "FINMIND_TOKEN not set"}
+        try:
+            r = httpx.get(
+                "https://api.web.finmindtrade.com/v2/user_info",
+                params={"token": self.token},
+                timeout=self.timeout,
+            )
+            r.raise_for_status()
+            j = r.json()
+            return {
+                "ok": j.get("status") == 200,
+                "user_id": j.get("user_id"),
+                "level": j.get("level"),
+                "level_title": j.get("level_title"),
+                "api_request_limit": j.get("api_request_limit"),
+                "api_request_limit_hour": j.get("api_request_limit_hour"),
+                "user_count": j.get("user_count"),
+                "auth_mode": "bearer+query",
+            }
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
 
     # ==========================================
     # 公開 API:個股資料
