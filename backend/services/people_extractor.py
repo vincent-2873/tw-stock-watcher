@@ -128,6 +128,7 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
 
     # 3. 拉近 N 日 articles (有 title 或 ai_summary)
     since = (now_tpe() - timedelta(days=days)).isoformat()
+    # 拉 articles (不過濾 ai_summary, title 自己也能匹配)
     articles_res = (
         svc.table("intel_articles")
         .select(
@@ -136,7 +137,6 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
             "url,source_id,published_at"
         )
         .gte("published_at", since)
-        .not_.is_("ai_summary", "null")
         .order("published_at", desc=True)
         .limit(limit)
         .execute()
