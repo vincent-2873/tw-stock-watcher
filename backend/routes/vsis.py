@@ -137,6 +137,66 @@ async def get_ecosystem(anchor: str) -> dict[str, Any]:
 # ==========================================
 # Dashboard 2.0 一次抓(首頁專用)
 # ==========================================
+@router.get("/quack/picks")
+async def quack_weekly_picks(
+    limit: int = Query(6, ge=1, le=15),
+    horizon: str = Query("1w", description="1w | 1m"),
+) -> dict[str, Any]:
+    """呱呱一週(或一個月)推薦清單 — 基於題材熱度 + investment_strategy。
+
+    邏輯:
+      1. 取熱度 TOP 5 active topics
+      2. 從每題材的 investment_strategy.short_term_1w (或 medium_term_1m) 抽個股
+      3. 每檔標上所屬題材 + 熱度分數
+      4. 按題材熱度排序,去重後取前 N 檔
+    """
+    sb = _svc()
+    topics = (
+        sb.table("topics")
+        .select("id, name, heat_score, stage, investment_strategy, supply_chain, ai_summary")
+        .eq("status", "active")
+        .order("heat_score", desc=True)
+        .limit(10)
+        .execute()
+        .data
+        or []
+    )
+
+    strategy_key = "short_term_1w" if horizon == "1w" else "medium_term_1m"
+    seen: dict[str, dict[str, Any]] = {}
+    for t in topics:
+        strat = (t.get("investment_strategy") or {}).get(strategy_key) or []
+        heat = t.get("heat_score") or 0
+        for ticker in strat:
+            ticker = str(ticker)
+            if not ticker.isdigit() and not (len(ticker) > 3 and ticker[:4].isdigit()):
+                continue  # 略過「德宏」這種名字
+            existing = seen.get(ticker)
+            # 第一次見到就存;若新題材熱度更高也更新歸屬
+            if not existing or heat > existing["heat_score"]:
+                # 判斷在供應鏈哪一層
+                chain_tier = None
+                for tier in (t.get("supply_chain") or {}).values():
+                    if tier and ticker in (tier.get("stocks") or []):
+                        chain_tier = tier.get("name")
+                        break
+                seen[ticker] = {
+                    "ticker": ticker,
+                    "topic_id": t["id"],
+                    "topic_name": t["name"],
+                    "topic_stage": t.get("stage"),
+                    "heat_score": heat,
+                    "chain_tier": chain_tier,
+                    "topic_summary": t.get("ai_summary"),
+                }
+    picks = sorted(seen.values(), key=lambda x: x["heat_score"], reverse=True)[:limit]
+    return {
+        "horizon": horizon,
+        "count": len(picks),
+        "picks": picks,
+    }
+
+
 @router.get("/dashboard/overview")
 async def dashboard_overview(top_topics: int = Query(5, ge=1, le=20)) -> dict[str, Any]:
     """Dashboard 2.0 首頁一次拿齊:TOP N 題材 + 12 龍頭 + 大類產業。"""

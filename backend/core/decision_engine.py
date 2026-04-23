@@ -30,6 +30,9 @@ from backend.utils.time_utils import now_tpe
 
 log = get_logger(__name__)
 
+# 全台股股名快取(懶載入,免費 FinMind TaiwanStockInfo 就能拉)
+_STOCK_NAME_CACHE: dict[str, str] = {}
+
 
 @dataclass
 class AnalysisResult:
@@ -210,15 +213,22 @@ class DecisionEngine:
     # 工具
     # ==========================================
     def _guess_stock_name(self, stock_id: str, price_data: list[dict]) -> str:
-        """從 FinMind 結果猜股名;也可之後改為查 TaiwanStockInfo。"""
-        known = {
-            "2317": "鴻海", "2330": "台積電", "2454": "聯發科",
-            "2882": "國泰金", "2881": "富邦金",
-            "2303": "聯電", "2412": "中華電", "0050": "元大台灣50",
-        }
-        if stock_id in known:
-            return known[stock_id]
-        return stock_id
+        """查全部台股名稱 — 用 FinMind TaiwanStockInfo(全台股)懶載入快取。"""
+        name = _STOCK_NAME_CACHE.get(stock_id)
+        if name:
+            return name
+        # lazy load(第一次呼叫時抓全台股對照表)
+        if not _STOCK_NAME_CACHE:
+            try:
+                rows, _ = self.finmind.get_stock_info()
+                for r in rows:
+                    sid = str(r.get("stock_id") or "").strip()
+                    nm = str(r.get("stock_name") or "").strip()
+                    if sid and nm:
+                        _STOCK_NAME_CACHE[sid] = nm
+            except Exception as e:
+                log.warning(f"載入 TaiwanStockInfo 失敗: {e}")
+        return _STOCK_NAME_CACHE.get(stock_id, stock_id)
 
     def _detect_market_regime(self, bench_data: list[dict]) -> list[str]:
         """簡化市場狀態:看大盤 20 日報酬 + 近期波動"""

@@ -13,6 +13,7 @@ import { QuackTodayCard } from "@/components/quack/QuackTodayCard";
 import { TopicsHeatSection } from "@/components/quack/TopicsHeatSection";
 import { MarketPanorama } from "@/components/quack/MarketPanorama";
 import { HeadlinesCard } from "@/components/quack/HeadlinesCard";
+import { QuackPicksCard } from "@/components/quack/QuackPicksCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -55,7 +56,6 @@ function confEmoji(c?: number): string {
 const NAV_LINKS = [
   { href: "/", label: "今日", icon: "🏠" },
   { href: "/pond", label: "池塘", icon: "🦆" },
-  { href: "/journal", label: "筆記", icon: "📓" },
   { href: "/map", label: "地圖", icon: "🗺️" },
   { href: "/stocks", label: "查股", icon: "🔍" },
   { href: "/chat", label: "呱呱", icon: "💬" },
@@ -150,6 +150,11 @@ export default async function Dashboard() {
         {/* 大盤全景 (30s 即時更新) */}
         <div className="mb-5 wabi-enter wabi-enter-delay-1">
           <MarketPanorama />
+        </div>
+
+        {/* 呱呱這週挑的(主動推薦) */}
+        <div className="mb-5 wabi-enter wabi-enter-delay-2">
+          <QuackPicksCard />
         </div>
 
         {/* 今日重點(AI 分類新聞 利多/中立/利空) */}

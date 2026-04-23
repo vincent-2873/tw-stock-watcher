@@ -121,8 +121,8 @@ export function QuackFloating() {
 
 const QUICK_ACTIONS = [
   { icon: "🦆", label: "池塘動靜", href: "/pond" },
-  { icon: "📓", label: "我的筆記", href: "/journal" },
-  { icon: "📊", label: "市場全景", href: "/market" },
+  { icon: "🔍", label: "查個股", href: "/stocks" },
+  { icon: "🗺️", label: "產業地圖", href: "/map" },
   { icon: "💬", label: "跟呱呱聊", href: "/chat" },
 ];
 
