@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 淺色股票看盤風格 — 參考 Yahoo 股市、富邦 e01 */
+    --bg: 220 20% 97%;         /* #f3f5f7 淺灰白 */
+    --fg: 220 25% 12%;         /* #151a24 深灰（主文字）*/
+    --muted: 220 15% 92%;      /* #e7eaef 背景色塊 */
+    --muted-fg: 220 10% 40%;   /* #5c6472 次要文字 */
+    --border: 220 15% 87%;     /* #d8dce3 分隔線 */
+    --card: 0 0% 100%;         /* #ffffff 卡片白底 */
+    --primary: 214 90% 48%;    /* #1069E8 品牌藍（券商用色）*/
+    --primary-fg: 0 0% 100%;   /* 白 */
+    --success: 142 66% 38%;    /* 淺綠 */
+    --danger: 0 75% 52%;       /* 鮮紅 */
+    --warning: 38 95% 50%;     /* 橘 */
+  }
+  .dark {
+    --bg: 222 47% 4%;
+    --fg: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-fg: 215 20% 65%;
+    --border: 217 33% 17%;
+    --card: 222 47% 6%;
+    --primary: 210 40% 98%;
+    --primary-fg: 222 47% 11%;
+  }
+  html { font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1; }
+  body { @apply bg-bg text-fg antialiased; }
+  * { @apply border-border; }
+  /* 強化數字可讀性 */
+  .font-mono, code { font-feature-settings: "tnum" 1; }
+}
+
+@layer utilities {
+  .price-up { @apply text-up font-semibold; }
+  .price-down { @apply text-down font-semibold; }
+  .price-flat { @apply text-muted-fg; }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0); }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { scrollbar-width: none; }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}

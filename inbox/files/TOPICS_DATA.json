@@ -1,0 +1,569 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2026-04-23",
+    "description": "當前台股活躍題材資料庫。每個題材包含催化劑、供應鏈地圖、投資策略、避開清單。",
+    "update_frequency": "每週更新熱度、每月重新審視"
+  },
+
+  "active_topics": [
+    {
+      "id": "ccl_price_increase_2026",
+      "name": "CCL 漲價循環",
+      "industry_ids": ["semiconductor_materials", "electronic_components"],
+      "heat_score": 95,
+      "heat_trend": "rising",
+      "start_date": "2026-04-01",
+      "expected_duration_days": 180,
+      "expected_end_date": "2026-10-01",
+      "status": "active",
+      "stage": "main_rally",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "信越宣布 silicone 全線漲價 10%",
+          "importance": 9
+        },
+        {
+          "date": "2026-04-20",
+          "event": "外資調升台光電、台燿、臻鼎、金像電、聯茂目標價",
+          "importance": 8
+        },
+        {
+          "date": "2026-04-17",
+          "event": "建滔化工再調漲板料及 PP 價格 10%",
+          "importance": 7
+        },
+        {
+          "date": "2026-04-01",
+          "event": "Resonac、MGC 啟動第二波漲價",
+          "importance": 8
+        }
+      ],
+      "supply_chain": {
+        "tier_1_raw_materials": {
+          "name": "上游原料",
+          "stocks": ["1815", "8358"],
+          "status": "補漲"
+        },
+        "tier_2_ccl": {
+          "name": "中游 CCL",
+          "stocks": ["2383", "6274", "6213"],
+          "status": "已漲"
+        },
+        "tier_3_resin": {
+          "name": "上游樹脂材料",
+          "stocks": ["4722", "4764", "3388"],
+          "status": "主升段"
+        },
+        "tier_4_pcb": {
+          "name": "下游 PCB",
+          "stocks": ["2368", "4958", "3044"],
+          "status": "已漲"
+        }
+      },
+      "ai_summary": "本波 CCL 漲價由 AI 伺服器需求爆發推動，日系信越帶頭漲價 10%，台廠台光電、台燿跟進調漲 20-40%，上游樹脂材料國精化、雙鍵成為真正受惠者。預期 2026 下半年還有第二波漲價。",
+      "investment_strategy": {
+        "short_term_1w": ["1815", "8358"],
+        "medium_term_1m": ["4722", "4764"],
+        "long_term_6m": ["2383", "6274"]
+      },
+      "avoid_list": [
+        {"ticker": "1721", "reason": "連漲過多，注意股風險"},
+        {"ticker": "1711", "reason": "已漲超過 100%，短線乖離過大"}
+      ],
+      "risk_factors": [
+        "若台積電技術論壇後資金轉向 CoPoS 封裝，CCL 可能階段性退熱",
+        "外資若隔日轉賣，短線有下殺 5-10% 風險"
+      ]
+    },
+
+    {
+      "id": "copos_advanced_packaging",
+      "name": "CoPoS 先進封裝",
+      "industry_ids": ["semiconductor", "packaging_testing"],
+      "heat_score": 82,
+      "heat_trend": "rising",
+      "start_date": "2026-04-01",
+      "expected_duration_days": 365,
+      "status": "active",
+      "stage": "starting",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "台積電技術論壇 Santa Clara 站登場，首提 CoPoS",
+          "importance": 10
+        },
+        {
+          "date": "2026-04-16",
+          "event": "魏哲家法說會首度親口說出 CoPoS",
+          "importance": 9
+        },
+        {
+          "date": "2026-01-15",
+          "event": "CES 2026 台積電 CoPoS 實驗線啟動",
+          "importance": 8
+        }
+      ],
+      "supply_chain": {
+        "tier_1_abf_substrate": {
+          "name": "ABF 載板",
+          "stocks": ["3037", "8046"],
+          "status": "補漲"
+        },
+        "tier_2_equipment": {
+          "name": "先進封裝設備",
+          "stocks": ["3680", "3583", "3131"],
+          "status": "主升段"
+        },
+        "tier_3_packaging": {
+          "name": "封裝廠",
+          "stocks": ["3711", "6239", "2449"],
+          "status": "穩定"
+        },
+        "tier_4_materials": {
+          "name": "先進封裝材料",
+          "stocks": ["4763", "3388"],
+          "status": "早期"
+        }
+      },
+      "ai_summary": "台積電首度正式揭露 CoPoS（方形封裝）技術路線圖，為 AI 晶片面積極限問題的核心解決方案。預計 2028 年後開始量產，設備與載板廠最直接受惠。",
+      "investment_strategy": {
+        "short_term_1w": ["3037"],
+        "medium_term_1m": ["3680", "3131"],
+        "long_term_6m": ["3583", "3037", "8046"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "CoPoS 技術難度高，推進時程可能延後",
+        "2028 年量產，短期效益有限"
+      ]
+    },
+
+    {
+      "id": "silicon_photonics_cpo",
+      "name": "矽光子 CPO",
+      "industry_ids": ["semiconductor", "electronic_components"],
+      "heat_score": 76,
+      "heat_trend": "rising",
+      "start_date": "2026-03-01",
+      "expected_duration_days": 365,
+      "status": "active",
+      "stage": "main_rally",
+      "catalysts": [
+        {
+          "date": "2026-04-16",
+          "event": "日月光宣告 2026 年為 CPO 商業化量產元年",
+          "importance": 10
+        },
+        {
+          "date": "2026-04-10",
+          "event": "NVIDIA 入股 Marvell，補齊 CPO 拼圖",
+          "importance": 9
+        }
+      ],
+      "supply_chain": {
+        "tier_1_materials": {
+          "name": "InP 磷化銦材料",
+          "stocks": ["3081", "2455"],
+          "status": "主升段"
+        },
+        "tier_2_optical_modules": {
+          "name": "光模組",
+          "stocks": ["4979", "3163"],
+          "status": "補漲"
+        },
+        "tier_3_packaging": {
+          "name": "CPO 封裝",
+          "stocks": ["3711"],
+          "status": "穩定"
+        }
+      },
+      "ai_summary": "800G / 1.6T 超高速傳輸需求推動矽光子商用化。傳統銅線已達物理極限，CPO 成為 AI 資料中心必然方向。台股聯亞、華星光、波若威直接受惠。",
+      "investment_strategy": {
+        "short_term_1w": ["4979"],
+        "medium_term_1m": ["3081", "3163"],
+        "long_term_6m": ["3711"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "技術標準未完全統一",
+        "量產時程不確定"
+      ]
+    },
+
+    {
+      "id": "silicon_wafer_price",
+      "name": "矽晶圓漲價",
+      "industry_ids": ["silicon_wafer"],
+      "heat_score": 68,
+      "heat_trend": "rising",
+      "start_date": "2026-04-01",
+      "expected_duration_days": 180,
+      "status": "active",
+      "stage": "early",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "信越 silicone 漲價 10%，國內矽晶圓報價跟漲",
+          "importance": 10
+        },
+        {
+          "date": "2026-04-10",
+          "event": "土銀主辦合晶 45 億元聯貸案簽約",
+          "importance": 8
+        }
+      ],
+      "supply_chain": {
+        "tier_1_wafer": {
+          "name": "矽晶圓廠",
+          "stocks": ["6182", "6488", "3532", "5483"],
+          "status": "主升段"
+        },
+        "tier_2_epitaxy": {
+          "name": "磊晶",
+          "stocks": ["3016", "3675"],
+          "status": "補漲"
+        },
+        "tier_3_recycling": {
+          "name": "再生晶圓",
+          "stocks": ["1560", "8028"],
+          "status": "早期"
+        }
+      },
+      "ai_summary": "信越帶頭漲價 10%，全球前六大矽晶圓廠同步跟進。合晶 2 座新廠 2026 開出產能，環球晶、台勝科領先受惠。2 奈米量產帶動再生晶圓需求。",
+      "investment_strategy": {
+        "short_term_1w": ["6182"],
+        "medium_term_1m": ["6488", "3532"],
+        "long_term_6m": ["1560", "8028"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "中國需求疲弱可能拖累 8 吋報價",
+        "新產能開出後供需可能失衡"
+      ]
+    },
+
+    {
+      "id": "ai_liquid_cooling",
+      "name": "AI 液冷散熱",
+      "industry_ids": ["thermal"],
+      "heat_score": 61,
+      "heat_trend": "stable",
+      "start_date": "2026-02-01",
+      "expected_duration_days": 365,
+      "status": "active",
+      "stage": "consolidation",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "雙鴻 3 月營收 33.29 億元，年增 91.7%",
+          "importance": 9
+        },
+        {
+          "date": "2026-04-20",
+          "event": "大摩上調奇鋐目標價至 2,750 元",
+          "importance": 8
+        }
+      ],
+      "supply_chain": {
+        "tier_1_liquid_cooling": {
+          "name": "液冷散熱",
+          "stocks": ["3324", "3017"],
+          "status": "主升段"
+        },
+        "tier_2_thermal_module": {
+          "name": "散熱模組",
+          "stocks": ["6805", "3483", "2421"],
+          "status": "補漲"
+        },
+        "tier_3_cdu": {
+          "name": "CDU 冷卻分配單元",
+          "stocks": ["3324"],
+          "status": "領先"
+        }
+      },
+      "ai_summary": "GB300 / Rubin 推升液冷滲透率。雙鴻水冷板、奇鋐 3D VC 佈局成熟。2026 H2 AWS Trainium3 帶動新一波訂單。",
+      "investment_strategy": {
+        "short_term_1w": ["3324"],
+        "medium_term_1m": ["3017", "6805"],
+        "long_term_6m": ["3324", "3017"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "千金股波動大",
+        "外資評等分歧"
+      ]
+    },
+
+    {
+      "id": "hbm_memory",
+      "name": "HBM 記憶體 + DDR5 換機",
+      "industry_ids": ["semiconductor-memory"],
+      "heat_score": 70,
+      "heat_trend": "rising",
+      "start_date": "2026-01-01",
+      "expected_duration_days": 365,
+      "status": "active",
+      "stage": "main_rally",
+      "catalysts": [
+        {
+          "date": "2026-04-16",
+          "event": "南亞科 Q1 EPS 8.41 元，毛利率 67.9% 創高",
+          "importance": 10
+        },
+        {
+          "date": "2026-04-10",
+          "event": "DDR4 報價單季漲 70%",
+          "importance": 9
+        }
+      ],
+      "supply_chain": {
+        "tier_1_idm": {
+          "name": "DRAM IDM",
+          "stocks": ["2408", "2344"],
+          "status": "主升段"
+        },
+        "tier_2_modules": {
+          "name": "DRAM 模組",
+          "stocks": ["4967", "3260", "3715"],
+          "status": "主升段"
+        },
+        "tier_3_nand": {
+          "name": "NAND 相關",
+          "stocks": ["8299", "2337"],
+          "status": "補漲"
+        }
+      },
+      "ai_summary": "DDR4 價格一年漲 300%，AI PC、AI 伺服器需求爆發。南亞科 Q1 毛利率創高。模組廠威剛、十銓同步受惠。",
+      "investment_strategy": {
+        "short_term_1w": ["2408"],
+        "medium_term_1m": ["4967", "2344"],
+        "long_term_6m": ["2408", "3260"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "中國長鑫搶 10% 市佔威脅",
+        "週期性風險"
+      ]
+    },
+
+    {
+      "id": "a14_2nm_process",
+      "name": "A14 / 2nm 製程",
+      "industry_ids": ["semiconductor"],
+      "heat_score": 72,
+      "heat_trend": "rising",
+      "start_date": "2026-03-01",
+      "expected_duration_days": 730,
+      "status": "active",
+      "stage": "early",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "台積電技術論壇揭示 A14 NanoFlex Pro 技術細節",
+          "importance": 10
+        },
+        {
+          "date": "2026-04-16",
+          "event": "台積電 N2 良率良好，N2P/A16 下半年量產",
+          "importance": 9
+        }
+      ],
+      "supply_chain": {
+        "tier_1_foundry": {
+          "name": "晶圓代工",
+          "stocks": ["2330"],
+          "status": "持續強勢"
+        },
+        "tier_2_equipment": {
+          "name": "EUV/ DUV 設備周邊",
+          "stocks": ["3680", "3131"],
+          "status": "補漲"
+        },
+        "tier_3_materials": {
+          "name": "先進製程材料",
+          "stocks": ["4722", "5434", "3388"],
+          "status": "受惠"
+        },
+        "tier_4_foundry_construction": {
+          "name": "廠務工程",
+          "stocks": ["6196", "2404", "5536"],
+          "status": "訂單能見度長"
+        }
+      },
+      "ai_summary": "台積電 A14 製程於新竹寶山 P3 廠啟動試運行，2028 量產。N2 家族將是台積電歷史上規模最大、生命週期最長的製程世代。",
+      "investment_strategy": {
+        "short_term_1w": ["2330"],
+        "medium_term_1m": ["3680", "6196"],
+        "long_term_6m": ["2330", "3680", "5434"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "製程延後風險",
+        "美國關稅政策"
+      ]
+    },
+
+    {
+      "id": "ai_server_supply_chain",
+      "name": "AI 伺服器供應鏈",
+      "industry_ids": ["3c_terminal"],
+      "heat_score": 75,
+      "heat_trend": "stable",
+      "start_date": "2025-01-01",
+      "expected_duration_days": 730,
+      "status": "active",
+      "stage": "main_rally",
+      "catalysts": [
+        {
+          "date": "2026-04-22",
+          "event": "CSP 業者 2026 資本支出超過 4,500 億美金",
+          "importance": 10
+        }
+      ],
+      "supply_chain": {
+        "tier_1_odm": {
+          "name": "AI 伺服器 ODM",
+          "stocks": ["2317", "2382", "3231", "2356"],
+          "status": "主升段"
+        },
+        "tier_2_chassis": {
+          "name": "機殼",
+          "stocks": ["8210", "2376"],
+          "status": "補漲"
+        },
+        "tier_3_power": {
+          "name": "電源",
+          "stocks": ["2308", "2301", "6282"],
+          "status": "主升段"
+        }
+      },
+      "ai_summary": "全球四大 CSP 2026 資本支出超過 4,500 億美金，NVIDIA GB 系列出貨從 2.5 萬櫃躍升至 6 萬櫃。台廠鴻海、廣達、緯創全面受惠。",
+      "investment_strategy": {
+        "short_term_1w": ["2317"],
+        "medium_term_1m": ["2382", "2308"],
+        "long_term_6m": ["2317", "2382"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "AI 資本支出放緩",
+        "地緣政治"
+      ]
+    },
+
+    {
+      "id": "glp1_weight_loss_drug",
+      "name": "GLP-1 減肥藥供應鏈",
+      "industry_ids": ["biotech"],
+      "heat_score": 55,
+      "heat_trend": "rising",
+      "start_date": "2026-01-01",
+      "expected_duration_days": 365,
+      "status": "active",
+      "stage": "early",
+      "catalysts": [
+        {
+          "date": "2026-03-01",
+          "event": "Eli Lilly、Novo Nordisk 擴大委外代工",
+          "importance": 9
+        }
+      ],
+      "supply_chain": {
+        "tier_1_cdmo": {
+          "name": "CDMO",
+          "stocks": ["6472", "6589"],
+          "status": "受惠"
+        },
+        "tier_2_packaging": {
+          "name": "藥品包材",
+          "stocks": ["4107"],
+          "status": "早期"
+        }
+      },
+      "ai_summary": "全球減肥藥需求爆發，Eli Lilly、Novo Nordisk 產能告急。台灣 CDMO 廠保瑞、台康生技有機會接到外包訂單。",
+      "investment_strategy": {
+        "medium_term_1m": ["6472"],
+        "long_term_6m": ["6472", "6589"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "訂單能見度不明",
+        "生技股波動大"
+      ]
+    },
+
+    {
+      "id": "low_earth_orbit_satellite",
+      "name": "低軌衛星",
+      "industry_ids": ["electronic_components", "3c_terminal"],
+      "heat_score": 50,
+      "heat_trend": "stable",
+      "start_date": "2025-06-01",
+      "expected_duration_days": 730,
+      "status": "active",
+      "stage": "early",
+      "catalysts": [
+        {
+          "date": "2026-03-15",
+          "event": "SpaceX Starlink 擴大台廠代工",
+          "importance": 8
+        }
+      ],
+      "supply_chain": {
+        "tier_1_component": {
+          "name": "零組件",
+          "stocks": ["2317", "3062"],
+          "status": "穩定"
+        },
+        "tier_2_terminal": {
+          "name": "終端設備",
+          "stocks": ["2356"],
+          "status": "補漲"
+        }
+      },
+      "ai_summary": "SpaceX Starlink、Kuiper、台灣國科會低軌衛星政策推動。鴻海、建漢、英業達為主要受惠台廠。",
+      "investment_strategy": {
+        "medium_term_1m": ["2317"],
+        "long_term_6m": ["2317", "2356"]
+      },
+      "avoid_list": [],
+      "risk_factors": [
+        "訂單揭露不明",
+        "地緣政治（中國制裁）"
+      ]
+    }
+  ],
+
+  "cooling_topics": [
+    {
+      "id": "perovskite_solar",
+      "name": "鈣鈦礦太陽能",
+      "heat_score": 30,
+      "reason_for_cooling": "商用化時程延後"
+    },
+    {
+      "id": "metaverse",
+      "name": "元宇宙",
+      "heat_score": 15,
+      "reason_for_cooling": "題材退燒"
+    }
+  ],
+
+  "emerging_topics": [
+    {
+      "id": "humanoid_robot",
+      "name": "人形機器人",
+      "heat_score": 45,
+      "status": "emerging",
+      "note": "NVIDIA Jensen CES 2026 大力推動，台灣供應鏈開始受惠"
+    },
+    {
+      "id": "ai_pc_adoption",
+      "name": "AI PC 滲透率爆發",
+      "heat_score": 48,
+      "status": "emerging",
+      "note": "Intel Lunar Lake、AMD Ryzen AI 400、Qualcomm X Elite 推動"
+    }
+  ]
+}

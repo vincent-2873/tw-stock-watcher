@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>呱呱投資招待所 | 完整首頁原型 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #1A1815;
+    --bg-secondary: #242119;
+    --bg-tertiary: #2D2A21;
+    --bg-card: #26231C;
+    --bg-elevated: #302C22;
+
+    --text-primary: #E8E3D5;
+    --text-secondary: #A89F8A;
+    --text-muted: #6B6353;
+
+    --accent-gold: #C9A961;
+    --accent-moss: #7A8471;
+    --accent-sand: #D4B896;
+
+    --rise: #C9754D;
+    --rise-light: #E89968;
+    --fall: #6B8E5A;
+    --fall-light: #8FA87C;
+    --neutral: #8A8170;
+
+    --heat-extreme: #A84836;
+    --heat-high: #C9754D;
+    --heat-medium: #C9A961;
+    --heat-low: #8A8170;
+    --heat-cool: #5A6B7A;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding-bottom: 100px;
+  }
+
+  /* ====== 頂部導航 ====== */
+  .topnav {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    border-bottom: 1px solid rgba(201, 169, 97, 0.1);
+    padding: 16px 24px;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .topnav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-quack {
+    font-size: 24px;
+  }
+
+  .logo-text {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 20px;
+    color: var(--accent-gold);
+    font-weight: 500;
+  }
+
+  .logo-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .nav-link {
+    padding: 8px 14px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+  }
+
+  .nav-link.active {
+    color: var(--accent-gold);
+    background: rgba(201, 169, 97, 0.1);
+  }
+
+  .nav-more {
+    position: relative;
+  }
+
+  /* ====== 主容器 ====== */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* ====== 問候區 ====== */
+  .greeting {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(201, 169, 97, 0.08);
+  }
+
+  .greeting-left h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .greeting-left .subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .greeting-right {
+    text-align: right;
+  }
+
+  .greeting-right .date {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--accent-gold);
+  }
+
+  .greeting-right .status {
+    font-size: 12px;
+    color: var(--fall);
+    margin-top: 4px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fall);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ====== 區塊標題 ====== */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    margin-top: 32px;
+  }
+
+  .section-title h2 {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .section-title .divider {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(201, 169, 97, 0.3), transparent);
+  }
+
+  .section-title .more-link {
+    color: var(--accent-gold);
+    font-size: 13px;
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  .section-title .more-link:hover {
+    opacity: 1;
+  }
+
+  /* ====== 市場脈動卡 ====== */
+  .market-pulse {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.12);
+    border-radius: 8px;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .market-pulse::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--accent-gold), transparent);
+    opacity: 0.5;
+  }
+
+  .market-item {
+    position: relative;
+  }
+
+  .market-item + .market-item::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: rgba(201, 169, 97, 0.1);
+  }
+
+  .market-item .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .market-item .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .market-item .change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .rise { color: var(--rise-light); }
+  .fall { color: var(--fall-light); }
+  .neutral { color: var(--neutral); }
+
+  .market-item .extra {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  /* ====== 呱呱晨報 ====== */
+  .quack-morning {
+    background: linear-gradient(135deg, rgba(201, 169, 97, 0.06) 0%, rgba(122, 132, 113, 0.04) 100%);
+    border: 1px solid rgba(201, 169, 97, 0.2);
+    border-radius: 8px;
+    padding: 28px;
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .quack-morning::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-gold);
+    border-radius: 8px 0 0 8px;
+  }
+
+  .quack-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .quack-avatar {
+    font-size: 36px;
+    animation: quack-nod 4s infinite;
+  }
+
+  @keyframes quack-nod {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .quack-title {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 18px;
+    color: var(--accent-gold);
+  }
+
+  .quack-time {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .quack-main {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 20px;
+    color: var(--text-primary);
+    line-height: 1.7;
+    margin-bottom: 18px;
+    padding-left: 8px;
+    border-left: 2px solid rgba(201, 169, 97, 0.3);
+    padding-left: 16px;
+  }
+
+  .quack-highlights {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .highlight-box {
+    padding: 14px 16px;
+    background: rgba(26, 24, 21, 0.5);
+    border-radius: 6px;
+  }
+
+  .highlight-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .highlight-stocks {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .highlight-stocks .risk { color: var(--rise-light); }
+  .highlight-stocks .safe { color: var(--fall-light); }
+
+  .quack-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    background: transparent;
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover {
+    background: rgba(201, 169, 97, 0.1);
+    border-color: var(--accent-gold);
+  }
+
+  .btn.primary {
+    background: rgba(201, 169, 97, 0.15);
+    border-color: var(--accent-gold);
+  }
+
+  .btn.primary:hover {
+    background: rgba(201, 169, 97, 0.25);
+  }
+
+  /* ====== 兩欄網格 ====== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  /* ====== 題材熱度卡 ====== */
+  .topic-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .topic-card:hover {
+    border-color: rgba(201, 169, 97, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .topic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .topic-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 16px;
+    color: var(--text-primary);
+  }
+
+  .topic-rank {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--accent-gold);
+    font-style: italic;
+  }
+
+  .topic-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-new {
+    background: rgba(200, 75, 60, 0.15);
+    color: var(--rise-light);
+    border: 1px solid rgba(200, 75, 60, 0.3);
+  }
+
+  .badge-hot {
+    background: rgba(201, 169, 97, 0.15);
+    color: var(--accent-gold);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+  }
+
+  .topic-heat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+
+  .heat-score {
+    color: var(--accent-gold);
+    font-weight: 500;
+  }
+
+  .heat-trend {
+    font-size: 12px;
+  }
+
+  .heat-trend.up { color: var(--rise-light); }
+  .heat-trend.down { color: var(--fall-light); }
+  .heat-trend.flat { color: var(--neutral); }
+
+  .heat-bar-wrapper {
+    height: 4px;
+    background: rgba(42, 39, 31, 0.5);
+    border-radius: 2px;
+    margin: 10px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .heat-bar {
+    height: 100%;
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .heat-bar.extreme { background: linear-gradient(to right, var(--heat-extreme), var(--heat-high)); }
+  .heat-bar.high { background: linear-gradient(to right, var(--heat-high), var(--heat-medium)); }
+  .heat-bar.medium { background: var(--heat-medium); }
+  .heat-bar.low { background: var(--heat-low); }
+
+  .topic-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+
+  .topic-stocks {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .stock-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 4px 10px;
+    background: rgba(201, 169, 97, 0.08);
+    border: 1px solid rgba(201, 169, 97, 0.15);
+    border-radius: 3px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .stock-chip:hover {
+    background: rgba(201, 169, 97, 0.2);
+    border-color: var(--accent-gold);
+  }
+
+  .stock-chip.rise { color: var(--rise-light); border-color: rgba(201, 117, 77, 0.3); }
+  .stock-chip.fall { color: var(--fall-light); border-color: rgba(107, 142, 90, 0.3); }
+
+  /* ====== 美股連動卡 ====== */
+  .us-connect {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .us-event {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(201, 169, 97, 0.06);
+  }
+
+  .us-event:last-child { border-bottom: none; }
+
+  .us-event-title {
+    font-size: 13px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .us-impact-arrow {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-left: 16px;
+    line-height: 1.5;
+  }
+
+  .us-stocks {
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-left: 16px;
+  }
+
+  /* ====== 焦點股卡 ====== */
+  .focus-stocks {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .focus-stock-item {
+    padding: 14px 0;
+    border-bottom: 1px dashed rgba(201, 169, 97, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .focus-stock-item:last-child { border-bottom: none; }
+
+  .focus-stock-item:hover {
+    padding-left: 8px;
+  }
+
+  .focus-stock-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .focus-stock-tag {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .focus-stock-price {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .focus-stock-price .px {
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  .focus-stock-price .chg {
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  /* ====== 供應鏈金字塔 ====== */
+  .pyramid-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 8px;
+    padding: 28px;
+    margin-top: 20px;
+  }
+
+  .pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin: 20px 0;
+  }
+
+  .pyramid-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .pyramid-row:hover {
+    background: rgba(201, 169, 97, 0.05);
+  }
+
+  .pyramid-row .arrow {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-muted);
+    font-size: 10px;
+  }
+
+  .pyramid-tier-label {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 11px;
+    color: var(--text-muted);
+    min-width: 130px;
+    text-align: right;
+    padding-right: 12px;
+    border-right: 1px solid rgba(201, 169, 97, 0.1);
+  }
+
+  .pyramid-stocks {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    min-width: 400px;
+  }
+
+  .pyramid-row.hot .pyramid-tier-label { color: var(--heat-extreme); }
+  .pyramid-row.hot .stock-chip {
+    background: rgba(168, 72, 54, 0.1);
+    border-color: rgba(168, 72, 54, 0.3);
+    color: var(--rise-light);
+  }
+
+  .pyramid-status {
+    font-size: 16px;
+    min-width: 30px;
+  }
+
+  .pyramid-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(201, 169, 97, 0.08);
+  }
+
+  /* ====== 資金流向三欄 ====== */
+  .three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .flow-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .flow-title {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .flow-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .flow-trend {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .flow-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 10px;
+  }
+
+  .flow-status.buy {
+    background: rgba(200, 75, 60, 0.15);
+    color: var(--rise-light);
+  }
+
+  .flow-status.sell {
+    background: rgba(107, 142, 90, 0.15);
+    color: var(--fall-light);
+  }
+
+  .flow-status.neutral-bg {
+    background: rgba(138, 129, 112, 0.15);
+    color: var(--neutral);
+  }
+
+  /* ====== 產業熱力圖 ====== */
+  .sector-heatmap {
+    margin-top: 20px;
+  }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .heatmap-cell {
+    padding: 16px 12px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .heatmap-cell:hover {
+    transform: scale(1.03);
+  }
+
+  .heatmap-cell.h-extreme {
+    background: rgba(168, 72, 54, 0.35);
+    border: 1px solid rgba(168, 72, 54, 0.5);
+  }
+
+  .heatmap-cell.h-high {
+    background: rgba(201, 117, 77, 0.28);
+    border: 1px solid rgba(201, 117, 77, 0.45);
+  }
+
+  .heatmap-cell.h-medium {
+    background: rgba(201, 169, 97, 0.18);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+  }
+
+  .heatmap-cell.h-flat {
+    background: rgba(138, 129, 112, 0.1);
+    border: 1px solid rgba(138, 129, 112, 0.2);
+  }
+
+  .heatmap-cell.h-low {
+    background: rgba(107, 142, 90, 0.15);
+    border: 1px solid rgba(107, 142, 90, 0.3);
+  }
+
+  .heatmap-cell.h-cold {
+    background: rgba(90, 107, 122, 0.18);
+    border: 1px solid rgba(90, 107, 122, 0.3);
+  }
+
+  .cell-name {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .cell-change {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+
+  .cell-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ====== 產業輪動 ====== */
+  .rotation-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201, 169, 97, 0.08);
+    border-radius: 6px;
+    padding: 24px;
+    margin-top: 20px;
+  }
+
+  .rotation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 16px;
+  }
+
+  .rotation-col h4 {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rotation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(201, 169, 97, 0.06);
+    font-size: 13px;
+  }
+
+  .rotation-item:last-child { border-bottom: none; }
+
+  .rotation-name {
+    color: var(--text-primary);
+  }
+
+  .rotation-amount {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .rotation-bar {
+    display: inline-flex;
+    margin-left: 8px;
+    gap: 1px;
+  }
+
+  .rotation-bar span {
+    width: 4px;
+    height: 10px;
+    border-radius: 1px;
+  }
+
+  .rotation-bar .filled-in { background: var(--rise-light); }
+  .rotation-bar .filled-out { background: var(--fall-light); }
+  .rotation-bar .empty { background: rgba(138, 129, 112, 0.2); }
+
+  /* ====== 空狀態 ====== */
+  .empty-state {
+    background: var(--bg-card);
+    border: 1px dashed rgba(201, 169, 97, 0.15);
+    border-radius: 8px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .empty-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .empty-title {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .empty-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .empty-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ====== 浮動呱呱 ====== */
+  .floating-quack {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(201, 169, 97, 0.35);
+    transition: all 0.3s;
+    z-index: 50;
+  }
+
+  .floating-quack:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 32px rgba(201, 169, 97, 0.5);
+  }
+
+  .floating-quack::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    background: var(--rise);
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    animation: pulse 2s infinite;
+  }
+
+  /* ====== 底部註腳 ====== */
+  .footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--text-muted);
+    font-size: 12px;
+    border-top: 1px solid rgba(201, 169, 97, 0.06);
+    margin-top: 48px;
+  }
+
+  .footer .warning {
+    color: var(--accent-gold);
+    font-family: 'Noto Serif TC', serif;
+    margin-bottom: 8px;
+  }
+
+  /* ====== RWD ====== */
+  @media (max-width: 768px) {
+    .market-pulse {
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .market-item + .market-item::before { display: none; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .rotation-grid { grid-template-columns: 1fr; gap: 20px; }
+    .heatmap-grid { grid-template-columns: repeat(2, 1fr); }
+    .nav-links { display: none; }
+    .greeting-left h1 { font-size: 22px; }
+    .quack-main { font-size: 16px; }
+    .quack-highlights { grid-template-columns: 1fr; }
+    .pyramid-tier-label { min-width: 90px; font-size: 10px; }
+    .pyramid-stocks { min-width: 0; }
+    .container { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== 頂部導航 ====== -->
+<div class="topnav">
+  <div class="topnav-inner">
+    <div class="logo">
+      <span class="logo-quack">🦆</span>
+      <div>
+        <div class="logo-text">呱呱投資招待所</div>
+        <div class="logo-sub">Quack House</div>
+      </div>
+    </div>
+    <nav class="nav-links">
+      <a class="nav-link active">🏠 今日</a>
+      <a class="nav-link">🔥 題材</a>
+      <a class="nav-link">📊 自選</a>
+      <a class="nav-link">🗺️ 產業</a>
+      <a class="nav-link nav-more">⋯ 更多</a>
+    </nav>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ====== 問候區 ====== -->
+  <div class="greeting">
+    <div class="greeting-left">
+      <h1>早安，Vincent</h1>
+      <div class="subtitle">今天池塘的水有點混，呱呱已經在觀察 · 盤中 11:23</div>
+    </div>
+    <div class="greeting-right">
+      <div class="date">2026.04.23 週四</div>
+      <div class="status"><span class="status-dot"></span>盤中資料 · 自動更新</div>
+    </div>
+  </div>
+
+  <!-- ====== 市場脈動 ====== -->
+  <div class="section-title">
+    <h2>🌡️ 今日市場脈動</h2>
+    <div class="divider"></div>
+    <a class="more-link">大盤詳情 →</a>
+  </div>
+
+  <div class="market-pulse">
+    <div class="market-item">
+      <div class="label">加權指數 TAIEX</div>
+      <div class="value">37,612</div>
+      <div class="change fall">-266 (-0.70%)</div>
+      <div class="extra">量 8,420 億 · 跌破月線</div>
+    </div>
+    <div class="market-item">
+      <div class="label">台指期</div>
+      <div class="value">37,520</div>
+      <div class="change fall">-1,226 (-3.16%)</div>
+      <div class="extra">期現差 -92 · 外資偏空</div>
+    </div>
+    <div class="market-item">
+      <div class="label">費城半導體</div>
+      <div class="value">6,845</div>
+      <div class="change fall">-2.45%</div>
+      <div class="extra">昨夜收黑 · 拖累台股</div>
+    </div>
+    <div class="market-item">
+      <div class="label">VIX 恐慌</div>
+      <div class="value">22.15</div>
+      <div class="change rise">+17.2%</div>
+      <div class="extra">⚠️ 警戒區間（>20）</div>
+    </div>
+  </div>
+
+  <!-- ====== 呱呱晨報 ====== -->
+  <div class="quack-morning">
+    <div class="quack-header">
+      <div class="quack-avatar">🦆</div>
+      <div>
+        <div class="quack-title">呱呱今日功課 · 盤中更新</div>
+        <div class="quack-time">11:23 · 呱呱剛剛重新翻了一輪資料</div>
+      </div>
+    </div>
+    <div class="quack-main">
+      「昨夜 Tesla CFO 一句『CAPEX 250 億 + 負現金流』，<br>
+      引爆 AI 泡沫疑慮。今天池塘有人在倒水，<br>
+      拉高的別追，跌深的先等水位穩。」
+    </div>
+    <div class="quack-highlights">
+      <div class="highlight-box">
+        <div class="highlight-label">💡 補漲機會（資金輪動受惠）</div>
+        <div class="highlight-stocks">
+          <span class="safe">富喬 1815</span> · <span class="safe">金居 8358</span> · <span class="safe">國精化 4722</span>
+        </div>
+      </div>
+      <div class="highlight-box">
+        <div class="highlight-label">⚠️ 避免追高（AI 泡沫疑慮）</div>
+        <div class="highlight-stocks">
+          <span class="risk">創意 3443</span> · <span class="risk">世芯 3661</span> · <span class="risk">信驊 5274</span>
+        </div>
+      </div>
+    </div>
+    <div class="quack-actions">
+      <a class="btn primary">📄 看完整盤前報告</a>
+      <a class="btn">💬 問呱呱為什麼</a>
+      <a class="btn">🔗 昨夜 Tesla 財報連結</a>
+    </div>
+  </div>
+
+  <!-- ====== 題材熱度 + 焦點股（兩欄）====== -->
+  <div class="section-title">
+    <h2>🔥 今日題材熱度</h2>
+    <div class="divider"></div>
+    <a class="more-link">所有題材 →</a>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <!-- 題材 1：AI CAPEX -->
+      <div class="topic-card">
+        <div class="topic-header">
+          <div class="topic-name">
+            <span class="topic-rank">I.</span>
+            <span>AI 資本支出疑慮</span>
+            <span class="topic-badge badge-new">新</span>
+          </div>
+          <div class="topic-heat">
+            <span class="heat-score">85°</span>
+            <span class="heat-trend down">↓</span>
+          </div>
+        </div>
+        <div class="heat-bar-wrapper">
+          <div class="heat-bar extreme" style="width: 85%;"></div>
+        </div>
+        <div class="topic-desc">
+          Tesla Q1 財報 CFO 警告 2026 資本支出增至 250 億美元（原 200 億），今年剩餘時間將為負現金流。市場重估 AI 變現能力。
+        </div>
+        <div class="topic-stocks">
+          <span class="stock-chip fall">創意 3443 -5.2%</span>
+          <span class="stock-chip fall">世芯 3661 -6.8%</span>
+          <span class="stock-chip fall">信驊 5274 -4.1%</span>
+          <span class="stock-chip fall">緯穎 6669 -3.8%</span>
+        </div>
+      </div>
+
+      <!-- 題材 2：記憶體降評 -->
+      <div class="topic-card">
+        <div class="topic-header">
+          <div class="topic-name">
+            <span class="topic-rank">II.</span>
+            <span>記憶體雙雄降評</span>
+            <span class="topic-badge badge-hot">延燒</span>
+          </div>
+          <div class="topic-heat">
+            <span class="heat-score">75°</span>
+            <span class="heat-trend down">↓</span>
+          </div>
+        </div>
+        <div class="heat-bar-wrapper">
+          <div class="heat-bar high" style="width: 75%;"></div>
+        </div>
+        <div class="topic-desc">
+          大摩 4/21 報告將南亞科、華邦電價評雙降，推薦 MLC NAND（旺宏、愛普）。雙雄 4/20 合計蒸發 1,345 億市值。
+        </div>
+        <div class="topic-stocks">
+          <span class="stock-chip fall">南亞科 2408 -3.8%</span>
+          <span class="stock-chip fall">華邦電 2344 -5.2%</span>
+          <span class="stock-chip rise">旺宏 2337 +2.1%</span>
+          <span class="stock-chip rise">愛普 6531 +1.5%</span>
+        </div>
+      </div>
+
+      <!-- 題材 3：CCL 漲價 -->
+      <div class="topic-card">
+        <div class="topic-header">
+          <div class="topic-name">
+            <span class="topic-rank">III.</span>
+            <span>CCL 漲價循環（補漲機會）</span>
+          </div>
+          <div class="topic-heat">
+            <span class="heat-score">65°</span>
+            <span class="heat-trend up">↑</span>
+          </div>
+        </div>
+        <div class="heat-bar-wrapper">
+          <div class="heat-bar medium" style="width: 65%;"></div>
+        </div>
+        <div class="topic-desc">
+          信越 4/22 宣布全線漲 10%，上游玻纖/銅箔尚未跟上主升段。資金輪動首選。
+        </div>
+        <div class="topic-stocks">
+          <span class="stock-chip rise">富喬 1815 +8.5%</span>
+          <span class="stock-chip rise">金居 8358 +6.1%</span>
+          <span class="stock-chip">國精化 4722 0.0%</span>
+          <span class="stock-chip rise">台光電 2383 +2.3%</span>
+        </div>
+      </div>
+
+      <!-- 題材 4：低軌衛星 -->
+      <div class="topic-card">
+        <div class="topic-header">
+          <div class="topic-name">
+            <span class="topic-rank">IV.</span>
+            <span>低軌衛星（避險輪動）</span>
+          </div>
+          <div class="topic-heat">
+            <span class="heat-score">58°</span>
+            <span class="heat-trend up">↑</span>
+          </div>
+        </div>
+        <div class="heat-bar-wrapper">
+          <div class="heat-bar medium" style="width: 58%;"></div>
+        </div>
+        <div class="topic-desc">
+          AI 拉回時的資金避風港，昇達科、昇紘等逆勢走強。
+        </div>
+        <div class="topic-stocks">
+          <span class="stock-chip rise">昇達科 3491 +7.2%</span>
+          <span class="stock-chip rise">昇紘 6967 +4.5%</span>
+        </div>
+      </div>
+
+      <!-- 題材 5：CoPoS -->
+      <div class="topic-card">
+        <div class="topic-header">
+          <div class="topic-name">
+            <span class="topic-rank">V.</span>
+            <span>CoPoS 先進封裝</span>
+          </div>
+          <div class="topic-heat">
+            <span class="heat-score">52°</span>
+            <span class="heat-trend flat">→</span>
+          </div>
+        </div>
+        <div class="heat-bar-wrapper">
+          <div class="heat-bar medium" style="width: 52%;"></div>
+        </div>
+        <div class="topic-desc">
+          台積電論壇技術焦點，中長線布局。今日隨大盤拉回。
+        </div>
+        <div class="topic-stocks">
+          <span class="stock-chip fall">家登 3680 -1.2%</span>
+          <span class="stock-chip fall">欣興 3037 -2.1%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右欄：美股連動 + 焦點股 -->
+    <div>
+      <!-- 美股連動 -->
+      <div class="us-connect" style="margin-bottom: 16px;">
+        <div class="flow-title" style="margin-bottom: 10px;">
+          🌏 昨夜美股 → 今日台股
+          <span style="font-size: 11px; color: var(--text-muted);">4/22 盤後</span>
+        </div>
+
+        <div class="us-event">
+          <div class="us-event-title">
+            <span class="fall">📉</span> Tesla 盤後 -5.3%（CAPEX 警告）
+          </div>
+          <div class="us-impact-arrow">→ 衝擊台股 AI 族群</div>
+          <div class="us-stocks">創意、世芯、信驊、緯穎</div>
+        </div>
+
+        <div class="us-event">
+          <div class="us-event-title">
+            <span class="fall">📉</span> 費半 -2.45%
+          </div>
+          <div class="us-impact-arrow">→ 半導體權值開低</div>
+          <div class="us-stocks">台積電、聯發科</div>
+        </div>
+
+        <div class="us-event">
+          <div class="us-event-title">
+            <span class="rise">📈</span> Micron 盤後 +1.2%
+          </div>
+          <div class="us-impact-arrow">→ 記憶體相對抗跌</div>
+          <div class="us-stocks">旺宏、愛普</div>
+        </div>
+
+        <div class="us-event">
+          <div class="us-event-title">
+            <span style="color: var(--rise);">⚠️</span> VIX +17% 至 22.15
+          </div>
+          <div class="us-impact-arrow">→ 外資賣壓升溫</div>
+        </div>
+      </div>
+
+      <!-- 焦點股 -->
+      <div class="focus-stocks">
+        <div class="flow-title" style="margin-bottom: 10px;">
+          💎 今日焦點
+          <span style="font-size: 11px; color: var(--text-muted);">點擊看分析</span>
+        </div>
+
+        <div class="focus-stock-item">
+          <div>
+            <div class="focus-stock-name">富喬 1815</div>
+            <div class="focus-stock-tag">CCL 上游補漲首選</div>
+          </div>
+          <div class="focus-stock-price">
+            <div class="px">68.5</div>
+            <div class="chg rise">+8.5%</div>
+          </div>
+        </div>
+
+        <div class="focus-stock-item">
+          <div>
+            <div class="focus-stock-name">旺宏 2337</div>
+            <div class="focus-stock-tag">大摩推薦 MLC NAND</div>
+          </div>
+          <div class="focus-stock-price">
+            <div class="px">142.5</div>
+            <div class="chg rise">+2.1%</div>
+          </div>
+        </div>
+
+        <div class="focus-stock-item">
+          <div>
+            <div class="focus-stock-name">昇達科 3491</div>
+            <div class="focus-stock-tag">低軌衛星避險</div>
+          </div>
+          <div class="focus-stock-price">
+            <div class="px">1,785</div>
+            <div class="chg rise">+7.2%</div>
+          </div>
+        </div>
+
+        <div class="focus-stock-item">
+          <div>
+            <div class="focus-stock-name">創意 3443</div>
+            <div class="focus-stock-tag">⚠️ 漲停打開</div>
+          </div>
+          <div class="focus-stock-price">
+            <div class="px">3,660</div>
+            <div class="chg fall">-5.2%</div>
+          </div>
+        </div>
+
+        <div class="focus-stock-item">
+          <div>
+            <div class="focus-stock-name">南亞科 2408</div>
+            <div class="focus-stock-tag">⚠️ 大摩降評</div>
+          </div>
+          <div class="focus-stock-price">
+            <div class="px">199.0</div>
+            <div class="chg fall">-3.8%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 供應鏈金字塔（CCL 題材為例）====== -->
+  <div class="section-title">
+    <h2>🏔️ 供應鏈金字塔 · CCL 漲價循環</h2>
+    <div class="divider"></div>
+    <a class="more-link">其他題材鏈 →</a>
+  </div>
+
+  <div class="pyramid-card">
+    <div style="text-align: center; color: var(--text-muted); font-size: 12px; margin-bottom: 8px;">
+      💡 點任何個股直接進入分析頁 · 🔥 為補漲機會
+    </div>
+
+    <div class="pyramid">
+      <div class="pyramid-row">
+        <div class="pyramid-tier-label">終端需求</div>
+        <div class="pyramid-stocks">
+          <span class="stock-chip">🇺🇸 NVIDIA</span>
+          <span class="stock-chip">🇺🇸 AMD</span>
+          <span class="stock-chip">🇺🇸 Apple</span>
+        </div>
+        <div class="pyramid-status">🔴</div>
+      </div>
+
+      <div class="pyramid-row">
+        <span class="arrow">↑</span>
+        <div class="pyramid-tier-label">PCB 組裝</div>
+        <div class="pyramid-stocks">
+          <span class="stock-chip">臻鼎 4958</span>
+          <span class="stock-chip">健鼎 3044</span>
+          <span class="stock-chip">欣興 3037</span>
+        </div>
+        <div class="pyramid-status">🟡</div>
+      </div>
+
+      <div class="pyramid-row">
+        <span class="arrow">↑</span>
+        <div class="pyramid-tier-label">CCL 基板（已漲）</div>
+        <div class="pyramid-stocks">
+          <span class="stock-chip rise">台光電 2383 +2.3%</span>
+          <span class="stock-chip rise">台燿 6274 +1.8%</span>
+          <span class="stock-chip">聯茂 6213</span>
+        </div>
+        <div class="pyramid-status">🟢</div>
+      </div>
+
+      <div class="pyramid-row">
+        <span class="arrow">↑</span>
+        <div class="pyramid-tier-label">樹脂材料</div>
+        <div class="pyramid-stocks">
+          <span class="stock-chip">國精化 4722</span>
+          <span class="stock-chip fall">雙鍵 4764 -1.2%</span>
+          <span class="stock-chip">崇越電 3388</span>
+        </div>
+        <div class="pyramid-status">🟢</div>
+      </div>
+
+      <div class="pyramid-row hot">
+        <span class="arrow">↑</span>
+        <div class="pyramid-tier-label">玻纖/銅箔 🔥</div>
+        <div class="pyramid-stocks">
+          <span class="stock-chip rise">富喬 1815 +8.5%</span>
+          <span class="stock-chip rise">金居 8358 +6.1%</span>
+          <span class="stock-chip">德宏 5475</span>
+        </div>
+        <div class="pyramid-status">🔥</div>
+      </div>
+    </div>
+
+    <div class="pyramid-legend">
+      <span>🔥 補漲機會（推薦）</span>
+      <span>🟢 主升段（正在漲）</span>
+      <span>🟡 已漲完</span>
+      <span>🔴 避開</span>
+    </div>
+  </div>
+
+  <!-- ====== 資金流向三大法人 ====== -->
+  <div class="section-title">
+    <h2>💰 三大法人資金流向</h2>
+    <div class="divider"></div>
+    <a class="more-link">完整明細 →</a>
+  </div>
+
+  <div class="three-col">
+    <div class="flow-card">
+      <div class="flow-title">
+        🌍 外資
+        <span style="color: var(--text-muted); font-size: 11px;">盤中估算</span>
+      </div>
+      <div class="flow-amount fall">-185.3 億</div>
+      <div class="flow-trend">5 日均 +85 億 · 今日 -2.2x</div>
+      <span class="flow-status sell">大幅賣超 ⚠️</span>
+      <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+        賣超前 3：台積電、創意、南亞科
+      </div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-title">
+        🏦 投信
+        <span style="color: var(--text-muted); font-size: 11px;">盤中估算</span>
+      </div>
+      <div class="flow-amount rise">+28.5 億</div>
+      <div class="flow-trend">連 4 日買超 · 累計 +112 億</div>
+      <span class="flow-status buy">小幅買超</span>
+      <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+        買超前 3：富喬、旺宏、昇達科
+      </div>
+    </div>
+
+    <div class="flow-card">
+      <div class="flow-title">
+        🏛️ 自營商
+        <span style="color: var(--text-muted); font-size: 11px;">盤中估算</span>
+      </div>
+      <div class="flow-amount neutral">-8.2 億</div>
+      <div class="flow-trend">震盪 · 5 日淨 +12 億</div>
+      <span class="flow-status neutral-bg">小幅賣超</span>
+      <div style="margin-top: 12px; font-size: 11px; color: var(--text-muted);">
+        偏好：避險工具、選擇權對沖
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 產業熱力圖 ====== -->
+  <div class="section-title">
+    <h2>🗺️ 產業熱力圖 · 今日</h2>
+    <div class="divider"></div>
+    <a class="more-link">進入產業地圖 →</a>
+  </div>
+
+  <div class="sector-heatmap">
+    <div class="heatmap-grid">
+      <div class="heatmap-cell h-low">
+        <div class="cell-name">AI 伺服器</div>
+        <div class="cell-change fall">-3.2%</div>
+        <div class="cell-amount">-125 億</div>
+      </div>
+      <div class="heatmap-cell h-cold">
+        <div class="cell-name">記憶體</div>
+        <div class="cell-change fall">-4.1%</div>
+        <div class="cell-amount">-62 億</div>
+      </div>
+      <div class="heatmap-cell h-flat">
+        <div class="cell-name">半導體代工</div>
+        <div class="cell-change fall">-1.8%</div>
+        <div class="cell-amount">-38 億</div>
+      </div>
+      <div class="heatmap-cell h-cold">
+        <div class="cell-name">IC 設計 (ASIC)</div>
+        <div class="cell-change fall">-4.5%</div>
+        <div class="cell-amount">-85 億</div>
+      </div>
+      <div class="heatmap-cell h-extreme">
+        <div class="cell-name">CCL / 玻纖 🔥</div>
+        <div class="cell-change rise">+5.8%</div>
+        <div class="cell-amount">+48 億</div>
+      </div>
+      <div class="heatmap-cell h-high">
+        <div class="cell-name">低軌衛星</div>
+        <div class="cell-change rise">+4.2%</div>
+        <div class="cell-amount">+22 億</div>
+      </div>
+      <div class="heatmap-cell h-medium">
+        <div class="cell-name">造紙/傳產</div>
+        <div class="cell-change rise">+1.8%</div>
+        <div class="cell-amount">+15 億</div>
+      </div>
+      <div class="heatmap-cell h-flat">
+        <div class="cell-name">金融</div>
+        <div class="cell-change fall">-0.5%</div>
+        <div class="cell-amount">-12 億</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== 產業輪動 ====== -->
+  <div class="rotation-card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-family: 'Noto Serif TC', serif; font-size: 16px; color: var(--text-primary);">
+        🔄 今日資金輪動方向
+      </h3>
+      <span style="font-size: 12px; color: var(--text-muted);">錢從防禦轉向補漲</span>
+    </div>
+
+    <div class="rotation-grid">
+      <div class="rotation-col">
+        <h4>🔥 資金流入 TOP 5</h4>
+        <div class="rotation-item">
+          <span class="rotation-name">1. CCL/玻纖</span>
+          <span class="rotation-amount rise">+48 億
+            <span class="rotation-bar">
+              <span class="filled-in"></span><span class="filled-in"></span><span class="filled-in"></span><span class="filled-in"></span><span class="filled-in"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">2. 低軌衛星</span>
+          <span class="rotation-amount rise">+22 億
+            <span class="rotation-bar">
+              <span class="filled-in"></span><span class="filled-in"></span><span class="filled-in"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">3. 造紙傳產</span>
+          <span class="rotation-amount rise">+15 億
+            <span class="rotation-bar">
+              <span class="filled-in"></span><span class="filled-in"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">4. MLC NAND</span>
+          <span class="rotation-amount rise">+12 億
+            <span class="rotation-bar">
+              <span class="filled-in"></span><span class="filled-in"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">5. 被動元件</span>
+          <span class="rotation-amount rise">+8 億
+            <span class="rotation-bar">
+              <span class="filled-in"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="rotation-col">
+        <h4>❄️ 資金流出 TOP 5</h4>
+        <div class="rotation-item">
+          <span class="rotation-name">1. AI 伺服器</span>
+          <span class="rotation-amount fall">-125 億
+            <span class="rotation-bar">
+              <span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">2. ASIC / IC 設計</span>
+          <span class="rotation-amount fall">-85 億
+            <span class="rotation-bar">
+              <span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">3. 記憶體</span>
+          <span class="rotation-amount fall">-62 億
+            <span class="rotation-bar">
+              <span class="filled-out"></span><span class="filled-out"></span><span class="filled-out"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">4. 半導體代工</span>
+          <span class="rotation-amount fall">-38 億
+            <span class="rotation-bar">
+              <span class="filled-out"></span><span class="filled-out"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+        <div class="rotation-item">
+          <span class="rotation-name">5. 散熱雙雄</span>
+          <span class="rotation-amount fall">-28 億
+            <span class="rotation-bar">
+              <span class="filled-out"></span><span class="filled-out"></span><span class="empty"></span><span class="empty"></span><span class="empty"></span>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; padding: 14px; background: rgba(201, 169, 97, 0.05); border-radius: 4px; font-size: 13px; color: var(--text-secondary);">
+      🦆 <strong style="color: var(--accent-gold);">呱呱解讀</strong>：今天資金明顯從「AI 高本益比」撤退，流向「低基期補漲」（CCL、衛星、傳產）。這是典型的 Risk-off 輪動。如果你手上 AI 部位較重，今天可以考慮減碼 20-30% 換成 CCL 或衛星族群平衡。
+    </div>
+  </div>
+
+  <!-- ====== 自選股（空狀態改版）====== -->
+  <div class="section-title">
+    <h2>📊 我的自選股</h2>
+    <div class="divider"></div>
+    <span style="color: var(--text-muted); font-size: 12px;">0 檔</span>
+  </div>
+
+  <div class="empty-state">
+    <div class="empty-icon">🦆💤</div>
+    <div class="empty-title">筆記本還是空白的</div>
+    <div class="empty-subtitle">呱呱幫你準備了幾個開始的方式</div>
+    <div class="empty-actions">
+      <a class="btn primary">🔥 從今日熱門題材開始</a>
+      <a class="btn">🏆 看台股龍頭生態系</a>
+      <a class="btn">📖 快速導覽（30 秒）</a>
+    </div>
+  </div>
+
+  <!-- ====== 警示（空狀態改版）====== -->
+  <div class="section-title">
+    <h2>🔔 小鈴鐺</h2>
+    <div class="divider"></div>
+    <span style="color: var(--text-muted); font-size: 12px;">近 3 日 · 0 則</span>
+  </div>
+
+  <div class="empty-state">
+    <div class="empty-icon">🔕</div>
+    <div class="empty-title">近 3 日市場平穩，無警示觸發</div>
+    <div class="empty-subtitle">設定自選股後，呱呱會幫你盯著</div>
+    <div class="empty-actions">
+      <a class="btn">⚙️ 設定警示規則</a>
+      <a class="btn">📜 看歷史警示</a>
+    </div>
+  </div>
+
+  <!-- ====== 底部 ====== -->
+  <div class="footer">
+    <div class="warning">⚠ 教你思考，不是給你答案</div>
+    <div>本系統為資訊整理與量化評分，非投資建議。股市有風險，投資需謹慎。</div>
+    <div style="margin-top: 12px; font-size: 11px;">
+      資料源：FinMind · FMP · Claude Sonnet 4.5 · 呱呱招待所 v2.0
+    </div>
+  </div>
+
+</div>
+
+<!-- ====== 浮動呱呱 ====== -->
+<div class="floating-quack" title="點我問呱呱">🦆</div>
+
+</body>
+</html>

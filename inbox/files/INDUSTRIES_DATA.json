@@ -1,0 +1,403 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2026-04-23",
+    "description": "台股完整產業分類體系，三層架構：Level 1（10 大類）→ Level 2（50+ 子產業）→ Level 3（題材）"
+  },
+
+  "level_1_categories": [
+    {
+      "id": "semiconductor",
+      "name": "半導體",
+      "icon": "🔬",
+      "description": "晶圓代工、IC 設計、封測、設備、材料等半導體全產業鏈",
+      "heat_level": "extreme",
+      "sub_industries": [
+        {
+          "id": "foundry",
+          "name": "晶圓代工",
+          "representative_stocks": ["2330", "2303", "3711"],
+          "key_drivers": ["AI 需求", "製程節點演進", "CapEx 週期"]
+        },
+        {
+          "id": "ic_design",
+          "name": "IC 設計",
+          "representative_stocks": ["2454", "3034", "3529", "3443", "5274", "3661", "6488"],
+          "key_drivers": ["AI SoC", "ASIC 大單", "手機規格升級"]
+        },
+        {
+          "id": "packaging_testing",
+          "name": "封測",
+          "representative_stocks": ["3711", "2449", "6239", "2329", "2351"],
+          "key_drivers": ["CoWoS", "SoIC", "AI 封裝"]
+        },
+        {
+          "id": "semi_equipment",
+          "name": "半導體設備",
+          "representative_stocks": ["3680", "3131", "3583", "6196", "2404", "5536"],
+          "key_drivers": ["台積電 CapEx", "先進封裝擴產"]
+        },
+        {
+          "id": "semi_materials",
+          "name": "半導體材料",
+          "representative_stocks": ["4722", "4764", "3388", "5434", "1711"],
+          "key_drivers": ["漲價循環", "國產替代", "高階材料"]
+        },
+        {
+          "id": "silicon_wafer",
+          "name": "矽晶圓",
+          "representative_stocks": ["6182", "6488", "3532", "5483", "3016"],
+          "key_drivers": ["8 吋缺貨", "12 吋擴產", "漲價"]
+        },
+        {
+          "id": "ip_licensing",
+          "name": "IP 矽智財",
+          "representative_stocks": ["3529", "6643", "4966"],
+          "key_drivers": ["AI 設計需求", "IP 重用"]
+        },
+        {
+          "id": "ic_distribution",
+          "name": "IC 通路",
+          "representative_stocks": ["3036", "2347"],
+          "key_drivers": ["缺料潮", "庫存週期"]
+        }
+      ]
+    },
+
+    {
+      "id": "electronic_components",
+      "name": "電子零組件",
+      "icon": "💻",
+      "description": "PCB、CCL、連接器、被動元件、散熱、面板驅動 IC 等",
+      "heat_level": "extreme",
+      "sub_industries": [
+        {
+          "id": "pcb",
+          "name": "PCB",
+          "representative_stocks": ["4958", "2368", "3044", "6213", "8046"],
+          "key_drivers": ["AI 伺服器", "車用電子", "HDI/SLP"]
+        },
+        {
+          "id": "ccl",
+          "name": "CCL 銅箔基板",
+          "representative_stocks": ["2383", "6274", "6213"],
+          "key_drivers": ["漲價循環", "M7/M8/M9 高階板"]
+        },
+        {
+          "id": "glass_fiber",
+          "name": "玻纖布",
+          "representative_stocks": ["1815", "德宏", "建榮"],
+          "key_drivers": ["LowDK", "T-Glass 缺貨"]
+        },
+        {
+          "id": "copper_foil",
+          "name": "銅箔",
+          "representative_stocks": ["8358", "長春"],
+          "key_drivers": ["高階電解銅箔", "AI 用量增"]
+        },
+        {
+          "id": "thermal",
+          "name": "散熱",
+          "representative_stocks": ["3017", "3324", "6805", "3483", "2421"],
+          "key_drivers": ["AI 液冷", "GB300", "CDU"]
+        },
+        {
+          "id": "connectors",
+          "name": "連接器",
+          "representative_stocks": ["3189", "2392", "3044"],
+          "key_drivers": ["AI 伺服器", "高速傳輸"]
+        },
+        {
+          "id": "passive_components",
+          "name": "被動元件",
+          "representative_stocks": ["2327", "2351", "信昌電"],
+          "key_drivers": ["MLCC 漲價", "AI 伺服器需求"]
+        },
+        {
+          "id": "panel_driver_ic",
+          "name": "面板驅動 IC",
+          "representative_stocks": ["3034", "3658"],
+          "key_drivers": ["面板回溫", "OLED"]
+        }
+      ]
+    },
+
+    {
+      "id": "3c_terminal",
+      "name": "3C 終端",
+      "icon": "📱",
+      "description": "筆電、手機、伺服器、網通、面板",
+      "heat_level": "high",
+      "sub_industries": [
+        {
+          "id": "odm_laptop",
+          "name": "ODM 筆電",
+          "representative_stocks": ["2382", "3231", "2357", "2353"],
+          "key_drivers": ["AI PC 換機潮", "NPU 滲透率"]
+        },
+        {
+          "id": "smartphone",
+          "name": "手機相關",
+          "representative_stocks": ["2317", "4938", "2474"],
+          "key_drivers": ["Apple iPhone", "摺疊機", "AI 手機"]
+        },
+        {
+          "id": "networking",
+          "name": "網通",
+          "representative_stocks": ["2382", "3231", "6285", "2345"],
+          "key_drivers": ["Wi-Fi 7", "資料中心", "5G"]
+        },
+        {
+          "id": "ai_server",
+          "name": "AI 伺服器",
+          "representative_stocks": ["2382", "8210", "2376", "2356"],
+          "key_drivers": ["GB300/Rubin", "CSP 擴建"]
+        },
+        {
+          "id": "display_panel",
+          "name": "面板",
+          "representative_stocks": ["2409", "3481"],
+          "key_drivers": ["面板報價", "OLED", "車用"]
+        }
+      ]
+    },
+
+    {
+      "id": "traditional_manufacturing",
+      "name": "傳統製造",
+      "icon": "⚙️",
+      "description": "工具機、紡織、造船、鋼鐵、水泥",
+      "heat_level": "low",
+      "sub_industries": [
+        {
+          "id": "machine_tools",
+          "name": "工具機",
+          "representative_stocks": ["1597", "1540", "4551"],
+          "key_drivers": ["景氣循環", "東南亞訂單"]
+        },
+        {
+          "id": "textile",
+          "name": "紡織",
+          "representative_stocks": ["1736", "1409", "1440", "1451"],
+          "key_drivers": ["運動品牌訂單", "綠色纖維"]
+        },
+        {
+          "id": "steel",
+          "name": "鋼鐵",
+          "representative_stocks": ["2002", "2006", "2014", "2015"],
+          "key_drivers": ["離岸風電", "中國限產"]
+        },
+        {
+          "id": "cement",
+          "name": "水泥",
+          "representative_stocks": ["1101", "1102"],
+          "key_drivers": ["基礎建設", "綠能轉型"]
+        },
+        {
+          "id": "shipping_builders",
+          "name": "造船",
+          "representative_stocks": ["2208"],
+          "key_drivers": ["國艦國造", "綠色船隻"]
+        }
+      ]
+    },
+
+    {
+      "id": "chemical_materials",
+      "name": "化工材料",
+      "icon": "🏭",
+      "description": "塑化、特化、纖維、電子化學品",
+      "heat_level": "high",
+      "sub_industries": [
+        {
+          "id": "petrochemical",
+          "name": "塑化",
+          "representative_stocks": ["1301", "1303", "1326", "1314", "6505"],
+          "key_drivers": ["景氣循環", "油價"]
+        },
+        {
+          "id": "specialty_chemical",
+          "name": "特化",
+          "representative_stocks": ["1711", "1721", "1717", "1704", "4722", "4764", "3388"],
+          "key_drivers": ["電子化學品轉型", "漲價循環"]
+        },
+        {
+          "id": "fiber",
+          "name": "纖維",
+          "representative_stocks": ["1440", "1451", "1409"],
+          "key_drivers": ["運動服飾需求", "機能纖維"]
+        }
+      ]
+    },
+
+    {
+      "id": "automotive_energy",
+      "name": "車用 / 能源",
+      "icon": "🚗",
+      "description": "電動車、車用電子、綠能、儲能",
+      "heat_level": "medium",
+      "sub_industries": [
+        {
+          "id": "automotive_electronics",
+          "name": "車用電子",
+          "representative_stocks": ["2308", "2317", "3034", "6282"],
+          "key_drivers": ["EV 滲透率", "ADAS", "車聯網"]
+        },
+        {
+          "id": "ev",
+          "name": "電動車",
+          "representative_stocks": ["2317", "3034", "MIH 聯盟"],
+          "key_drivers": ["Tesla 訂單", "MIH 平台"]
+        },
+        {
+          "id": "green_energy",
+          "name": "綠能",
+          "representative_stocks": ["3576", "6443"],
+          "key_drivers": ["離岸風電", "太陽能"]
+        },
+        {
+          "id": "energy_storage",
+          "name": "儲能",
+          "representative_stocks": ["6443", "3324"],
+          "key_drivers": ["BESS 需求", "電網韌性"]
+        },
+        {
+          "id": "power_supply",
+          "name": "電源供應",
+          "representative_stocks": ["2308", "2301", "6282"],
+          "key_drivers": ["AI 伺服器電源", "EV 充電"]
+        }
+      ]
+    },
+
+    {
+      "id": "financial",
+      "name": "金融",
+      "icon": "🏦",
+      "description": "金控、銀行、證券、保險",
+      "heat_level": "medium",
+      "sub_industries": [
+        {
+          "id": "financial_holdings",
+          "name": "金控",
+          "representative_stocks": ["2882", "2881", "2891", "2886", "2884", "5880", "2885"],
+          "key_drivers": ["降息循環", "台股新高", "金金併"]
+        },
+        {
+          "id": "securities",
+          "name": "證券",
+          "representative_stocks": ["2888", "6024"],
+          "key_drivers": ["成交量", "IPO 熱度"]
+        },
+        {
+          "id": "insurance",
+          "name": "保險",
+          "representative_stocks": ["2823"],
+          "key_drivers": ["壽險投資收益", "利率"]
+        }
+      ]
+    },
+
+    {
+      "id": "biotech",
+      "name": "生技醫療",
+      "icon": "🏥",
+      "description": "CDMO、新藥、醫材、醫美",
+      "heat_level": "medium",
+      "sub_industries": [
+        {
+          "id": "cdmo",
+          "name": "CDMO / CRO",
+          "representative_stocks": ["6472", "6589"],
+          "key_drivers": ["外包趨勢", "減肥藥供應鏈"]
+        },
+        {
+          "id": "new_drug",
+          "name": "新藥",
+          "representative_stocks": ["4174", "4142", "4763"],
+          "key_drivers": ["AI 新藥開發", "臨床進度"]
+        },
+        {
+          "id": "medical_device",
+          "name": "醫材",
+          "representative_stocks": ["4107", "4104", "4733"],
+          "key_drivers": ["老齡化", "出口成長"]
+        },
+        {
+          "id": "aesthetic",
+          "name": "醫美",
+          "representative_stocks": ["1795", "8404"],
+          "key_drivers": ["消費升級", "出口"]
+        }
+      ]
+    },
+
+    {
+      "id": "consumer",
+      "name": "消費民生",
+      "icon": "🍜",
+      "description": "食品、零售、觀光、餐飲",
+      "heat_level": "low",
+      "sub_industries": [
+        {
+          "id": "food",
+          "name": "食品",
+          "representative_stocks": ["1216", "1201", "1210", "1215"],
+          "key_drivers": ["原物料成本", "東南亞擴張"]
+        },
+        {
+          "id": "retail",
+          "name": "零售",
+          "representative_stocks": ["2912", "2929"],
+          "key_drivers": ["消費復甦", "電商整合"]
+        },
+        {
+          "id": "tourism",
+          "name": "觀光",
+          "representative_stocks": ["2731", "5706"],
+          "key_drivers": ["國旅回溫", "日圓"]
+        },
+        {
+          "id": "restaurant",
+          "name": "餐飲",
+          "representative_stocks": ["2727", "2723"],
+          "key_drivers": ["展店速度", "消費力"]
+        }
+      ]
+    },
+
+    {
+      "id": "infrastructure",
+      "name": "基礎建設",
+      "icon": "🏗️",
+      "description": "營建、電信、運輸",
+      "heat_level": "low",
+      "sub_industries": [
+        {
+          "id": "construction",
+          "name": "營建",
+          "representative_stocks": ["2537", "5516", "2545"],
+          "key_drivers": ["房市景氣", "都更"]
+        },
+        {
+          "id": "telecom",
+          "name": "電信",
+          "representative_stocks": ["2412", "3045", "4904"],
+          "key_drivers": ["5G 滲透率", "殖利率"]
+        },
+        {
+          "id": "shipping",
+          "name": "運輸",
+          "representative_stocks": ["2603", "2609", "2615"],
+          "key_drivers": ["運價", "地緣政治"]
+        },
+        {
+          "id": "bike",
+          "name": "自行車",
+          "representative_stocks": ["9921", "9914"],
+          "key_drivers": ["E-bike 滲透率", "歐美庫存"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,37 +1,43 @@
-/* 呱呱招待所首頁 v2 — 直接 port 自 15_FULL_HOMEPAGE_PROTOTYPE.html */
+/* 呱呱招待所首頁 v3 — 禪風 palette(和紙米 + 墨 + 朱印)*/
+/* Phase 1 Day 1-2: 原本硬編碼深色(#1A1815)全改引用 globals.css 的 zen tokens */
 
 .root {
-  --bg-primary: #1A1815;
-  --bg-secondary: #242119;
-  --bg-tertiary: #2D2A21;
-  --bg-card: #26231C;
-  --bg-elevated: #302C22;
+  /* 和紙米底(取代舊 #1A1815 深炭灰) */
+  --bg-primary:   var(--washi);        /* #F5EFE0 主背景 */
+  --bg-secondary: var(--washi-warm);   /* #FAF5E8 暖紙 */
+  --bg-tertiary:  var(--washi-cool);   /* #EDE6D3 涼紙 */
+  --bg-card:      var(--washi-warm);   /* 卡片背景 */
+  --bg-elevated:  var(--washi-deep);   /* #E4DBC5 凸起層 */
 
-  --text-primary: #E8E3D5;
-  --text-secondary: #A89F8A;
-  --text-muted: #6B6353;
+  /* 墨色文字(取代舊 #E8E3D5 米白) */
+  --text-primary:   var(--sumi);        /* #2C2416 主文字 */
+  --text-secondary: var(--sumi-soft);   /* #4A3F28 */
+  --text-muted:     var(--sumi-mist);   /* #7A6E53 */
 
-  --accent-gold: #C9A961;
-  --accent-moss: #7A8471;
+  /* 朱印重點色 */
+  --accent-gold: var(--kin);            /* #B8893D 金茶 */
+  --accent-moss: var(--matcha);         /* #7A8B5C 抹茶 */
   --accent-sand: #D4B896;
 
-  --rise: #C9754D;
-  --rise-light: #E89968;
-  --fall: #6B8E5A;
+  /* 台股漲跌(紅漲綠跌) */
+  --rise:       var(--rise-zen);        /* #C95B4C */
+  --rise-light: var(--shu-light);       /* #D67670 */
+  --fall:       var(--fall-zen);        /* #6B8B5A */
   --fall-light: #8FA87C;
-  --neutral: #8A8170;
+  --neutral:    var(--sumi-whisper);    /* #A89878 */
 
+  /* 題材熱度(同名避免循環引用,直接用實際值)*/
   --heat-extreme: #A84836;
-  --heat-high: #C9754D;
-  --heat-medium: #C9A961;
-  --heat-low: #8A8170;
-  --heat-cool: #5A6B7A;
+  --heat-high:    #C9754D;
+  --heat-medium:  #D4A05C;
+  --heat-low:     #A89878;
+  --heat-cool:    #5A6B7A;
 
-  font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  line-height: 1.6;
+  line-height: 1.75;
   padding-bottom: 100px;
 }
 
@@ -414,7 +420,7 @@
 .topicCard:hover {
   border-color: rgba(201, 169, 97, 0.25);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 24px rgba(44, 36, 22, 0.12);
 }
 
 .topicHeader {

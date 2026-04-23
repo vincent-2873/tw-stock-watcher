@@ -1,0 +1,912 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2026-04-23",
+    "description": "台股 12 大產業龍頭 + 隱形冠軍的完整生態系資料。可直接匯入 VSIS 系統作為初始資料。",
+    "data_sources_notes": "資料來源包含年報、法說會、DIGITIMES、Claude 研究。實際使用前建議交叉驗證。",
+    "update_frequency": "建議每季度更新一次"
+  },
+
+  "ecosystems": [
+    {
+      "anchor_ticker": "2330",
+      "anchor_name": "台積電",
+      "anchor_english": "TSMC",
+      "anchor_type": "taiwan_leader",
+      "industry": "半導體-晶圓代工",
+      "global_position": "#1 foundry worldwide, 全球市佔超過 60%",
+      "market_cap_ntd": "60兆+",
+      "current_price_range": "2000-2100",
+      "key_description": "全球 AI 晶片代工獨大，護城河極深（2-3 年技術領先）",
+
+      "customers": [
+        {
+          "name": "NVIDIA",
+          "ticker_overseas": "NVDA",
+          "revenue_share_pct": 22,
+          "products": ["H100", "H200", "B200", "GB300", "Rubin"],
+          "growth_potential": "extremely_high",
+          "importance": 10,
+          "latest_news": "Rubin 平台採用 N3P，2026 H2 量產"
+        },
+        {
+          "name": "Apple",
+          "ticker_overseas": "AAPL",
+          "revenue_share_pct": 25,
+          "products": ["A18", "M4", "M5", "摺疊 iPhone"],
+          "growth_potential": "medium",
+          "importance": 10
+        },
+        {
+          "name": "AMD",
+          "ticker_overseas": "AMD",
+          "revenue_share_pct": 8,
+          "products": ["MI300", "MI350", "Ryzen AI 400"],
+          "importance": 8
+        },
+        {
+          "name": "Broadcom",
+          "ticker_overseas": "AVGO",
+          "revenue_share_pct": 6,
+          "products": ["ASIC 客製化晶片"],
+          "importance": 8
+        },
+        {
+          "name": "Qualcomm",
+          "ticker_overseas": "QCOM",
+          "revenue_share_pct": 5,
+          "products": ["AP 處理器（重新回頭找台積電）"]
+        }
+      ],
+
+      "cloud_customers": [
+        {"name": "AWS", "product": "Trainium 系列 ASIC"},
+        {"name": "Google", "product": "TPU v8"},
+        {"name": "Meta", "product": "MTIA"},
+        {"name": "Microsoft", "product": "Maia"}
+      ],
+
+      "suppliers": [
+        {
+          "category": "EUV 設備",
+          "vendor_name": "ASML",
+          "substitutable": false,
+          "strategic_importance": "critical",
+          "taiwan_related_stocks": []
+        },
+        {
+          "category": "矽晶圓",
+          "vendor_names": ["合晶", "環球晶", "SUMCO", "信越半導體"],
+          "taiwan_related_stocks": ["6182", "6488"],
+          "substitutable": true,
+          "domestic_ratio": 30
+        },
+        {
+          "category": "光阻劑",
+          "vendor_names": ["JSR", "信越化學", "東京應化"],
+          "taiwan_related_stocks": ["5434"],
+          "note": "崇越 5434 代理 JSR"
+        },
+        {
+          "category": "特化材料",
+          "vendor_names": ["永光", "崇越電", "信越化學"],
+          "taiwan_related_stocks": ["1711", "3388"],
+          "substitutable": true
+        },
+        {
+          "category": "設備",
+          "vendor_names": ["ASML", "AMAT", "Lam Research", "KLA"],
+          "taiwan_related_stocks": ["3680", "3131", "3583"],
+          "note": "台廠多為耗材或周邊"
+        },
+        {
+          "category": "廠務工程",
+          "vendor_names": ["帆宣", "漢唐", "聖暉"],
+          "taiwan_related_stocks": ["6196", "2404", "5536"],
+          "domestic_ratio": 80
+        }
+      ],
+
+      "competitors": [
+        {
+          "name": "Samsung Foundry",
+          "market_share_pct": 15,
+          "competitive_level": "medium",
+          "technology_gap_years": 2
+        },
+        {
+          "name": "Intel Foundry",
+          "market_share_pct": 3,
+          "competitive_level": "low",
+          "government_backing": true
+        },
+        {
+          "name": "中芯國際 SMIC",
+          "market_share_pct": 6,
+          "competitive_level": "limited",
+          "technology_gap_years": 5
+        }
+      ],
+
+      "downstream_partners": {
+        "abf_substrate": ["3037", "8046"],
+        "packaging_testing": ["3711", "2449", "6239"],
+        "packaging_equipment": ["3680", "3131", "3583"],
+        "heat_dissipation": ["3017", "3324", "6805"]
+      },
+
+      "taiwan_beneficiary_stocks": [
+        {
+          "ticker": "3037",
+          "name": "欣興",
+          "category": "ABF 載板",
+          "correlation_pct": 95,
+          "elasticity_grade": "A+",
+          "note": "CoPoS/EMIB 雙受惠",
+          "target_price": 580
+        },
+        {
+          "ticker": "3711",
+          "name": "日月光",
+          "category": "封測",
+          "correlation_pct": 85,
+          "elasticity_grade": "A",
+          "target_price": 230
+        },
+        {
+          "ticker": "6182",
+          "name": "合晶",
+          "category": "矽晶圓",
+          "correlation_pct": 80,
+          "elasticity_grade": "A",
+          "target_price": 80
+        },
+        {
+          "ticker": "3680",
+          "name": "家登",
+          "category": "EUV 載盒",
+          "correlation_pct": 90,
+          "elasticity_grade": "A+",
+          "target_price": 850,
+          "hidden_champion": true
+        },
+        {
+          "ticker": "4722",
+          "name": "國精化",
+          "category": "CCL 樹脂",
+          "correlation_pct": 70,
+          "elasticity_grade": "A",
+          "target_price": 320,
+          "hidden_champion": true
+        },
+        {
+          "ticker": "6196",
+          "name": "帆宣",
+          "category": "廠務自動化",
+          "correlation_pct": 75,
+          "elasticity_grade": "B+",
+          "target_price": 380
+        }
+      ],
+
+      "key_themes_2026": [
+        "CoWoS 產能 4 倍擴張",
+        "A14 製程試運行",
+        "CoPoS 方形封裝導入",
+        "2nm 量產",
+        "AI 資本支出 520-560 億美金"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2454",
+      "anchor_name": "聯發科",
+      "anchor_english": "MediaTek",
+      "anchor_type": "taiwan_leader",
+      "industry": "半導體-IC 設計",
+      "global_position": "#4 IC 設計公司，天璣系列手機 SoC 寡佔",
+      "current_price_range": "2200-2300",
+      "key_description": "天璣 / WiFi / ASIC 三大主軸，AI 手機領頭羊",
+
+      "customers": [
+        {"name": "小米 Xiaomi", "products": "天璣 9400、AI PC"},
+        {"name": "OPPO / vivo", "products": "中高階手機 SoC"},
+        {"name": "Samsung", "products": "中階 Galaxy 機種"},
+        {"name": "Google", "products": "Pixel 部分機種"},
+        {"name": "Meta", "products": "AR 眼鏡晶片"}
+      ],
+
+      "suppliers": [
+        {
+          "category": "晶圓代工",
+          "vendor_names": ["台積電"],
+          "taiwan_related_stocks": ["2330"],
+          "dependency": "critical"
+        },
+        {
+          "category": "封測",
+          "taiwan_related_stocks": ["3711", "6239"]
+        },
+        {
+          "category": "ABF 載板",
+          "taiwan_related_stocks": ["3037"]
+        },
+        {
+          "category": "IP 矽智財",
+          "taiwan_related_stocks": ["3529", "6643", "4966"],
+          "vendor_names_overseas": ["ARM", "Synopsys"]
+        }
+      ],
+
+      "competitors": [
+        {"name": "Qualcomm", "strength": "高階手機 SoC 霸主"},
+        {"name": "Apple（自用）", "strength": "A 系列、M 系列"},
+        {"name": "UNISOC（中國紫光）", "strength": "低階市場"},
+        {"name": "Samsung Exynos", "strength": "自用為主"}
+      ],
+
+      "taiwan_beneficiary_stocks": [
+        {"ticker": "3529", "name": "力旺", "category": "矽智財 IP", "hidden_champion": true},
+        {"ticker": "6643", "name": "M31", "category": "矽智財 IP"},
+        {"ticker": "4966", "name": "譜瑞-KY", "category": "高速傳輸 IP"},
+        {"ticker": "3036", "name": "文曄", "category": "IC 通路"},
+        {"ticker": "2347", "name": "聯強", "category": "IC 通路"},
+        {"ticker": "6515", "name": "穎崴", "category": "測試介面", "hidden_champion": true},
+        {"ticker": "6223", "name": "旺矽", "category": "探針卡"}
+      ],
+
+      "key_themes_2026": [
+        "AI 手機 SoC 爆發",
+        "Google TPU v8 ASIC 大單",
+        "車用 IC 成長",
+        "WiFi 7 / 衛星通訊"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2317",
+      "anchor_name": "鴻海",
+      "anchor_english": "Foxconn",
+      "anchor_type": "taiwan_leader",
+      "industry": "電子製造服務 EMS",
+      "global_position": "全球最大 EMS，AI 伺服器 ODM 龍頭",
+      "current_price_range": "200-220",
+      "key_description": "3+3 轉型戰略：電動車、數位健康、機器人 + AI + 半導體 + 低軌衛星",
+
+      "customers": [
+        {"name": "Apple", "revenue_share_pct": 35, "products": "iPhone、iPad、Mac"},
+        {"name": "NVIDIA", "revenue_share_pct": 15, "products": "GB200、GB300 AI 伺服器"},
+        {"name": "Dell / HPE", "products": "企業伺服器"},
+        {"name": "Microsoft Azure", "products": "雲端伺服器"},
+        {"name": "Tesla / 飛揚汽車", "products": "EV 組裝"},
+        {"name": "SpaceX", "products": "Starlink 衛星零件"}
+      ],
+
+      "suppliers": [
+        {
+          "category": "晶片",
+          "taiwan_related_stocks": ["2330", "2454"],
+          "vendor_names_overseas": ["NVIDIA", "AMD"]
+        },
+        {
+          "category": "電源散熱",
+          "taiwan_related_stocks": ["2308", "3017", "3324"]
+        },
+        {
+          "category": "機殼",
+          "taiwan_related_stocks": ["2474", "2467"]
+        },
+        {
+          "category": "連接器",
+          "taiwan_related_stocks": ["3189", "3044"]
+        }
+      ],
+
+      "foxconn_group_stocks": [
+        {"ticker": "2354", "name": "鴻準", "business": "散熱模組"},
+        {"ticker": "2392", "name": "正崴", "business": "連接器"},
+        {"ticker": "6414", "name": "樺漢", "business": "工業電腦"},
+        {"ticker": "3062", "name": "建漢", "business": "網通設備"},
+        {"ticker": "4729", "name": "熒茂", "business": "光學"},
+        {"ticker": "6088", "name": "華東", "business": "DRAM 模組"},
+        {"ticker": "3481", "name": "群創", "business": "面板（子公司群創）"}
+      ],
+
+      "competitors": [
+        {"name": "和碩 4938", "ticker": "4938", "note": "iPhone 第二大組裝"},
+        {"name": "廣達 2382", "ticker": "2382", "note": "AI 伺服器競爭"},
+        {"name": "緯創 3231", "ticker": "3231"},
+        {"name": "英業達 2356", "ticker": "2356"}
+      ],
+
+      "key_themes_2026": [
+        "AI 伺服器 ODM 龍頭",
+        "電動車（MIH 聯盟）",
+        "Apple 摺疊 iPhone",
+        "低軌衛星通訊",
+        "機器人代工"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2408",
+      "anchor_name": "南亞科",
+      "anchor_english": "Nanya Technology",
+      "anchor_type": "taiwan_leader",
+      "industry": "半導體-記憶體",
+      "global_position": "全球第四大 DRAM 廠（台塑集團旗下）",
+      "current_price_range": "180-250",
+      "key_description": "DDR4 / DDR5 / HBM 三軸並進，台塑集團現金母金雞",
+
+      "customers": [
+        {"name": "模組廠", "taiwan_related_stocks": ["4967", "3715", "3260"]},
+        {"name": "華邦電 2344", "note": "同業但部分採購"},
+        {"name": "AI 伺服器廠", "note": "HBM 需求"},
+        {"name": "手機、PC 品牌"}
+      ],
+
+      "suppliers": [
+        {
+          "category": "設備",
+          "vendor_names_overseas": ["ASML", "AMAT", "Lam Research"],
+          "taiwan_related_stocks": ["3680"]
+        },
+        {
+          "category": "矽晶圓",
+          "taiwan_related_stocks": ["6488", "6182"]
+        }
+      ],
+
+      "competitors": [
+        {"name": "Samsung", "market_share_pct": 44},
+        {"name": "SK 海力士", "market_share_pct": 26},
+        {"name": "Micron 美光", "market_share_pct": 22},
+        {"name": "中國長鑫", "note": "2026 搶 10% 市佔"}
+      ],
+
+      "memory_ecosystem_stocks": [
+        {"ticker": "2408", "name": "南亞科", "category": "DRAM IDM"},
+        {"ticker": "2344", "name": "華邦電", "category": "DRAM + NOR"},
+        {"ticker": "4967", "name": "十銓", "category": "DRAM 模組"},
+        {"ticker": "3715", "name": "定穎投控", "category": "DRAM 模組"},
+        {"ticker": "3260", "name": "威剛", "category": "DRAM 模組"},
+        {"ticker": "8299", "name": "群聯", "category": "NAND 控制 IC"},
+        {"ticker": "5269", "name": "祥碩", "category": "USB 控制 IC"},
+        {"ticker": "2337", "name": "旺宏", "category": "NOR Flash"}
+      ],
+
+      "key_themes_2026": [
+        "DDR4 價格一年漲 300%",
+        "HBM 需求爆發",
+        "AI PC 滲透率",
+        "DDR5 換機潮",
+        "資本支出 520 億擴產"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2308",
+      "anchor_name": "台達電",
+      "anchor_english": "Delta Electronics",
+      "anchor_type": "taiwan_leader",
+      "industry": "電源散熱",
+      "global_position": "全球第一大電源供應器廠，AI 電源霸主",
+      "current_price_range": "1900-2100",
+      "key_description": "AI 伺服器電源獨大，EV 充電、工業自動化、散熱全面布局",
+
+      "customers": [
+        {"name": "NVIDIA", "products": "AI 伺服器電源（GB300/Rubin）", "importance": 10},
+        {"name": "Apple", "products": "充電器"},
+        {"name": "Google / Meta", "products": "資料中心電源"},
+        {"name": "Tesla / EV 廠商", "products": "EV 充電樁、車載電源"}
+      ],
+
+      "suppliers": [
+        {"category": "自製比例高", "note": "垂直整合"},
+        {"category": "磁性材料", "taiwan_related_stocks": ["2488"]},
+        {"category": "半導體", "taiwan_related_stocks": ["2330"]}
+      ],
+
+      "competitors": [
+        {"name": "光寶 2301", "ticker": "2301"},
+        {"name": "群光 2385", "ticker": "2385"},
+        {"name": "Delta 印度廠"}
+      ],
+
+      "ai_power_heat_ecosystem": [
+        {"ticker": "2308", "name": "台達電", "category": "AI 電源龍頭"},
+        {"ticker": "2301", "name": "光寶", "category": "電源"},
+        {"ticker": "6282", "name": "康舒", "category": "電源"},
+        {"ticker": "3017", "name": "奇鋐", "category": "散熱"},
+        {"ticker": "3324", "name": "雙鴻", "category": "液冷散熱"},
+        {"ticker": "6805", "name": "富世達", "category": "散熱"},
+        {"ticker": "3483", "name": "力致", "category": "散熱"},
+        {"ticker": "3189", "name": "景碩", "category": "連接器"},
+        {"ticker": "8210", "name": "勤誠", "category": "機殼"},
+        {"ticker": "3149", "name": "正達", "category": "風扇"}
+      ],
+
+      "key_themes_2026": [
+        "AI 伺服器液冷散熱",
+        "GB300 / Rubin 電源",
+        "資料中心擴建",
+        "EV 充電樁爆發"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2409",
+      "anchor_name": "友達",
+      "anchor_english": "AUO",
+      "anchor_type": "taiwan_leader",
+      "industry": "面板",
+      "global_position": "全球第 3-4 大面板廠",
+      "current_price_range": "15-25",
+      "key_description": "LCD / OLED / Micro LED 全線布局，轉型車用、工控、醫療",
+
+      "customers": [
+        {"name": "電視品牌", "products": "LCD TV"},
+        {"name": "Tesla", "products": "車用面板"},
+        {"name": "Apple", "products": "MacBook 面板"},
+        {"name": "醫療 / 工控客戶", "products": "特殊用途面板"}
+      ],
+
+      "suppliers": [
+        {"category": "玻璃", "vendor_names": ["康寧", "NEG"]},
+        {"category": "驅動 IC", "taiwan_related_stocks": ["3034", "3658"]},
+        {"category": "偏光板", "taiwan_related_stocks": ["台灣日東"]},
+        {"category": "背光", "taiwan_related_stocks": ["2393", "3019"]}
+      ],
+
+      "competitors": [
+        {"name": "京東方 BOE", "country": "中國", "market_share": 28},
+        {"name": "TCL 華星", "country": "中國"},
+        {"name": "LG Display", "country": "韓國"},
+        {"name": "Samsung Display", "country": "韓國"}
+      ],
+
+      "panel_ecosystem_stocks": [
+        {"ticker": "2409", "name": "友達"},
+        {"ticker": "3481", "name": "群創"},
+        {"ticker": "3034", "name": "聯詠", "category": "驅動 IC 龍頭"},
+        {"ticker": "3658", "name": "漢磊", "category": "驅動 IC"},
+        {"ticker": "8016", "name": "矽創", "category": "玻璃"},
+        {"ticker": "2393", "name": "億光", "category": "背光"},
+        {"ticker": "3622", "name": "洋華", "category": "觸控"}
+      ],
+
+      "key_themes_2026": [
+        "面板報價復甦",
+        "OLED 車用滲透率",
+        "Micro LED 商用化",
+        "AI PC 驅動換機"
+      ]
+    },
+
+    {
+      "anchor_ticker": "9921",
+      "anchor_name": "巨大",
+      "anchor_english": "Giant",
+      "anchor_type": "taiwan_leader",
+      "industry": "自行車",
+      "global_position": "全球第一大自行車廠",
+      "current_price_range": "200-260",
+      "key_description": "E-bike + 高階自行車雙引擎，歐美自行車通路龍頭",
+
+      "customers": [
+        {"name": "歐洲零售商", "revenue_share_pct": 45},
+        {"name": "美國零售商", "revenue_share_pct": 30},
+        {"name": "自有通路 Giant Store"},
+        {"name": "電商 D2C"}
+      ],
+
+      "suppliers": [
+        {"category": "齒輪", "taiwan_related_stocks": ["1536"]},
+        {"category": "車架", "taiwan_related_stocks": ["4426"]},
+        {"category": "變速煞車", "vendor_names": ["SRAM（美國）", "Shimano（日本）"]},
+        {"category": "E-bike 電池", "taiwan_related_stocks": ["1536", "1503"]}
+      ],
+
+      "competitors": [
+        {"name": "美利達 9914", "ticker": "9914", "note": "台灣第二"},
+        {"name": "Trek", "country": "美國"},
+        {"name": "捷安特中國"},
+        {"name": "Specialized", "country": "美國"}
+      ],
+
+      "bike_ecosystem_stocks": [
+        {"ticker": "9921", "name": "巨大"},
+        {"ticker": "9914", "name": "美利達"},
+        {"ticker": "4426", "name": "利勤", "category": "車架"},
+        {"ticker": "8255", "name": "朋程", "category": "車架"},
+        {"ticker": "1536", "name": "和大", "category": "齒輪"},
+        {"ticker": "1517", "name": "利奇", "category": "零配件"}
+      ],
+
+      "key_themes_2026": [
+        "E-bike 滲透率突破 30%",
+        "歐洲庫存去化完成",
+        "美國關稅議題",
+        "高階車市場回溫"
+      ]
+    },
+
+    {
+      "anchor_ticker": "1216",
+      "anchor_name": "統一",
+      "anchor_english": "Uni-President",
+      "anchor_type": "taiwan_leader",
+      "industry": "食品飲料",
+      "global_position": "東南亞最大食品集團",
+      "current_price_range": "75-90",
+      "key_description": "統一集團：食品 + 7-11 通路 + 物流 + 東南亞擴張",
+
+      "customers": [
+        {"name": "統一超 2912 (7-11)", "type": "集團內通路"},
+        {"name": "家樂福", "type": "外部通路"},
+        {"name": "好市多 Costco", "type": "外部通路"},
+        {"name": "東南亞 7-11（越南、菲律賓）"}
+      ],
+
+      "suppliers": [
+        {"category": "食品原料", "taiwan_related_stocks": ["1210", "1215"]},
+        {"category": "肉品", "taiwan_related_stocks": ["1215"]},
+        {"category": "進口原料", "note": "美國小麥、玉米"}
+      ],
+
+      "competitors": [
+        {"name": "味全 1201"},
+        {"name": "泰山 1218"},
+        {"name": "愛之味 1217"},
+        {"name": "可口可樂", "country": "國際"}
+      ],
+
+      "food_ecosystem_stocks": [
+        {"ticker": "1216", "name": "統一"},
+        {"ticker": "2912", "name": "統一超"},
+        {"ticker": "1210", "name": "大成", "category": "食品原料"},
+        {"ticker": "1215", "name": "卜蜂", "category": "肉品"},
+        {"ticker": "1218", "name": "泰山", "category": "食品"},
+        {"ticker": "1201", "name": "味全", "category": "乳品"}
+      ],
+
+      "key_themes_2026": [
+        "原物料成本下降",
+        "東南亞擴張（越南、菲律賓）",
+        "高毛利產品轉型",
+        "即飲咖啡 / 茶"
+      ]
+    },
+
+    {
+      "anchor_ticker": "1301",
+      "anchor_name": "台塑",
+      "anchor_english": "Formosa Plastics",
+      "anchor_type": "taiwan_leader",
+      "industry": "塑化",
+      "global_position": "亞洲前三大塑化集團",
+      "current_price_range": "50-70",
+      "key_description": "台塑四寶整合：1301 台塑 + 1303 南亞 + 1326 台化 + 6505 台塑化",
+
+      "taiwan_plastic_group": [
+        {"ticker": "1301", "name": "台塑", "business": "PVC、聚乙烯"},
+        {"ticker": "1303", "name": "南亞", "business": "PET、電子材料（銅箔、CCL）"},
+        {"ticker": "1326", "name": "台化", "business": "PTA、芳香烴"},
+        {"ticker": "6505", "name": "台塑化", "business": "煉油、油品"}
+      ],
+
+      "customers": [
+        {"name": "下游加工廠（台灣）"},
+        {"name": "出口（中國、東南亞）"},
+        {"name": "1303 南亞客戶", "note": "電子業"},
+        {"name": "1326 台化客戶", "note": "紡織業"}
+      ],
+
+      "suppliers": [
+        {"category": "原油", "source": "中東、美國"},
+        {"category": "石腦油", "note": "進口為主"},
+        {"category": "能源", "note": "煤炭、天然氣"}
+      ],
+
+      "competitors": [
+        {"name": "中國石化"},
+        {"name": "LG 化學", "country": "韓國"},
+        {"name": "SABIC", "country": "沙烏地阿拉伯"}
+      ],
+
+      "chemical_ecosystem_stocks": [
+        {"ticker": "1301", "name": "台塑"},
+        {"ticker": "1303", "name": "南亞", "note": "電子材料題材強"},
+        {"ticker": "1326", "name": "台化"},
+        {"ticker": "1314", "name": "中石化"},
+        {"ticker": "1717", "name": "長興", "category": "特化"},
+        {"ticker": "1704", "name": "榮化", "category": "特化"}
+      ],
+
+      "key_themes_2026": [
+        "塑化景氣循環底部翻揚",
+        "南亞電子材料分拆效應",
+        "ECFA 影響（中國政策）",
+        "油價穩定後的轉機"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2882",
+      "anchor_name": "國泰金",
+      "anchor_english": "Cathay Financial Holdings",
+      "anchor_type": "taiwan_leader",
+      "industry": "金融控股",
+      "global_position": "台灣最大金控（與富邦金並列）",
+      "current_price_range": "55-75",
+      "key_description": "壽險為核心，銀行、證券、投信全面",
+
+      "business_segments": [
+        {"name": "壽險", "revenue_share_pct": 55},
+        {"name": "銀行", "revenue_share_pct": 25},
+        {"name": "證券", "revenue_share_pct": 10},
+        {"name": "其他", "revenue_share_pct": 10}
+      ],
+
+      "investment_portfolio": [
+        {"category": "海外債（美債為主）", "allocation_pct": 45},
+        {"category": "國內股票", "allocation_pct": 15},
+        {"category": "REITs / 另類投資", "allocation_pct": 20},
+        {"category": "其他"}
+      ],
+
+      "competitors": [
+        {"ticker": "2881", "name": "富邦金", "note": "直接競爭"},
+        {"ticker": "2891", "name": "中信金"},
+        {"ticker": "2886", "name": "兆豐金", "note": "官股"},
+        {"ticker": "2884", "name": "玉山金", "note": "成長型"}
+      ],
+
+      "financial_ecosystem_stocks": [
+        {"ticker": "2882", "name": "國泰金", "type": "壽險龍頭"},
+        {"ticker": "2881", "name": "富邦金", "type": "壽險龍頭"},
+        {"ticker": "2891", "name": "中信金", "type": "多元業務"},
+        {"ticker": "2886", "name": "兆豐金", "type": "官股"},
+        {"ticker": "2884", "name": "玉山金", "type": "成長型"},
+        {"ticker": "5880", "name": "合庫金", "type": "官股"}
+      ],
+
+      "key_themes_2026": [
+        "降息循環啟動 → 債券價值上升",
+        "台股指數新高 → 自營 & 壽險獲利",
+        "Fed 政策轉向",
+        "金金併題材"
+      ]
+    },
+
+    {
+      "anchor_ticker": "2002",
+      "anchor_name": "中鋼",
+      "anchor_english": "China Steel",
+      "anchor_type": "taiwan_leader",
+      "industry": "鋼鐵",
+      "global_position": "台灣最大鋼鐵廠",
+      "current_price_range": "20-30",
+      "key_description": "鋼鐵本業 + 綠能（離岸風電）轉型",
+
+      "customers": [
+        {"name": "下游鋼廠"},
+        {"name": "華新 1605（電線）"},
+        {"name": "營建業"},
+        {"name": "汽車業"},
+        {"name": "造船業"}
+      ],
+
+      "suppliers": [
+        {"category": "鐵礦砂", "source": "澳洲、巴西"},
+        {"category": "焦炭 / 焦煤"},
+        {"category": "廢鋼回收"}
+      ],
+
+      "competitors": [
+        {"name": "韓國 POSCO"},
+        {"name": "中國寶鋼"},
+        {"name": "日本製鐵"}
+      ],
+
+      "steel_ecosystem_stocks": [
+        {"ticker": "2002", "name": "中鋼"},
+        {"ticker": "2009", "name": "第一銅"},
+        {"ticker": "2015", "name": "豐興"},
+        {"ticker": "2006", "name": "東和鋼鐵", "category": "不鏽鋼"},
+        {"ticker": "2008", "name": "高興昌"},
+        {"ticker": "2014", "name": "中鴻"},
+        {"ticker": "1605", "name": "華新", "category": "電線電纜"}
+      ],
+
+      "key_themes_2026": [
+        "離岸風電材料（綠能轉型）",
+        "中國限產政策",
+        "基礎建設需求",
+        "廢鋼回收（永續）"
+      ]
+    },
+
+    {
+      "anchor_ticker": "6472",
+      "anchor_name": "保瑞",
+      "anchor_english": "Bora Pharmaceuticals",
+      "anchor_type": "taiwan_leader",
+      "industry": "生技 CDMO",
+      "global_position": "台灣 CDMO（藥品代工）龍頭",
+      "current_price_range": "400-600",
+      "key_description": "亞洲最大 CDMO 之一，接 Pfizer、Merck、GSK 大單",
+
+      "customers": [
+        {"name": "Pfizer", "country": "美國"},
+        {"name": "Novartis", "country": "瑞士"},
+        {"name": "Merck", "country": "美國/德國"},
+        {"name": "Sanofi", "country": "法國"},
+        {"name": "GSK", "country": "英國"}
+      ],
+
+      "suppliers": [
+        {"category": "原料藥 API"},
+        {"category": "包材"},
+        {"category": "設備（歐美）"}
+      ],
+
+      "competitors": [
+        {"name": "Samsung 生物製劑", "country": "韓國"},
+        {"name": "Dr. Reddy's", "country": "印度"},
+        {"name": "藥明康德", "country": "中國"}
+      ],
+
+      "biotech_ecosystem_stocks": [
+        {"ticker": "6472", "name": "保瑞", "category": "CDMO"},
+        {"ticker": "6589", "name": "台康生技", "category": "CDMO"},
+        {"ticker": "4174", "name": "浩鼎", "category": "新藥"},
+        {"ticker": "4142", "name": "國光生", "category": "疫苗"},
+        {"ticker": "4107", "name": "邦特", "category": "醫材"},
+        {"ticker": "1795", "name": "美時", "category": "學名藥"}
+      ],
+
+      "key_themes_2026": [
+        "減肥藥（GLP-1）供應鏈",
+        "CDMO 外包趨勢",
+        "AI 新藥開發",
+        "老齡化醫材需求"
+      ]
+    }
+  ],
+
+  "hidden_champions": [
+    {
+      "ticker": "1560",
+      "name": "中砂",
+      "category": "再生晶圓 / 人造鑽石",
+      "global_position": "人造鑽石龍頭（再生晶圓用）",
+      "key_customer": "台積電"
+    },
+    {
+      "ticker": "3583",
+      "name": "辛耘",
+      "category": "半導體清洗設備",
+      "global_position": "台積電清洗設備獨家",
+      "key_customer": "台積電"
+    },
+    {
+      "ticker": "2404",
+      "name": "漢唐",
+      "category": "無塵室工程",
+      "global_position": "半導體無塵室工程亞洲第一",
+      "key_customer": "台積電"
+    },
+    {
+      "ticker": "5274",
+      "name": "信驊",
+      "category": "BMC 晶片",
+      "global_position": "全球 BMC 晶片寡占（市佔 80%）",
+      "key_customer": "全球伺服器廠"
+    },
+    {
+      "ticker": "3680",
+      "name": "家登",
+      "category": "EUV 載盒",
+      "global_position": "EUV 載盒全球獨家",
+      "key_customer": "台積電、三星、Intel"
+    },
+    {
+      "ticker": "3529",
+      "name": "力旺",
+      "category": "矽智財 IP (OTP)",
+      "global_position": "全球第一",
+      "key_customer": "台積電、聯發科"
+    },
+    {
+      "ticker": "6515",
+      "name": "穎崴",
+      "category": "測試介面",
+      "global_position": "全球前三",
+      "key_customer": "台積電、NVIDIA"
+    },
+    {
+      "ticker": "6196",
+      "name": "帆宣",
+      "category": "廠務自動化",
+      "global_position": "台積電廠務自動化獨家",
+      "key_customer": "台積電"
+    },
+    {
+      "ticker": "6223",
+      "name": "旺矽",
+      "category": "探針卡",
+      "global_position": "全球前五",
+      "key_customer": "半導體測試廠"
+    },
+    {
+      "ticker": "3443",
+      "name": "創意",
+      "category": "ASIC 設計服務",
+      "global_position": "亞洲第一",
+      "key_customer": "Google TPU、AWS Trainium"
+    },
+    {
+      "ticker": "4722",
+      "name": "國精化",
+      "category": "CCL 樹脂",
+      "global_position": "高階 CCL 樹脂全球寡占",
+      "key_customer": "台光電、台燿"
+    },
+    {
+      "ticker": "4764",
+      "name": "雙鍵",
+      "category": "5G/6G 樹脂",
+      "global_position": "5G/6G 樹脂材料寡占",
+      "key_customer": "台光電、台燿"
+    },
+    {
+      "ticker": "4763",
+      "name": "材料-KY",
+      "category": "先進封裝材料",
+      "global_position": "台積電 CoWoS 供應商"
+    },
+    {
+      "ticker": "8046",
+      "name": "南電",
+      "category": "ABF 載板",
+      "global_position": "全球前三"
+    },
+    {
+      "ticker": "1815",
+      "name": "富喬",
+      "category": "玻纖布",
+      "global_position": "LowDK 二代布、T-Glass"
+    },
+    {
+      "ticker": "8358",
+      "name": "金居",
+      "category": "高階電解銅箔",
+      "global_position": "重要供應商"
+    },
+    {
+      "ticker": "3131",
+      "name": "弘塑",
+      "category": "清洗設備",
+      "global_position": "台積電先進封裝獨家"
+    },
+    {
+      "ticker": "3081",
+      "name": "聯亞",
+      "category": "InP 磷化銦雷射",
+      "global_position": "CPO 供應鏈關鍵"
+    },
+    {
+      "ticker": "4979",
+      "name": "華星光",
+      "category": "光模組",
+      "global_position": "NVIDIA 供應鏈"
+    },
+    {
+      "ticker": "3163",
+      "name": "波若威",
+      "category": "光纖分波多工器",
+      "global_position": "800G/1.6T"
+    }
+  ]
+}
