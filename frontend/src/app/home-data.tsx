@@ -318,7 +318,276 @@ export function QuackPicksLive() {
 }
 
 // ============================================
-// 4. 今日重點(AI 分類新聞)
+// 4. 呱呱今日功課(從 topics + 市場狀況即時生成)
+// ============================================
+type MorningData = {
+  topTopic?: Topic;
+  avoid?: Topic;
+  marketDown: boolean;
+  updatedAt: string;
+};
+
+export function QuackMorningLive() {
+  const [d, setD] = useState<MorningData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [tRes, mRes] = await Promise.all([
+          fetch(`${API}/api/topics?status=active&order=heat&limit=10`, { cache: "no-store" }),
+          fetch(`${API}/api/market/overview`, { cache: "no-store" }),
+        ]);
+        const t = await tRes.json();
+        const m = await mRes.json();
+        const topics: Topic[] = t.topics ?? [];
+        const rising = topics.filter(
+          (x) => x.heat_trend === "rising" && (x.heat_score ?? 0) < 80,
+        )[0];
+        const overheated = topics.find(
+          (x) => (x.heat_score ?? 0) >= 90 && x.heat_trend !== "falling",
+        );
+        const marketDown = (m?.taiex?.day_change_pct ?? 0) < -0.5;
+        if (!cancelled) {
+          setD({
+            topTopic: rising ?? topics[0],
+            avoid: overheated,
+            marketDown,
+            updatedAt: new Date().toLocaleTimeString("zh-TW", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+              timeZone: "Asia/Taipei",
+            }),
+          });
+        }
+      } catch {/* */}
+    }
+    load();
+  }, []);
+
+  const opener = d?.marketDown
+    ? "池塘今天水有點混。"
+    : "池塘還算平靜,注意誰先動。";
+
+  return (
+    <div className={styles.quackMorning}>
+      <div className={styles.quackHeader}>
+        <div className={styles.quackAvatar}>🦆</div>
+        <div>
+          <div className={styles.quackTitle}>呱呱今日功課 · 即時</div>
+          <div className={styles.quackTime}>
+            {d?.updatedAt ? `${d.updatedAt} · 呱呱剛從 DB 讀完題材熱度` : "呱呱翻資料中⋯"}
+          </div>
+        </div>
+      </div>
+      <div className={styles.quackMain}>
+        {opener}
+        {d?.topTopic && (
+          <>
+            <br />
+            今天最升溫的題材是「
+            <Link
+              href={`/pond/${d.topTopic.id}`}
+              style={{ color: "var(--accent-gold)", textDecoration: "none" }}
+            >
+              {d.topTopic.name}
+            </Link>
+            」(熱度 {d.topTopic.heat_score}°
+            {d.topTopic.heat_trend === "rising" ? " ↑" : ""}),
+            <br />
+            資金可能從{d.avoid?.name ?? "過熱題材"}輪動過來。
+          </>
+        )}
+      </div>
+      {d && (
+        <div className={styles.quackHighlights}>
+          <div className={styles.highlightBox}>
+            <div className={styles.highlightLabel}>💡 呱呱留意(補漲 / 升溫題材)</div>
+            <div className={styles.highlightStocks}>
+              {d.topTopic ? (
+                <Link href={`/pond/${d.topTopic.id}`} className={styles.safe} style={{ textDecoration: "none" }}>
+                  {d.topTopic.name} {d.topTopic.heat_score}°
+                </Link>
+              ) : "—"}
+            </div>
+          </div>
+          <div className={styles.highlightBox}>
+            <div className={styles.highlightLabel}>⚠️ 呱呱警戒(過熱 / 避免追高)</div>
+            <div className={styles.highlightStocks}>
+              {d.avoid ? (
+                <Link href={`/pond/${d.avoid.id}`} className={styles.risk} style={{ textDecoration: "none" }}>
+                  {d.avoid.name} {d.avoid.heat_score}°
+                </Link>
+              ) : "—"}
+            </div>
+          </div>
+        </div>
+      )}
+      <div className={styles.quackActions}>
+        <Link className={cx(styles.btn, styles.primary)} href="/pond">🔥 看全部題材</Link>
+        <Link className={styles.btn} href="/chat">💬 問呱呱為什麼</Link>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// 5. 供應鏈金字塔(從 topics.supply_chain 動態產生)
+// ============================================
+export function SupplyChainLive() {
+  const [topic, setTopic] = useState<Topic | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/topics?status=active&order=heat&limit=1`, { cache: "no-store" });
+        const j = await r.json();
+        if (!cancelled) setTopic(j.topics?.[0] ?? null);
+      } catch {/* */}
+    }
+    load();
+  }, []);
+
+  if (!topic) {
+    return (
+      <div style={{ padding: 24, color: "var(--text-muted)", fontStyle: "italic" }}>
+        呱呱正在畫供應鏈⋯
+      </div>
+    );
+  }
+
+  const tiers = Object.entries(topic.supply_chain || {});
+  const STATUS_LABEL: Record<string, { icon: string; txt: string; tone: string }> = {
+    "主升段": { icon: "🟢", txt: "主升段(正在漲)", tone: "var(--heat-medium, #C9A961)" },
+    "補漲": { icon: "🔥", txt: "補漲(推薦觀察)", tone: "var(--rise-light, #E89968)" },
+    "已漲": { icon: "🟡", txt: "已漲完(追高風險)", tone: "var(--neutral, #8A8170)" },
+    "成熟": { icon: "🟡", txt: "成熟期", tone: "var(--neutral, #8A8170)" },
+    "退潮": { icon: "🔴", txt: "退潮(避開)", tone: "var(--text-muted)" },
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          textAlign: "center",
+          color: "var(--text-muted)",
+          fontSize: 12,
+          marginBottom: 12,
+        }}
+      >
+        題材:
+        <Link
+          href={`/pond/${topic.id}`}
+          style={{ color: "var(--accent-gold)", textDecoration: "none", marginLeft: 6 }}
+        >
+          {topic.name}
+        </Link>
+        {" · 熱度 "}
+        <span style={{ color: "var(--accent-gold)" }}>{topic.heat_score}°</span>
+        {" · 點個股進分析頁"}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "16px 0" }}>
+        {tiers.map(([key, tier], i) => {
+          const status = STATUS_LABEL[tier.status || ""] || { icon: "⚪", txt: tier.status || "", tone: "var(--text-muted)" };
+          return (
+            <div
+              key={key}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "150px 1fr auto",
+                alignItems: "center",
+                gap: 12,
+                padding: "12px 16px",
+                borderRadius: 6,
+                background: status.icon === "🔥" ? "rgba(168, 72, 54, 0.1)" : "var(--bg-elevated)",
+                border: `1px solid ${status.icon === "🔥" ? "rgba(168, 72, 54, 0.35)" : "rgba(201, 169, 97, 0.1)"}`,
+                position: "relative",
+              }}
+            >
+              {i > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -8,
+                    left: 80,
+                    fontSize: 10,
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  ↑ 資金從下往上流
+                </span>
+              )}
+              <div
+                style={{
+                  fontFamily: "var(--font-serif, 'Noto Serif TC', serif)",
+                  fontSize: 13,
+                  color: "var(--text-primary)",
+                  textAlign: "right",
+                  paddingRight: 12,
+                  borderRight: "1px solid rgba(201, 169, 97, 0.15)",
+                }}
+              >
+                {tier.name}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {(tier.stocks || []).map((code) => {
+                  const isTw = /^\d{4,6}$/.test(code);
+                  return isTw ? (
+                    <Link
+                      key={code}
+                      href={`/stocks/${code}`}
+                      className={styles.stockChip}
+                      style={{ textDecoration: "none" }}
+                    >
+                      {code}
+                    </Link>
+                  ) : (
+                    <span key={code} className={styles.stockChip}>{code}</span>
+                  );
+                })}
+              </div>
+              <div
+                style={{
+                  textAlign: "right",
+                  fontSize: 12,
+                  color: status.tone,
+                  fontFamily: "var(--font-serif)",
+                  minWidth: 140,
+                }}
+              >
+                <span style={{ fontSize: 18, marginRight: 4 }}>{status.icon}</span>
+                {status.txt}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 20,
+          fontSize: 11,
+          color: "var(--text-muted)",
+          marginTop: 16,
+          paddingTop: 16,
+          borderTop: "1px solid rgba(201, 169, 97, 0.08)",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>🔥 補漲(推薦觀察)</span>
+        <span>🟢 主升段(正在漲)</span>
+        <span>🟡 已漲完(追高風險)</span>
+        <span>🔴 退潮(避開)</span>
+      </div>
+    </>
+  );
+}
+
+// ============================================
+// 6. 今日重點(AI 分類新聞)
 // ============================================
 type Headline = {
   title?: string;

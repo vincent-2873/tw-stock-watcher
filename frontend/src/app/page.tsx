@@ -5,6 +5,8 @@ import {
   TopicsLive,
   QuackPicksLive,
   HeadlinesLive,
+  QuackMorningLive,
+  SupplyChainLive,
 } from "./home-data";
 
 export const dynamic = "force-dynamic";
@@ -282,47 +284,8 @@ export default function Home() {
         {/* 即時 30 秒更新 */}
         <MarketPulseLive />
 
-        {/* 🦆 呱呱今日功課 */}
-        <div className={styles.quackMorning}>
-          <div className={styles.quackHeader}>
-            <div className={styles.quackAvatar}>🦆</div>
-            <div>
-              <div className={styles.quackTitle}>呱呱今日功課 · {now.session}更新</div>
-              <div className={styles.quackTime}>{now.time} · 呱呱剛剛重新翻了一輪資料</div>
-            </div>
-          </div>
-          <div className={styles.quackMain}>
-            「昨夜 Tesla CFO 一句『CAPEX 250 億 + 負現金流』,<br />
-            引爆 AI 泡沫疑慮。今天池塘有人在倒水,<br />
-            拉高的別追,跌深的先等水位穩。」
-          </div>
-          <div className={styles.quackHighlights}>
-            <div className={styles.highlightBox}>
-              <div className={styles.highlightLabel}>💡 補漲機會(資金輪動受惠)</div>
-              <div className={styles.highlightStocks}>
-                <Link href="/stocks/1815" className={styles.safe}>富喬 1815</Link>
-                {" · "}
-                <Link href="/stocks/8358" className={styles.safe}>金居 8358</Link>
-                {" · "}
-                <Link href="/stocks/4722" className={styles.safe}>國精化 4722</Link>
-              </div>
-            </div>
-            <div className={styles.highlightBox}>
-              <div className={styles.highlightLabel}>⚠️ 避免追高(AI 泡沫疑慮)</div>
-              <div className={styles.highlightStocks}>
-                <Link href="/stocks/3443" className={styles.risk}>創意 3443</Link>
-                {" · "}
-                <Link href="/stocks/3661" className={styles.risk}>世芯 3661</Link>
-                {" · "}
-                <Link href="/stocks/5274" className={styles.risk}>信驊 5274</Link>
-              </div>
-            </div>
-          </div>
-          <div className={styles.quackActions}>
-            <Link className={cx(styles.btn, styles.primary)} href="/chat">📄 看完整盤前報告</Link>
-            <Link className={styles.btn} href="/chat">💬 問呱呱為什麼</Link>
-          </div>
-        </div>
+        {/* 🦆 呱呱今日功課(即時資料生成) */}
+        <QuackMorningLive />
 
         {/* 🔥 題材熱度 + 右欄 */}
         <div className={styles.sectionTitle}>
@@ -405,39 +368,15 @@ export default function Home() {
           <HeadlinesLive />
         </div>
 
-        {/* 🏔️ 供應鏈金字塔 */}
+        {/* 🏔️ 供應鏈(即時:最熱題材的供應鏈) */}
         <div className={styles.sectionTitle}>
-          <h2>🏔️ 供應鏈金字塔 · CCL 漲價循環</h2>
+          <h2>🏔️ 最熱題材供應鏈</h2>
           <div className={styles.divider}></div>
-          <Link className={styles.moreLink} href="/pond/ccl_price_increase_2026">其他題材鏈 →</Link>
+          <Link className={styles.moreLink} href="/pond">其他題材鏈 →</Link>
         </div>
 
         <div className={styles.pyramidCard}>
-          <div className={styles.pyramidHint}>
-            💡 點任何個股直接進入分析頁 · 🔥 為補漲機會
-          </div>
-          <div className={styles.pyramid}>
-            {PYRAMID.map((row, i) => (
-              <div key={i} className={cx(styles.pyramidRow, row.hot && styles.hot)}>
-                {i > 0 && <span className={styles.arrow}>↑</span>}
-                <div className={styles.pyramidTierLabel}>{row.label}</div>
-                <div className={styles.pyramidStocks}>
-                  {row.stocks.map((s) => {
-                    const m = s.code.match(/(\d{4,6})/);
-                    const href = m && !s.foreign ? `/stocks/${m[1]}` : "#";
-                    return <StockChip key={s.code} code={s.code} change={s.change} href={href} />;
-                  })}
-                </div>
-                <div className={styles.pyramidStatus}>{row.status}</div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.pyramidLegend}>
-            <span>🔥 補漲機會(推薦)</span>
-            <span>🟢 主升段(正在漲)</span>
-            <span>🟡 已漲完</span>
-            <span>🔴 避開</span>
-          </div>
+          <SupplyChainLive />
         </div>
 
         {/* 💰 三大法人 */}
