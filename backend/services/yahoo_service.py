@@ -68,10 +68,11 @@ def get_index_quote(symbol: str) -> Optional[dict]:
         return None
 
 
-# 預設 index 表
+# 預設 index 表(含費城半導體 — 用於首頁市場脈動)
 US_INDICES = [
     ("^GSPC", "S&P 500"),
     ("^IXIC", "Nasdaq"),
     ("^DJI", "Dow 30"),
     ("^VIX", "VIX"),
+    ("^SOX", "費城半導體"),
 ]
