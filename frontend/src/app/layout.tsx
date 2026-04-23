@@ -9,6 +9,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { QuackFloating } from "@/components/quack/QuackFloating";
+import { ZenPetals } from "@/components/quack/ZenPetals";
 
 const serif = Noto_Serif_TC({
   subsets: ["latin"],
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${serif.variable} ${sans.variable} ${mono.variable} ${mincho.variable} ${maru.variable} ${cormorant.variable}`}
     >
       <body>
+        <ZenPetals />
         {children}
         <QuackFloating />
       </body>

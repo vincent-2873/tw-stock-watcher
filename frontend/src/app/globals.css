@@ -337,3 +337,96 @@ h1, h2, h3, h4, h5 {
 .bg-up { background-color: var(--up); color: var(--bg); }
 .bg-down { background-color: var(--down); color: var(--bg); }
 .bg-moss { background-color: var(--moss); color: var(--bg); }
+
+/* ==========================================
+   Phase 1 Day 6-7 — 飄落花瓣裝飾(來自 18_ZEN HTML)
+   ========================================== */
+.zen-petal {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(
+    ellipse at 30% 30%,
+    var(--shu-light),
+    transparent 70%
+  );
+  border-radius: 50% 0 50% 50%;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 0;
+  top: -20px;
+  animation: zen-float-petal 20s linear infinite;
+}
+@keyframes zen-float-petal {
+  0%   { transform: translateY(-100px) translateX(0) rotate(0deg); opacity: 0; }
+  10%  { opacity: 0.22; }
+  90%  { opacity: 0.22; }
+  100% { transform: translateY(110vh) translateX(100px) rotate(360deg); opacity: 0; }
+}
+.zen-petal-1 { left: 10%; animation-delay: 0s;  animation-duration: 25s; }
+.zen-petal-2 { left: 30%; animation-delay: 5s;  animation-duration: 30s; }
+.zen-petal-3 { left: 60%; animation-delay: 10s; animation-duration: 22s; }
+.zen-petal-4 { left: 85%; animation-delay: 15s; animation-duration: 28s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .zen-petal { display: none; }
+}
+
+/* ==========================================
+   Phase 3 — 股價亮燈提示(Vincent v2 19 文件)
+   ========================================== */
+.stock-flash-up {
+  animation: stock-flash-rise 0.8s ease-out;
+  color: var(--rise-zen);
+}
+.stock-flash-down {
+  animation: stock-flash-fall 0.8s ease-out;
+  color: var(--fall-zen);
+}
+@keyframes stock-flash-rise {
+  0%   { background: rgba(201, 91, 76, 0.3); }
+  100% { background: transparent; }
+}
+@keyframes stock-flash-fall {
+  0%   { background: rgba(107, 139, 90, 0.3); }
+  100% { background: transparent; }
+}
+
+/* 漲停 / 跌停 邊框脈動 */
+.stock-limit-up {
+  border: 2px solid var(--rise-zen);
+  animation: stock-pulse-limit-up 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(201, 91, 76, 0.4);
+}
+.stock-limit-down {
+  border: 2px solid var(--fall-zen);
+  animation: stock-pulse-limit-down 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(107, 139, 90, 0.4);
+}
+@keyframes stock-pulse-limit-up {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 91, 76, 0.4); }
+  50%      { box-shadow: 0 0 40px rgba(201, 91, 76, 0.8); }
+}
+@keyframes stock-pulse-limit-down {
+  0%, 100% { box-shadow: 0 0 20px rgba(107, 139, 90, 0.4); }
+  50%      { box-shadow: 0 0 40px rgba(107, 139, 90, 0.8); }
+}
+
+/* 爆量金光 */
+.stock-volume-burst {
+  position: relative;
+  border: 2px solid var(--kin);
+  background: linear-gradient(135deg, var(--washi), rgba(184, 137, 61, 0.1));
+}
+.stock-volume-burst::before {
+  content: '💰';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 20px;
+  animation: stock-volume-bounce 1s ease-in-out infinite;
+}
+@keyframes stock-volume-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}

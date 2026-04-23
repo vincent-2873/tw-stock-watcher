@@ -46,7 +46,7 @@
   position: sticky;
   top: 0;
   background: var(--bg-primary);
-  border-bottom: 1px solid rgba(201, 169, 97, 0.1);
+  border-bottom: 1px solid rgba(184, 137, 61, 0.1);
   padding: 16px 24px;
   z-index: 100;
   backdrop-filter: blur(8px);
@@ -71,14 +71,14 @@
 }
 
 .logoText {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 20px;
   color: var(--accent-gold);
   font-weight: 500;
 }
 
 .logoSub {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-latin);
   font-size: 13px;
   color: var(--text-muted);
   font-style: italic;
@@ -107,7 +107,7 @@
 
 .navLink.active {
   color: var(--accent-gold);
-  background: rgba(201, 169, 97, 0.1);
+  background: rgba(184, 137, 61, 0.1);
 }
 
 /* ====== 主容器 ====== */
@@ -124,13 +124,13 @@
   align-items: flex-end;
   margin-bottom: 32px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(201, 169, 97, 0.08);
+  border-bottom: 1px solid rgba(184, 137, 61, 0.08);
   flex-wrap: wrap;
   gap: 12px;
 }
 
 .greetingLeft h1 {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 28px;
   font-weight: 400;
   color: var(--text-primary);
@@ -147,7 +147,7 @@
 }
 
 .date {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-latin);
   font-size: 16px;
   color: var(--accent-gold);
 }
@@ -183,7 +183,7 @@
 }
 
 .sectionTitle h2 {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 500;
   color: var(--text-primary);
@@ -192,7 +192,7 @@
 .divider {
   flex: 1;
   height: 1px;
-  background: linear-gradient(to right, rgba(201, 169, 97, 0.3), transparent);
+  background: linear-gradient(to right, rgba(184, 137, 61, 0.3), transparent);
 }
 
 .moreLink {
@@ -207,7 +207,7 @@
 /* ====== 市場脈動卡 ====== */
 .marketPulse {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.12);
+  border: 1px solid rgba(184, 137, 61, 0.12);
   border-radius: 8px;
   padding: 24px;
   display: grid;
@@ -239,7 +239,7 @@
   top: 10%;
   bottom: 10%;
   width: 1px;
-  background: rgba(201, 169, 97, 0.1);
+  background: rgba(184, 137, 61, 0.1);
 }
 
 .label {
@@ -250,7 +250,7 @@
 }
 
 .valueNum {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 500;
   color: var(--text-primary);
@@ -258,7 +258,7 @@
 }
 
 .change {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   margin-top: 4px;
 }
@@ -275,8 +275,8 @@
 
 /* ====== 呱呱晨報 ====== */
 .quackMorning {
-  background: linear-gradient(135deg, rgba(201, 169, 97, 0.06) 0%, rgba(122, 132, 113, 0.04) 100%);
-  border: 1px solid rgba(201, 169, 97, 0.2);
+  background: linear-gradient(135deg, rgba(184, 137, 61, 0.06) 0%, rgba(122, 132, 113, 0.04) 100%);
+  border: 1px solid rgba(184, 137, 61, 0.2);
   border-radius: 8px;
   padding: 28px;
   margin-top: 20px;
@@ -312,7 +312,7 @@
 }
 
 .quackTitle {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 18px;
   color: var(--accent-gold);
 }
@@ -324,12 +324,12 @@
 }
 
 .quackMain {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 20px;
   color: var(--text-primary);
   line-height: 1.7;
   margin-bottom: 18px;
-  border-left: 2px solid rgba(201, 169, 97, 0.3);
+  border-left: 2px solid rgba(184, 137, 61, 0.3);
   padding-left: 16px;
 }
 
@@ -342,7 +342,7 @@
 
 .highlightBox {
   padding: 14px 16px;
-  background: rgba(26, 24, 21, 0.5);
+  background: rgba(228, 219, 197, 0.5);
   border-radius: 6px;
 }
 
@@ -353,7 +353,7 @@
 }
 
 .highlightStocks {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   color: var(--text-primary);
 }
@@ -370,7 +370,7 @@
 .btn {
   padding: 10px 18px;
   border-radius: 4px;
-  border: 1px solid rgba(201, 169, 97, 0.3);
+  border: 1px solid rgba(184, 137, 61, 0.3);
   background: transparent;
   color: var(--accent-gold);
   text-decoration: none;
@@ -383,17 +383,17 @@
 }
 
 .btn:hover {
-  background: rgba(201, 169, 97, 0.1);
+  background: rgba(184, 137, 61, 0.1);
   border-color: var(--accent-gold);
 }
 
 .btn.primary {
-  background: rgba(201, 169, 97, 0.15);
+  background: rgba(184, 137, 61, 0.15);
   border-color: var(--accent-gold);
 }
 
 .btn.primary:hover {
-  background: rgba(201, 169, 97, 0.25);
+  background: rgba(184, 137, 61, 0.25);
 }
 
 /* ====== 兩欄網格 ====== */
@@ -407,7 +407,7 @@
 /* ====== 題材熱度卡 ====== */
 .topicCard {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 6px;
   padding: 18px 20px;
   margin-bottom: 12px;
@@ -418,7 +418,7 @@
 }
 
 .topicCard:hover {
-  border-color: rgba(201, 169, 97, 0.25);
+  border-color: rgba(184, 137, 61, 0.25);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(44, 36, 22, 0.12);
 }
@@ -434,13 +434,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 16px;
   color: var(--text-primary);
 }
 
 .topicRank {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-latin);
   font-size: 20px;
   color: var(--accent-gold);
   font-style: italic;
@@ -460,16 +460,16 @@
 }
 
 .badgeHot {
-  background: rgba(201, 169, 97, 0.15);
+  background: rgba(184, 137, 61, 0.15);
   color: var(--accent-gold);
-  border: 1px solid rgba(201, 169, 97, 0.3);
+  border: 1px solid rgba(184, 137, 61, 0.3);
 }
 
 .topicHeat {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
 }
 
@@ -485,7 +485,7 @@
 
 .heatBarWrapper {
   height: 4px;
-  background: rgba(42, 39, 31, 0.5);
+  background: rgba(184, 137, 61, 0.12);
   border-radius: 2px;
   margin: 10px 0;
   overflow: hidden;
@@ -516,11 +516,11 @@
 }
 
 .stockChip {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   padding: 4px 10px;
-  background: rgba(201, 169, 97, 0.08);
-  border: 1px solid rgba(201, 169, 97, 0.15);
+  background: rgba(184, 137, 61, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.15);
   border-radius: 3px;
   color: var(--text-primary);
   cursor: pointer;
@@ -530,7 +530,7 @@
 }
 
 .stockChip:hover {
-  background: rgba(201, 169, 97, 0.2);
+  background: rgba(184, 137, 61, 0.2);
   border-color: var(--accent-gold);
 }
 
@@ -540,14 +540,14 @@
 /* ====== 美股連動卡 ====== */
 .usConnect {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 6px;
   padding: 20px;
 }
 
 .usEvent {
   padding: 12px 0;
-  border-bottom: 1px solid rgba(201, 169, 97, 0.06);
+  border-bottom: 1px solid rgba(184, 137, 61, 0.06);
 }
 
 .usEvent:last-child { border-bottom: none; }
@@ -570,7 +570,7 @@
 
 .usStocks {
   margin-top: 4px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-secondary);
   margin-left: 16px;
@@ -579,14 +579,14 @@
 /* ====== 焦點股卡 ====== */
 .focusStocks {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 6px;
   padding: 20px;
 }
 
 .focusStockItem {
   padding: 14px 0;
-  border-bottom: 1px dashed rgba(201, 169, 97, 0.08);
+  border-bottom: 1px dashed rgba(184, 137, 61, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -600,7 +600,7 @@
 .focusStockItem:hover { padding-left: 8px; }
 
 .focusStockName {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   color: var(--text-primary);
 }
@@ -613,7 +613,7 @@
 
 .focusStockPrice {
   text-align: right;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .focusStockPrice .px {
@@ -638,7 +638,7 @@
 /* ====== 供應鏈金字塔 ====== */
 .pyramidCard {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 8px;
   padding: 28px;
   margin-top: 20px;
@@ -670,7 +670,7 @@
 }
 
 .pyramidRow:hover {
-  background: rgba(201, 169, 97, 0.05);
+  background: rgba(184, 137, 61, 0.05);
 }
 
 .arrow {
@@ -683,13 +683,13 @@
 }
 
 .pyramidTierLabel {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 11px;
   color: var(--text-muted);
   min-width: 130px;
   text-align: right;
   padding-right: 12px;
-  border-right: 1px solid rgba(201, 169, 97, 0.1);
+  border-right: 1px solid rgba(184, 137, 61, 0.1);
 }
 
 .pyramidStocks {
@@ -719,7 +719,7 @@
   color: var(--text-muted);
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid rgba(201, 169, 97, 0.08);
+  border-top: 1px solid rgba(184, 137, 61, 0.08);
   flex-wrap: wrap;
 }
 
@@ -733,13 +733,13 @@
 
 .flowCard {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 6px;
   padding: 20px;
 }
 
 .flowAmount {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 22px;
   margin-bottom: 6px;
 }
@@ -811,8 +811,8 @@
 }
 
 .heatmapCell.hMedium {
-  background: rgba(201, 169, 97, 0.18);
-  border: 1px solid rgba(201, 169, 97, 0.3);
+  background: rgba(184, 137, 61, 0.18);
+  border: 1px solid rgba(184, 137, 61, 0.3);
 }
 
 .heatmapCell.hFlat {
@@ -837,12 +837,12 @@
 }
 
 .cellChange {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
 }
 
 .cellAmount {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   color: var(--text-muted);
   margin-top: 2px;
@@ -851,7 +851,7 @@
 /* ====== 產業輪動 ====== */
 .rotationCard {
   background: var(--bg-card);
-  border: 1px solid rgba(201, 169, 97, 0.08);
+  border: 1px solid rgba(184, 137, 61, 0.08);
   border-radius: 6px;
   padding: 24px;
   margin-top: 20px;
@@ -866,7 +866,7 @@
 }
 
 .rotationHead h3 {
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   font-size: 16px;
   color: var(--text-primary);
 }
@@ -897,7 +897,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px dashed rgba(201, 169, 97, 0.06);
+  border-bottom: 1px dashed rgba(184, 137, 61, 0.06);
   font-size: 13px;
 }
 
@@ -906,7 +906,7 @@
 .rotationName { color: var(--text-primary); }
 
 .rotationAmount {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .rotationBar {
@@ -928,7 +928,7 @@
 .rotationReading {
   margin-top: 20px;
   padding: 14px;
-  background: rgba(201, 169, 97, 0.05);
+  background: rgba(184, 137, 61, 0.05);
   border-radius: 4px;
   font-size: 13px;
   color: var(--text-secondary);
@@ -941,7 +941,7 @@
 /* ====== 空狀態 ====== */
 .emptyState {
   background: var(--bg-card);
-  border: 1px dashed rgba(201, 169, 97, 0.15);
+  border: 1px dashed rgba(184, 137, 61, 0.15);
   border-radius: 8px;
   padding: 32px 24px;
   text-align: center;
@@ -979,13 +979,13 @@
   padding: 32px 24px;
   color: var(--text-muted);
   font-size: 12px;
-  border-top: 1px solid rgba(201, 169, 97, 0.06);
+  border-top: 1px solid rgba(184, 137, 61, 0.06);
   margin-top: 48px;
 }
 
 .footer .warning {
   color: var(--accent-gold);
-  font-family: 'Noto Serif TC', serif;
+  font-family: var(--font-serif);
   margin-bottom: 8px;
 }
 

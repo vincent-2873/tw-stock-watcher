@@ -31,14 +31,60 @@ def _require_token(x_admin_token: str | None) -> None:
         raise HTTPException(401, "bad admin token")
 
 
-def _dsn() -> str:
-    # backend 在 Zeabur 上對 db.xxx.supabase.co 的直連 DNS 正常
+def _dsn_candidates() -> list[str]:
+    """
+    Return a list of psycopg2 DSN strings to try in order.
+
+    Zeabur 的 container 不支援 IPv6 路由到 db.xxx.supabase.co(direct connection),
+    因此優先走 pooler(IPv4 + port 6543)。若有 SUPABASE_DB_HOST / SUPABASE_POOLER_HOST
+    等 env 覆寫,也支援。
+    """
     url = os.getenv("SUPABASE_URL", "").rstrip("/")
     ref = url.replace("https://", "").split(".")[0]
     password = os.getenv("SUPABASE_DB_PASSWORD", "")
     if not ref or not password:
         raise HTTPException(500, "SUPABASE_URL or SUPABASE_DB_PASSWORD missing")
-    return f"host=db.{ref}.supabase.co port=5432 dbname=postgres user=postgres password={password} sslmode=require"
+
+    # env 指定的 pooler host(最高優先)
+    pooler = os.getenv("SUPABASE_POOLER_HOST", "").strip()
+    region = os.getenv("SUPABASE_REGION", "ap-northeast-1").strip() or "ap-northeast-1"
+
+    candidates: list[str] = []
+    # 1. pooler — transaction mode(6543)— IPv4,Zeabur 通
+    if pooler:
+        candidates.append(
+            f"host={pooler} port=6543 dbname=postgres "
+            f"user=postgres.{ref} password={password} sslmode=require"
+        )
+    # 2. pooler — 預設以 region 拼(aws-0-{region}.pooler.supabase.com)
+    candidates.append(
+        f"host=aws-0-{region}.pooler.supabase.com port=6543 dbname=postgres "
+        f"user=postgres.{ref} password={password} sslmode=require"
+    )
+    # 3. pooler session mode(5432)做 fallback
+    candidates.append(
+        f"host=aws-0-{region}.pooler.supabase.com port=5432 dbname=postgres "
+        f"user=postgres.{ref} password={password} sslmode=require"
+    )
+    # 4. direct 最後試 — 多數情況會 IPv6 fail,但本機跑 backend 時可用
+    candidates.append(
+        f"host=db.{ref}.supabase.co port=5432 dbname=postgres user=postgres "
+        f"password={password} sslmode=require"
+    )
+    return candidates
+
+
+def _connect():
+    """Try DSN candidates in order; raise with the accumulated error trail."""
+    errors: list[str] = []
+    for dsn in _dsn_candidates():
+        try:
+            return psycopg2.connect(dsn, connect_timeout=8)
+        except Exception as e:
+            # 只印 host 的部分,不洩漏 password
+            host = next((tok for tok in dsn.split() if tok.startswith("host=")), "host=?")
+            errors.append(f"{host} → {type(e).__name__}: {e}")
+    raise HTTPException(500, "db connect failed, tried all DSNs:\n" + "\n".join(errors))
 
 
 class ExecSqlReq(BaseModel):
@@ -54,10 +100,7 @@ async def admin_ping(x_admin_token: str | None = Header(default=None)):
 @router.post("/admin/exec_sql")
 async def admin_exec_sql(req: ExecSqlReq, x_admin_token: str | None = Header(default=None)):
     _require_token(x_admin_token)
-    try:
-        conn = psycopg2.connect(_dsn())
-    except Exception as e:
-        raise HTTPException(500, f"db connect failed: {type(e).__name__}: {e}")
+    conn = _connect()
     try:
         with conn.cursor() as cur:
             cur.execute(req.sql)
@@ -98,10 +141,7 @@ async def admin_upsert_seed(req: UpsertReq, x_admin_token: str | None = Header(d
         f"INSERT INTO {req.table} ({col_list}) VALUES ({placeholders}) "
         f"ON CONFLICT ({req.conflict}) DO UPDATE SET {update_set}"
     )
-    try:
-        conn = psycopg2.connect(_dsn())
-    except Exception as e:
-        raise HTTPException(500, f"db connect failed: {type(e).__name__}: {e}")
+    conn = _connect()
     try:
         with conn.cursor() as cur:
             inserted = 0
