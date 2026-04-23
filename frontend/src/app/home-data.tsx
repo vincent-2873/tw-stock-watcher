@@ -876,6 +876,12 @@ type Statement = {
   };
 };
 
+/**
+ * Bug 5 修(CLAUDE.md 鐵則 4):
+ *   - 資料為空整塊隱藏,不顯示「暫無」或佔位文字
+ *   - 此元件現在自己管理區塊標題 + loading/empty/data 三狀態
+ *   - 空時 return null,外層看不到標題也看不到空殼
+ */
 export function PeopleStatementsLive() {
   const [items, setItems] = useState<Statement[] | null>(null);
   useEffect(() => {
@@ -890,50 +896,24 @@ export function PeopleStatementsLive() {
       }
     }
     load();
+    const t = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
   }, []);
 
-  if (items === null) {
-    return (
-      <div
-        style={{
-          padding: "18px 22px",
-          background: "var(--card)",
-          border: "1px solid var(--border)",
-          borderRadius: 8,
-          color: "var(--muted-fg)",
-          fontStyle: "italic",
-        }}
-      >
-        呱呱在聽全世界⋯
-      </div>
-    );
-  }
+  // loading — 用極簡佔位符 (不算空殼,因還在載入)
+  if (items === null) return null;
 
-  if (items.length === 0) {
-    return (
-      <div
-        style={{
-          padding: "28px 22px",
-          background: "var(--card)",
-          border: "1px dashed var(--border)",
-          borderRadius: 8,
-          textAlign: "center",
-          color: "var(--muted-fg)",
-        }}
-      >
-        <div style={{ fontSize: 28, opacity: 0.5, marginBottom: 6 }}>🎤💤</div>
-        <div style={{ fontFamily: "var(--font-serif)", fontSize: 14 }}>
-          今天關鍵人物暫無重要發言
-        </div>
-        <div style={{ fontSize: 11, marginTop: 6 }}>
-          呱呱正監測 40+ 位人物(馬斯克 / 黃仁勳 / Powell / 魏哲家⋯)
-        </div>
-      </div>
-    );
-  }
+  // 空 — 整塊隱藏,連標題都不 render
+  if (items.length === 0) return null;
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <>
+      <div className={styles.sectionTitle}>
+        <h2>🎤 今日關鍵發言</h2>
+        <div className={styles.divider}></div>
+        <Link className={styles.moreLink} href="/intel">所有情報 →</Link>
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
       {items.map((s) => (
         <div
           key={s.id}
@@ -966,7 +946,8 @@ export function PeopleStatementsLive() {
           )}
         </div>
       ))}
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -150,12 +150,7 @@ export default function Home() {
         {/* 🦆 呱呱今日功課(即時資料生成) */}
         <QuackMorningLive />
 
-        {/* 🎤 今日關鍵發言(重點人物 Intel Hub) */}
-        <div className={styles.sectionTitle}>
-          <h2>🎤 今日關鍵發言</h2>
-          <div className={styles.divider}></div>
-          <Link className={styles.moreLink} href="/intel">所有情報 →</Link>
-        </div>
+        {/* 🎤 今日關鍵發言 — 空時整塊隱藏 (PeopleStatementsLive 自管標題) */}
         <PeopleStatementsLive />
 
         {/* 🔥 題材熱度 + 右欄 */}
