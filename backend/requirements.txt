@@ -31,3 +31,7 @@ pendulum>=3.0
 
 # 日誌
 loguru>=0.7
+
+# RSS 解析(Intel Hub Phase 1)
+feedparser>=6.0
+beautifulsoup4>=4.12
