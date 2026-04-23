@@ -8,6 +8,7 @@ import {
 } from "@/lib/api";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { DimCard } from "@/components/stocks/DimCard";
+import { InstitutionalBanner } from "@/components/stocks/InstitutionalBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -143,6 +144,9 @@ export default async function StockDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
       </section>
+
+      {/* 法人動向(凸顯顯示) */}
+      <InstitutionalBanner chip={analysis.evidence.chip} />
 
       {/* 四象限 */}
       <section className="mb-6">
