@@ -1,5 +1,11 @@
 import Link from "next/link";
 import styles from "./page.module.css";
+import {
+  MarketPulseLive,
+  TopicsLive,
+  QuackPicksLive,
+  HeadlinesLive,
+} from "./home-data";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -273,18 +279,8 @@ export default function Home() {
           <div className={styles.divider}></div>
           <Link className={styles.moreLink} href="/market">大盤詳情 →</Link>
         </div>
-        <div className={styles.marketPulse}>
-          {MARKET.map((m, i) => (
-            <div key={i} className={styles.marketItem}>
-              <div className={styles.label}>{m.label}</div>
-              <div className={styles.valueNum}>{m.value}</div>
-              <div className={cx(styles.change, m.chgClass === "rise" ? styles.rise : styles.fall)}>
-                {m.change}
-              </div>
-              <div className={styles.extra}>{m.extra}</div>
-            </div>
-          ))}
-        </div>
+        {/* 即時 30 秒更新 */}
+        <MarketPulseLive />
 
         {/* 🦆 呱呱今日功課 */}
         <div className={styles.quackMorning}>
@@ -337,33 +333,7 @@ export default function Home() {
 
         <div className={styles.twoCol}>
           <div>
-            {TOPICS.map((t) => (
-              <Link key={t.rank} className={styles.topicCard} href="/pond">
-                <div className={styles.topicHeader}>
-                  <div className={styles.topicName}>
-                    <span className={styles.topicRank}>{t.rank}</span>
-                    <span>{t.name}</span>
-                    {t.badge === "new" && <span className={cx(styles.topicBadge, styles.badgeNew)}>新</span>}
-                    {t.badge === "hot" && <span className={cx(styles.topicBadge, styles.badgeHot)}>延燒</span>}
-                  </div>
-                  <div className={styles.topicHeat}>
-                    <span className={styles.heatScore}>{t.heat}°</span>
-                    <span className={cx(styles.heatTrend, styles[t.trend])}>
-                      {t.trend === "up" ? "↑" : t.trend === "down" ? "↓" : "→"}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.heatBarWrapper}>
-                  <div className={cx(styles.heatBar, styles[t.tier])} style={{ width: `${t.heat}%` }}></div>
-                </div>
-                <div className={styles.topicDesc}>{t.desc}</div>
-                <div className={styles.topicStocks}>
-                  {t.stocks.map((s) => (
-                    <StockChip key={s.code} code={`${s.name} ${s.code}`} change={s.change} />
-                  ))}
-                </div>
-              </Link>
-            ))}
+            <TopicsLive />
           </div>
 
           {/* 右欄 */}
@@ -405,6 +375,34 @@ export default function Home() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* 🦆 呱呱這週挑的(帶信心度) */}
+        <div className={styles.sectionTitle}>
+          <h2>🦆 呱呱這週挑的</h2>
+          <div className={styles.divider}></div>
+          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>題材熱度 + 供應鏈位置</span>
+        </div>
+        <div style={{ padding: "12px 0" }}>
+          <QuackPicksLive />
+        </div>
+
+        {/* 📰 今日重點(AI 分類新聞) */}
+        <div className={styles.sectionTitle}>
+          <h2>📰 今日重點</h2>
+          <div className={styles.divider}></div>
+          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>AI 分類 · 近 24 小時</span>
+        </div>
+        <div
+          style={{
+            background: "var(--bg-card)",
+            border: "1px solid rgba(201, 169, 97, 0.08)",
+            borderRadius: 6,
+            padding: "16px 20px",
+            marginTop: 8,
+          }}
+        >
+          <HeadlinesLive />
         </div>
 
         {/* 🏔️ 供應鏈金字塔 */}
