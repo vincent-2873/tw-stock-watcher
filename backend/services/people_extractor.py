@@ -131,10 +131,12 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
     articles_res = (
         svc.table("intel_articles")
         .select(
-            "id,title,ai_summary,ai_sentiment,ai_market_impact,"
-            "ai_affected_stocks,ai_importance,url,source_id,published_at"
+            "id,title,ai_summary,ai_sentiment,ai_quack_perspective,"
+            "ai_affected_stocks,ai_importance,ai_urgency,"
+            "url,source_id,published_at"
         )
         .gte("published_at", since)
+        .not_.is_("ai_summary", "null")
         .order("published_at", desc=True)
         .limit(limit)
         .execute()
@@ -170,9 +172,11 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
                     "ai_summary": art.get("ai_summary"),
                     "ai_topic": None,
                     "ai_sentiment": art.get("ai_sentiment"),
-                    "ai_market_impact": art.get("ai_market_impact"),
+                    # intel_articles 沒 market_impact, 用呱呱觀點代替
+                    "ai_market_impact": art.get("ai_quack_perspective"),
                     "ai_affected_stocks": art.get("ai_affected_stocks"),
-                    "ai_urgency": art.get("ai_importance"),
+                    # ai_urgency: people_statements 用這欄顯示緊急度 (0-10)
+                    "ai_urgency": art.get("ai_urgency") or art.get("ai_importance"),
                     "said_at": art.get("published_at"),
                 }
             )
