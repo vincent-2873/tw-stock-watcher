@@ -72,6 +72,17 @@ class _ReasoningInput(BaseModel):
     news_top5: Optional[list[dict]] = None
 
 
+def _is_missing_table(e: Exception) -> bool:
+    """偵測表不存在的多種錯誤訊息(psycopg2 / PostgREST / supabase-py)"""
+    msg = str(e).lower()
+    return (
+        "does not exist" in msg
+        or "could not find the table" in msg
+        or "pgrst205" in msg
+        or "relation" in msg and "does not exist" in msg
+    )
+
+
 def _require_admin(token: Optional[str]) -> None:
     if not ADMIN_TOKEN:
         raise HTTPException(503, "ADMIN_TOKEN not configured")
@@ -94,8 +105,7 @@ def _safe_select(table: str, *, columns: str = "*", order: tuple[str, bool] | No
         resp = q.execute()
         return resp.data or []
     except Exception as e:
-        msg = str(e)
-        if "does not exist" in msg or "relation" in msg and "does not exist" in msg:
+        if _is_missing_table(e):
             log.warning("quack route: table %s not exist — returning []", table)
             return []
         log.exception("quack _safe_select %s: %s", table, e)
@@ -242,7 +252,7 @@ async def list_predictions(
         )
         rows = r.data or []
     except Exception as e:
-        if "does not exist" in str(e):
+        if _is_missing_table(e):
             return {"count": 0, "hit_rate": None, "predictions": [], "note": "migration 0003 未執行"}
         raise HTTPException(500, f"db error: {e}")
 
@@ -318,7 +328,7 @@ async def social_hot(hours: int = Query(6, ge=1, le=72)):
         )
         rows = r.data or []
     except Exception as e:
-        if "does not exist" in str(e):
+        if _is_missing_table(e):
             return {"stocks": [], "topics": [], "note": "migration 0003 未執行"}
         raise HTTPException(500, f"db error: {e}")
 
@@ -406,7 +416,7 @@ async def list_auto_alerts(
         q = q.order("created_at", desc=True).limit(limit)
         rows = q.execute().data or []
     except Exception as e:
-        if "does not exist" in str(e):
+        if _is_missing_table(e):
             return {"count": 0, "alerts": [], "note": "migration 0003 未執行"}
         raise HTTPException(500, f"db error: {e}")
     return {"count": len(rows), "alerts": rows}
