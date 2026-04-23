@@ -11,6 +11,7 @@ import { LiveTicker } from "@/components/LiveTicker";
 import { WeatherCard } from "@/components/quack/WeatherCard";
 import { QuackTodayCard } from "@/components/quack/QuackTodayCard";
 import { TopicsHeatSection } from "@/components/quack/TopicsHeatSection";
+import { MarketPanorama } from "@/components/quack/MarketPanorama";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -54,7 +55,8 @@ const NAV_LINKS = [
   { href: "/", label: "今日", icon: "🏠" },
   { href: "/pond", label: "池塘", icon: "🦆" },
   { href: "/journal", label: "筆記", icon: "📓" },
-  { href: "/market", label: "全景", icon: "📊" },
+  { href: "/map", label: "地圖", icon: "🗺️" },
+  { href: "/stocks", label: "查股", icon: "🔍" },
   { href: "/chat", label: "呱呱", icon: "💬" },
   { href: "/alerts", label: "鈴鐺", icon: "🔔" },
 ];
@@ -139,9 +141,14 @@ export default async function Dashboard() {
         <div className="wabi-divider" />
 
         {/* 呱呱招待所 · 今日三塊 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8 wabi-enter wabi-enter-delay-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5 wabi-enter wabi-enter-delay-1">
           <WeatherCard />
           <QuackTodayCard />
+        </div>
+
+        {/* 大盤全景 (30s 即時更新) */}
+        <div className="mb-5 wabi-enter wabi-enter-delay-1">
+          <MarketPanorama />
         </div>
 
         <div className="mb-8 wabi-enter wabi-enter-delay-2">
