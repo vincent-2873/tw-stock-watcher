@@ -1,0 +1,43 @@
+name: 🔄 Intel Cron (every 15 min)
+
+# 每 15 分鐘呼叫一次 /api/intel/cron — 同時拉 RSS 再 analyze N 篇
+# 用 GitHub Actions 跑,繞過 Zeabur edge 90s timeout
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      analyze_limit:
+        description: 'Articles to analyze per run'
+        type: string
+        default: '8'
+
+concurrency:
+  group: intel-cron
+  cancel-in-progress: false
+
+jobs:
+  cron:
+    name: Call intel/cron + quack/reasoning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Hit /api/intel/cron
+        run: |
+          LIMIT="${{ github.event.inputs.analyze_limit || '8' }}"
+          echo "Calling /api/intel/cron?analyze_limit=$LIMIT"
+          curl -sS -X POST "https://vsis-api.zeabur.app/api/intel/cron?analyze_limit=$LIMIT" \
+            -H "X-Admin-Token: ${{ secrets.ADMIN_TOKEN }}" \
+            --max-time 300 -w "\nHTTP %{http_code} in %{time_total}s\n" || echo "cron call failed (continuing)"
+
+      - name: Refresh quack/reasoning (first call today)
+        if: github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -sS "https://vsis-api.zeabur.app/api/quack/reasoning" \
+            --max-time 120 -w "\nHTTP %{http_code} in %{time_total}s\n" || true
+
+      - name: Refresh PTT social mentions (once per run)
+        run: |
+          curl -sS -X POST "https://vsis-api.zeabur.app/api/quack/social/refresh?pages=3" \
+            -H "X-Admin-Token: ${{ secrets.ADMIN_TOKEN }}" \
+            --max-time 120 -w "\nHTTP %{http_code} in %{time_total}s\n" || true

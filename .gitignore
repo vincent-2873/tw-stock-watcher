@@ -100,3 +100,4 @@ credentials/
 test-data/
 sample-data/
 .pytest_cache/
+inbox/files_unzipped/

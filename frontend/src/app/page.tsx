@@ -12,6 +12,7 @@ import {
   InstitutionalLive,
   PeopleStatementsLive,
 } from "./home-data";
+import { HeroDate } from "@/components/hero/HeroDate";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -275,7 +276,7 @@ export default function Home() {
         <section className={styles.heroQuack}>
           <div className={styles.heroLeft}>
             <div className={styles.heroDate}>
-              {now.dateEn} · {now.time} TPE
+              <HeroDate />
             </div>
             <h1>
               今天池塘的水<br />
