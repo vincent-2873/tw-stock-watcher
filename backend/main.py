@@ -60,6 +60,7 @@ from backend.routes import vsis as _vsis_routes  # noqa: E402
 from backend.routes import intel as _intel_routes  # noqa: E402
 from backend.routes import quack as _quack_routes  # noqa: E402
 from backend.routes import diag as _diag_routes  # noqa: E402
+from backend.routes import time_route as _time_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
@@ -74,6 +75,7 @@ app.include_router(_vsis_routes.router, prefix="/api", tags=["vsis"])
 app.include_router(_intel_routes.router, prefix="/api", tags=["intel"])
 app.include_router(_quack_routes.router, prefix="/api", tags=["quack"])
 app.include_router(_diag_routes.router, prefix="/api", tags=["diag"])
+app.include_router(_time_routes.router, prefix="/api", tags=["time"])
 
 
 @app.get("/")
