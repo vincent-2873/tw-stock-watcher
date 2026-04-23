@@ -16,6 +16,7 @@ from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException, Query
 
+from backend.services.article_analyzer import ArticleAnalyzer
 from backend.services.intel_crawler import IntelCrawler
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import get_service_client
@@ -51,6 +52,33 @@ async def list_sources(active_only: bool = Query(True)) -> dict[str, Any]:
 async def refresh_all(x_admin_token: str | None = Header(default=None)) -> dict[str, Any]:
     _require_admin(x_admin_token)
     return IntelCrawler().run_all()
+
+
+@router.post("/intel/analyze")
+async def analyze_pending(
+    limit: int = Query(20, ge=1, le=50),
+    x_admin_token: str | None = Header(default=None),
+) -> dict[str, Any]:
+    """批次 AI 分析 pending 文章(Phase 2)"""
+    _require_admin(x_admin_token)
+    return ArticleAnalyzer().run_batch(limit)
+
+
+@router.post("/intel/cron")
+async def cron_tick(
+    x_admin_token: str | None = Header(default=None),
+    crawl: bool = Query(True),
+    analyze: bool = Query(True),
+    analyze_limit: int = Query(15, ge=1, le=30),
+) -> dict[str, Any]:
+    """一次跑完:抓 RSS + AI 分析 — 給 Zeabur cron / GitHub Actions 打。"""
+    _require_admin(x_admin_token)
+    out: dict[str, Any] = {"tpe_now": now_tpe().isoformat()}
+    if crawl:
+        out["crawl"] = IntelCrawler().run_all()
+    if analyze:
+        out["analyze"] = ArticleAnalyzer().run_batch(analyze_limit)
+    return out
 
 
 @router.post("/intel/refresh/{source_id}")
