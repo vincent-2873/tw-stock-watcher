@@ -56,16 +56,29 @@ def _dsn_candidates() -> list[str]:
             f"host={pooler} port=6543 dbname=postgres "
             f"user=postgres.{ref} password={password} sslmode=require"
         )
-    # 2. pooler — 預設以 region 拼(aws-0-{region}.pooler.supabase.com)
-    candidates.append(
-        f"host=aws-0-{region}.pooler.supabase.com port=6543 dbname=postgres "
-        f"user=postgres.{ref} password={password} sslmode=require"
-    )
-    # 3. pooler session mode(5432)做 fallback
-    candidates.append(
-        f"host=aws-0-{region}.pooler.supabase.com port=5432 dbname=postgres "
-        f"user=postgres.{ref} password={password} sslmode=require"
-    )
+    # 2. pooler — 依 region 拼 aws-0-{region}.pooler.supabase.com
+    #    用列表輪流試(Supabase Cloud project 會在某一個 region),
+    #    主要:ap-southeast-1 / ap-northeast-1 / us-east-1 / eu-west-1 / us-west-1
+    regions_to_try = [region] + [
+        r for r in (
+            "ap-southeast-1",
+            "ap-northeast-1",
+            "ap-northeast-2",
+            "us-east-1",
+            "us-east-2",
+            "us-west-1",
+            "us-west-2",
+            "eu-west-1",
+            "eu-west-2",
+            "eu-central-1",
+            "sa-east-1",
+        ) if r != region
+    ]
+    for r in regions_to_try:
+        candidates.append(
+            f"host=aws-0-{r}.pooler.supabase.com port=6543 dbname=postgres "
+            f"user=postgres.{ref} password={password} sslmode=require"
+        )
     # 4. direct 最後試 — 多數情況會 IPv6 fail,但本機跑 backend 時可用
     candidates.append(
         f"host=db.{ref}.supabase.co port=5432 dbname=postgres user=postgres "
@@ -79,11 +92,14 @@ def _connect():
     errors: list[str] = []
     for dsn in _dsn_candidates():
         try:
-            return psycopg2.connect(dsn, connect_timeout=8)
-        except Exception as e:
-            # 只印 host 的部分,不洩漏 password
+            conn = psycopg2.connect(dsn, connect_timeout=4)
+            # 連到了 — 把 region(如果是 pooler)記到最後錯誤列表底,方便之後設 env
             host = next((tok for tok in dsn.split() if tok.startswith("host=")), "host=?")
-            errors.append(f"{host} → {type(e).__name__}: {e}")
+            errors.append(f"OK via {host}")
+            return conn
+        except Exception as e:
+            host = next((tok for tok in dsn.split() if tok.startswith("host=")), "host=?")
+            errors.append(f"{host} → {type(e).__name__}: {str(e)[:120]}")
     raise HTTPException(500, "db connect failed, tried all DSNs:\n" + "\n".join(errors))
 
 

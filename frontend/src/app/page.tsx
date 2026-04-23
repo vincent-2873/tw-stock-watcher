@@ -231,7 +231,14 @@ function tpeNow() {
     hour12: false,
     timeZone: "Asia/Taipei",
   });
-  return { greet, session, date: `${date} 週${weekday}`, time };
+  const dateEn = tpe.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Taipei",
+  }).replace(",", " ·").replace(",", " ·");
+  return { greet, session, date: `${date} 週${weekday}`, dateEn, time };
 }
 
 // ===== 頁面 =====
@@ -241,43 +248,77 @@ export default function Home() {
 
   return (
     <div className={styles.root}>
-      {/* Top nav */}
+      {/* Top nav — 禪風 v3 照 18_ZEN HTML */}
       <div className={styles.topnav}>
         <div className={styles.topnavInner}>
-          <Link href="/" className={styles.logo} style={{ textDecoration: "none" }}>
+          <Link href="/" className={styles.logo}>
             <span className={styles.logoQuack}>🦆</span>
-            <div>
-              <div className={styles.logoText}>呱呱投資招待所</div>
-              <div className={styles.logoSub}>Quack House</div>
+            <div className={styles.logoTextBlock}>
+              <span className={styles.logoJp}>クワック・ハウス</span>
+              <span className={styles.logoText}>呱呱投資招待所</span>
             </div>
+            <span className={styles.logoUnderline}></span>
           </Link>
           <nav className={styles.navLinks}>
-            <Link className={cx(styles.navLink, styles.active)} href="/">🏠 首頁</Link>
-            <Link className={styles.navLink} href="/intel">📰 情報</Link>
-            <Link className={styles.navLink} href="/pond">🔥 題材熱度</Link>
-            <Link className={styles.navLink} href="/map">🗺️ 產業分類</Link>
-            <Link className={styles.navLink} href="/stocks">🔍 查個股</Link>
-            <Link className={styles.navLink} href="/chat">💬 AI 問答</Link>
+            <Link className={cx(styles.navLink, styles.active)} href="/">今日重點</Link>
+            <Link className={styles.navLink} href="/pond">題材熱度</Link>
+            <Link className={styles.navLink} href="/stocks">自選股</Link>
+            <Link className={styles.navLink} href="/map">產業地圖</Link>
+            <Link className={styles.navLink} href="/chat">AI 對話</Link>
+            <Link className={styles.navLink} href="/intel">更多 ⋯</Link>
           </nav>
         </div>
       </div>
 
       <div className={styles.container}>
-        {/* Greeting */}
-        <div className={styles.greeting}>
-          <div className={styles.greetingLeft}>
-            <h1>{now.greet},Vincent</h1>
-            <div className={styles.subtitle}>
-              今天池塘的水有點混,呱呱已經在觀察 · {now.session} {now.time}
+        {/* Hero — 照 18_ZEN_HOMEPAGE_v3.html */}
+        <section className={styles.heroQuack}>
+          <div className={styles.heroLeft}>
+            <div className={styles.heroDate}>
+              {now.dateEn} · {now.time} TPE
+            </div>
+            <h1>
+              今天池塘的水<br />
+              有點<span className={styles.accent}>混</span>。
+            </h1>
+            <div className={styles.heroQuote}>
+              昨夜 Tesla 一句「CAPEX 250 億 + 負現金流」,
+              <br />
+              引爆 AI 泡沫疑慮。拉高的別追,跌深的先等。
+            </div>
+            <div className={styles.heroActions}>
+              <Link className={cx(styles.btnZen, styles.btnZenPrimary)} href="#quack-morning">
+                📄 看完整晨報
+              </Link>
+              <Link className={styles.btnZen} href="/chat">
+                💬 問呱呱
+              </Link>
+              <Link className={styles.btnZen} href="/intel">
+                🔗 相關情報
+              </Link>
             </div>
           </div>
-          <div className={styles.greetingRight}>
-            <div className={styles.date}>{now.date}</div>
-            <div className={styles.status}>
-              <span className={styles.statusDot}></span>{now.session}資料 · 自動更新
+
+          <div className={styles.heroRight}>
+            <div className={styles.quackCircle}>
+              <span className={styles.quackBigEmoji} aria-hidden>
+                🦆
+              </span>
             </div>
+            <span className={`${styles.floatNum} ${styles.floatN1}`}>
+              TAIEX <span className="num">37,612</span>
+            </span>
+            <span className={`${styles.floatNum} ${styles.floatN2}`}>
+              VIX <span className="num">22.15</span>
+            </span>
+            <span className={`${styles.floatNum} ${styles.floatN3}`}>
+              台指期 <span className="num">37,520</span>
+            </span>
+            <span className={`${styles.floatNum} ${styles.floatN4}`}>
+              費半 <span className="num">-2.45%</span>
+            </span>
           </div>
-        </div>
+        </section>
 
         {/* 🌡️ 市場脈動 */}
         <div className={styles.sectionTitle}>
