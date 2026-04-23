@@ -245,9 +245,11 @@ const TIER_TEXT_ON: Record<string, string> = {
   SSR: "#F5EFE0",
 };
 
+type TierLevel = "SR" | "R" | "N";
+
 export function QuackPicksLive() {
   const [picks, setPicks] = useState<Pick[] | null>(null);
-  const [minTier, setMinTier] = useState<"SR" | "R">("SR");
+  const [minTier, setMinTier] = useState<TierLevel>("SR");
 
   useEffect(() => {
     let cancelled = false;
@@ -274,7 +276,7 @@ export function QuackPicksLive() {
     );
   }
 
-  // 無 SR/SSR 自動 fallback 到 R 看看
+  // 無 SR/SSR → 給 CTA 切到 R
   if (picks.length === 0 && minTier === "SR") {
     return (
       <div style={{ padding: 16, fontSize: 13, color: "var(--text-muted)" }}>
@@ -293,6 +295,29 @@ export function QuackPicksLive() {
           }}
         >
           看 R 級觀察名單 →
+        </button>
+      </div>
+    );
+  }
+  // 無 R → 給 CTA 切到 N
+  if (picks.length === 0 && minTier === "R") {
+    return (
+      <div style={{ padding: 16, fontSize: 13, color: "var(--text-muted)" }}>
+        今日亦無 R 級股 — 整體估值 / 籌碼 / 技術面都偏弱。
+        <button
+          onClick={() => setMinTier("N")}
+          style={{
+            marginLeft: 8,
+            padding: "2px 10px",
+            fontSize: 11,
+            border: "1px solid var(--border)",
+            background: "transparent",
+            color: "inherit",
+            cursor: "pointer",
+            borderRadius: 4,
+          }}
+        >
+          看 N 級觀察池 TOP 6 →
         </button>
       </div>
     );
