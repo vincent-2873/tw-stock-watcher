@@ -140,60 +140,102 @@ async def get_ecosystem(anchor: str) -> dict[str, Any]:
 @router.get("/quack/picks")
 async def quack_weekly_picks(
     limit: int = Query(6, ge=1, le=15),
-    horizon: str = Query("1w", description="1w | 1m"),
+    min_tier: str = Query("SR", description="最低 tier: R / SR / SSR"),
 ) -> dict[str, Any]:
-    """呱呱一週(或一個月)推薦清單 — 基於題材熱度 + investment_strategy。
+    """呱呱挑股 — Phase 2.3 改版: 走 stocks.current_tier 真四象限評分。
 
-    邏輯:
-      1. 取熱度 TOP 5 active topics
-      2. 從每題材的 investment_strategy.short_term_1w (或 medium_term_1m) 抽個股
-      3. 每檔標上所屬題材 + 熱度分數
-      4. 按題材熱度排序,去重後取前 N 檔
+    CLAUDE.md 鐵則: 每個建議都要有根據。
+    - SELECT FROM stocks WHERE current_tier IN (min_tier..SSR)
+    - 依 current_score DESC 排序
+    - 附上所屬題材(從 topics.supply_chain 反查)
+    - score_breakdown 可點進個股頁驗證
+
+    Worker: backend/services/scoring_worker.py (GitHub Action 每日 15:30 TPE)
     """
     sb = _svc()
-    topics = (
-        sb.table("topics")
-        .select("id, name, heat_score, stage, investment_strategy, supply_chain, ai_summary")
-        .eq("status", "active")
-        .order("heat_score", desc=True)
-        .limit(10)
+
+    tier_order = ["C", "N", "R", "SR", "SSR"]
+    try:
+        start = tier_order.index(min_tier.upper())
+    except ValueError:
+        start = 3
+    allowed_tiers = tier_order[start:]
+
+    rows = (
+        sb.table("stocks")
+        .select(
+            "stock_id, stock_name, industry, "
+            "current_score, current_tier, score_breakdown, tier_updated_at"
+        )
+        .eq("is_active", True)
+        .in_("current_tier", allowed_tiers)
+        .order("current_score", desc=True)
+        .limit(limit)
         .execute()
         .data
         or []
     )
 
-    strategy_key = "short_term_1w" if horizon == "1w" else "medium_term_1m"
-    seen: dict[str, dict[str, Any]] = {}
+    # 反查題材做字典 (ticker → primary topic)
+    topics = (
+        sb.table("topics")
+        .select("id,name,heat_score,stage,supply_chain")
+        .eq("status", "active")
+        .order("heat_score", desc=True)
+        .limit(15)
+        .execute()
+        .data
+        or []
+    )
+    stock_to_topic: dict[str, list[dict[str, Any]]] = {}
     for t in topics:
-        strat = (t.get("investment_strategy") or {}).get(strategy_key) or []
-        heat = t.get("heat_score") or 0
-        for ticker in strat:
-            ticker = str(ticker)
-            if not ticker.isdigit() and not (len(ticker) > 3 and ticker[:4].isdigit()):
-                continue  # 略過「德宏」這種名字
-            existing = seen.get(ticker)
-            # 第一次見到就存;若新題材熱度更高也更新歸屬
-            if not existing or heat > existing["heat_score"]:
-                # 判斷在供應鏈哪一層
-                chain_tier = None
-                for tier in (t.get("supply_chain") or {}).values():
-                    if tier and ticker in (tier.get("stocks") or []):
-                        chain_tier = tier.get("name")
-                        break
-                seen[ticker] = {
-                    "ticker": ticker,
-                    "topic_id": t["id"],
-                    "topic_name": t["name"],
-                    "topic_stage": t.get("stage"),
-                    "heat_score": heat,
-                    "chain_tier": chain_tier,
-                    "topic_summary": t.get("ai_summary"),
-                }
-    picks = sorted(seen.values(), key=lambda x: x["heat_score"], reverse=True)[:limit]
+        sc = t.get("supply_chain") or {}
+        for chain in sc.values():
+            for s in (chain.get("stocks") or []):
+                sid = str(s).strip()
+                if not sid:
+                    continue
+                stock_to_topic.setdefault(sid, []).append(
+                    {
+                        "topic_id": t["id"],
+                        "topic_name": t["name"],
+                        "topic_heat": t.get("heat_score") or 0,
+                        "topic_stage": t.get("stage"),
+                        "chain_tier": chain.get("name"),
+                    }
+                )
+
+    picks: list[dict[str, Any]] = []
+    for r in rows:
+        sid = r["stock_id"]
+        topic_links = sorted(
+            stock_to_topic.get(sid, []),
+            key=lambda x: x["topic_heat"],
+            reverse=True,
+        )
+        primary = topic_links[0] if topic_links else None
+        picks.append(
+            {
+                "ticker": sid,
+                "stock_name": r.get("stock_name"),
+                "industry": r.get("industry"),
+                "score": r.get("current_score"),
+                "tier": r.get("current_tier"),
+                "breakdown": r.get("score_breakdown"),
+                "tier_updated_at": r.get("tier_updated_at"),
+                "topic_id": primary["topic_id"] if primary else None,
+                "topic_name": primary["topic_name"] if primary else None,
+                "topic_stage": primary["topic_stage"] if primary else None,
+                "topic_heat": primary["topic_heat"] if primary else None,
+                "chain_tier": primary["chain_tier"] if primary else None,
+            }
+        )
+
     return {
-        "horizon": horizon,
+        "min_tier": min_tier.upper(),
         "count": len(picks),
         "picks": picks,
+        "note": "基於 stocks.current_score 四象限評分 (每日 15:30 TPE 重算)",
     }
 
 

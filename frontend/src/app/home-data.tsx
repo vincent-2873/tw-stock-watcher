@@ -206,41 +206,65 @@ export function TopicsLive() {
 }
 
 // ============================================
-// 3. 呱呱這週挑的(帶信心度標示)
+// 3. 呱呱這週挑的 — Phase 2.3 新版:走 stocks.current_tier 真四象限
 // ============================================
 type Pick = {
   ticker: string;
-  topic_id: string;
-  topic_name: string;
+  stock_name: string | null;
+  industry: string | null;
+  score: number | null;
+  tier: "C" | "N" | "R" | "SR" | "SSR" | null;
+  breakdown: {
+    fundamental?: number;
+    chip?: number;
+    technical?: number;
+    catalyst?: number;
+    market_adjustment?: number;
+    confidence?: number;
+  } | null;
+  tier_updated_at: string | null;
+  topic_id: string | null;
+  topic_name: string | null;
   topic_stage: string | null;
-  heat_score: number;
+  topic_heat: number | null;
   chain_tier: string | null;
 };
 
-/**
- * Bug 6 修:這裡的 heat 是「題材熱度」(0-100),不是個股 AI 信心度
- * 避免跟個股頁的 confidence % 混淆,這裡只標示題材強度不冠「信心」二字
- */
-function topicHeatBand(heat: number): { label: string; color: string } {
-  if (heat >= 90) return { label: "題材熾熱", color: "var(--heat-extreme, #A84836)" };
-  if (heat >= 75) return { label: "題材升溫", color: "var(--heat-high, #C9754D)" };
-  if (heat >= 60) return { label: "題材穩定", color: "var(--heat-medium, #D4A05C)" };
-  return { label: "題材轉冷", color: "var(--heat-low, #A89878)" };
-}
+const TIER_COLOR: Record<string, string> = {
+  C: "#4A4A4A",
+  N: "#8A8170",
+  R: "#B8B0A0",
+  SR: "#B85450",
+  SSR: "#B8893D",
+};
+const TIER_TEXT_ON: Record<string, string> = {
+  C: "#F5EFE0",
+  N: "#F5EFE0",
+  R: "#2C2416",
+  SR: "#F5EFE0",
+  SSR: "#F5EFE0",
+};
 
 export function QuackPicksLive() {
   const [picks, setPicks] = useState<Pick[] | null>(null);
+  const [minTier, setMinTier] = useState<"SR" | "R">("SR");
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        const r = await fetch(`${API}/api/quack/picks?horizon=1w&limit=6`, { cache: "no-store" });
+        const r = await fetch(
+          `${API}/api/quack/picks?limit=6&min_tier=${minTier}`,
+          { cache: "no-store" },
+        );
         const j = await r.json();
         if (!cancelled) setPicks(j.picks ?? []);
-      } catch {/* */}
+      } catch {
+        /* */
+      }
     }
     load();
-  }, []);
+  }, [minTier]);
 
   if (picks === null) {
     return (
@@ -249,70 +273,151 @@ export function QuackPicksLive() {
       </div>
     );
   }
+
+  // 無 SR/SSR 自動 fallback 到 R 看看
+  if (picks.length === 0 && minTier === "SR") {
+    return (
+      <div style={{ padding: 16, fontSize: 13, color: "var(--text-muted)" }}>
+        今日無 SR/SSR 評級股 — 市場偏弱,呱呱暫不挑。
+        <button
+          onClick={() => setMinTier("R")}
+          style={{
+            marginLeft: 8,
+            padding: "2px 10px",
+            fontSize: 11,
+            border: "1px solid var(--border)",
+            background: "transparent",
+            color: "inherit",
+            cursor: "pointer",
+            borderRadius: 4,
+          }}
+        >
+          看 R 級觀察名單 →
+        </button>
+      </div>
+    );
+  }
   if (picks.length === 0) {
-    return <div style={{ padding: 16, color: "var(--text-muted)" }}>—— 本週無推薦 ——</div>;
+    return null;
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+        gap: 12,
+      }}
+    >
       {picks.map((p) => {
-        const band = topicHeatBand(p.heat_score);
+        const tier = p.tier || "N";
+        const tierBg = TIER_COLOR[tier];
+        const tierFg = TIER_TEXT_ON[tier];
+        const bd = p.breakdown || {};
         return (
           <Link
             key={p.ticker}
             href={`/stocks/${p.ticker}`}
             style={{
-              padding: 14,
+              padding: 16,
               borderRadius: 6,
               background: "var(--bg-elevated)",
-              border: "1px solid rgba(201, 169, 97, 0.1)",
+              border: "1px solid rgba(201, 169, 97, 0.15)",
               textDecoration: "none",
               color: "inherit",
               display: "block",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 8,
+              }}
+            >
               <span
                 style={{
-                  fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+                  fontFamily: "'JetBrains Mono', monospace",
                   color: "var(--text-primary)",
-                  fontSize: 18,
+                  fontSize: 20,
                   fontWeight: 500,
+                  letterSpacing: "0.04em",
                 }}
               >
                 {p.ticker}
               </span>
+              {/* TierBadge inline */}
               <span
                 style={{
-                  fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                  color: "var(--accent-gold)",
-                  fontSize: 14,
+                  padding: "3px 10px",
+                  background: tier === "SSR"
+                    ? "linear-gradient(135deg, #D4A05C, #B8893D)"
+                    : tierBg,
+                  color: tierFg,
+                  fontFamily: "'Shippori Mincho', serif",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  borderRadius: 2,
+                  boxShadow:
+                    tier === "SR"
+                      ? "0 2px 8px rgba(184, 84, 80, 0.3)"
+                      : tier === "SSR"
+                        ? "0 4px 16px rgba(184, 137, 61, 0.5)"
+                        : "none",
                 }}
               >
-                {p.heat_score}°
+                {tier}
               </span>
             </div>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 2 }}>
-              {p.topic_name}
-              {p.topic_stage && (
-                <span style={{ marginLeft: 6, fontSize: 10, color: "var(--text-muted)" }}>
-                  · {STAGE_LABEL[p.topic_stage] || p.topic_stage}
-                </span>
-              )}
-            </div>
-            {p.chain_tier && (
-              <div style={{ fontSize: 11, color: "var(--text-muted)" }}>供應鏈:{p.chain_tier}</div>
-            )}
             <div
               style={{
-                marginTop: 8,
-                fontSize: 11,
-                color: band.color,
-                fontFamily: "var(--font-serif, 'Noto Serif TC', serif)",
-                letterSpacing: "0.03em",
+                fontSize: 14,
+                color: "var(--text-primary)",
+                marginBottom: 4,
+                fontFamily: "'Shippori Mincho', serif",
               }}
             >
-              {band.label}
+              {p.stock_name || p.ticker}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--text-muted)",
+                marginBottom: 8,
+              }}
+            >
+              {p.industry}
+              {p.topic_name && (
+                <>
+                  {" · "}
+                  <span style={{ color: "var(--accent-gold, #B8893D)" }}>
+                    {p.topic_name}
+                  </span>
+                  {p.chain_tier && ` (${p.chain_tier})`}
+                </>
+              )}
+            </div>
+            {/* 四象限分數 */}
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                fontSize: 10,
+                color: "var(--text-muted)",
+                fontFamily: "'JetBrains Mono', monospace",
+                borderTop: "1px solid rgba(201, 169, 97, 0.08)",
+                paddingTop: 8,
+              }}
+            >
+              <span>基 {bd.fundamental ?? "-"}</span>
+              <span>籌 {bd.chip ?? "-"}</span>
+              <span>技 {bd.technical ?? "-"}</span>
+              <span>題 {bd.catalyst ?? "-"}</span>
+              <span style={{ marginLeft: "auto", color: "var(--fg)" }}>
+                {p.score ?? "-"} / 95
+              </span>
             </div>
           </Link>
         );
