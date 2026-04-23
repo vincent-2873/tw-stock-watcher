@@ -365,6 +365,32 @@ async def social_hot(hours: int = Query(6, ge=1, le=72)):
 
 
 # =========================================================================
+# POST /api/quack/social/refresh — 觸發 PTT 爬蟲(需 admin)
+# =========================================================================
+@router.post("/quack/social/refresh")
+async def social_refresh(
+    pages: int = Query(3, ge=1, le=10),
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_token)
+    # 延遲 import,避免啟動 cost(beautifulsoup/httpx 都已在 requirements)
+    from backend.services import ptt_scraper
+
+    return ptt_scraper.run(pages=pages)
+
+
+# =========================================================================
+# POST /api/quack/auto_search/run — 手動觸發 auto_search
+# =========================================================================
+@router.post("/quack/auto_search/run")
+async def auto_search_run(x_admin_token: Optional[str] = Header(default=None)):
+    _require_admin(x_admin_token)
+    from backend.services import auto_search
+
+    return auto_search.run()
+
+
+# =========================================================================
 # GET /api/quack/alerts — 自動警示(Phase 3 C1)
 # =========================================================================
 @router.get("/quack/alerts")
