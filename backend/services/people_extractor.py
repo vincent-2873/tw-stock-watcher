@@ -131,7 +131,7 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
     articles_res = (
         svc.table("intel_articles")
         .select(
-            "id,title,title_zh,ai_summary,ai_sentiment,ai_market_impact,"
+            "id,title,ai_summary,ai_sentiment,ai_market_impact,"
             "ai_affected_stocks,ai_importance,url,source_id,published_at"
         )
         .gte("published_at", since)
@@ -149,7 +149,6 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
     for art in articles:
         haystack_parts = [
             art.get("title") or "",
-            art.get("title_zh") or "",
             art.get("ai_summary") or "",
         ]
         haystack = "\n".join(haystack_parts)
@@ -167,7 +166,7 @@ def extract_statements(days: int = 14, limit: int = 100) -> dict[str, Any]:
                     "source": _infer_source(art.get("url", "")),
                     "source_url": art.get("url"),
                     "statement_text": art.get("title", ""),
-                    "statement_translated": art.get("title_zh"),
+                    "statement_translated": None,
                     "ai_summary": art.get("ai_summary"),
                     "ai_topic": None,
                     "ai_sentiment": art.get("ai_sentiment"),
