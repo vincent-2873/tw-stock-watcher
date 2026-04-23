@@ -70,10 +70,11 @@ async def cron_tick(
     x_admin_token: str | None = Header(default=None),
     crawl: bool = Query(True),
     analyze: bool = Query(True),
-    extract_people: bool = Query(True),
+    extract_people: bool = Query(False),  # 預設 false, 避免 cron 拖掛容器
     analyze_limit: int = Query(15, ge=1, le=30),
 ) -> dict[str, Any]:
-    """一次跑完:抓 RSS + AI 分析 + 人物發言萃取 — 給 GitHub Actions 打。"""
+    """一次跑完:抓 RSS + AI 分析 — 給 GitHub Actions 打。
+    extract_people 要另外一個 cron 明確呼叫, 避免單次 handler 超 90s。"""
     _require_admin(x_admin_token)
     out: dict[str, Any] = {"tpe_now": now_tpe().isoformat()}
     if crawl:
@@ -81,8 +82,7 @@ async def cron_tick(
     if analyze:
         out["analyze"] = ArticleAnalyzer().run_batch(analyze_limit)
     if extract_people:
-        # 每次 cron 只掃近 3 日, 最多 50 篇 (避免 Zeabur edge 90s timeout)
-        # GitHub Action 每 15 分跑一次, 長期積累會把 14 日內都掃過
+        # opt-in 才跑, 限制 days=3 limit=50
         try:
             out["extract_people"] = _extract_people(days=3, limit=50)
         except Exception as e:
