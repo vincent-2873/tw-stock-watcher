@@ -54,7 +54,10 @@ async def admin_ping(x_admin_token: str | None = Header(default=None)):
 @router.post("/admin/exec_sql")
 async def admin_exec_sql(req: ExecSqlReq, x_admin_token: str | None = Header(default=None)):
     _require_token(x_admin_token)
-    conn = psycopg2.connect(_dsn())
+    try:
+        conn = psycopg2.connect(_dsn())
+    except Exception as e:
+        raise HTTPException(500, f"db connect failed: {type(e).__name__}: {e}")
     try:
         with conn.cursor() as cur:
             cur.execute(req.sql)
@@ -95,7 +98,10 @@ async def admin_upsert_seed(req: UpsertReq, x_admin_token: str | None = Header(d
         f"INSERT INTO {req.table} ({col_list}) VALUES ({placeholders}) "
         f"ON CONFLICT ({req.conflict}) DO UPDATE SET {update_set}"
     )
-    conn = psycopg2.connect(_dsn())
+    try:
+        conn = psycopg2.connect(_dsn())
+    except Exception as e:
+        raise HTTPException(500, f"db connect failed: {type(e).__name__}: {e}")
     try:
         with conn.cursor() as cur:
             inserted = 0
