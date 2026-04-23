@@ -56,13 +56,16 @@ async def notify_test(req: TestRequest):
     results: dict = {}
     if "line" in req.channels:
         r = get_line_notifier().push_text(f"{req.subject}\n\n{req.message}")
-        results["line"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:200]}
+        results["line"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:2000]}
+    if "line_broadcast" in req.channels:
+        r = get_line_notifier().broadcast(f"{req.subject}\n\n{req.message}")
+        results["line_broadcast"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:2000]}
     if "discord" in req.channels:
         r = DiscordNotifier().push_text(f"**{req.subject}**\n{req.message}")
-        results["discord"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:200]}
+        results["discord"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:2000]}
     if "email" in req.channels:
         r = EmailNotifier().push(req.subject, req.message)
-        results["email"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:200]}
+        results["email"] = {"ok": r.ok, "status": r.status, "detail": r.detail[:2000]}
     return {"results": results, "tpe_now": now_tpe().isoformat()}
 
 
