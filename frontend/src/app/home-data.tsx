@@ -749,6 +749,108 @@ export function FocusStocksLive() {
 }
 
 // ============================================
+// 7.5 三大法人
+// ============================================
+type InstitutionalData = {
+  latest_date?: string;
+  today?: { foreign: number; invt: number; dealer: number };
+  five_day?: { foreign: number; invt: number; dealer: number; avg_foreign_per_day?: number };
+  status?: { foreign: string; invt: string; dealer: string };
+  error?: string;
+};
+
+function toYi(n: number): string {
+  return (n / 1e8).toFixed(1);
+}
+
+function StatusPill({ status }: { status: string }) {
+  const isSell = status.includes("賣");
+  const isBig = status.includes("大幅");
+  const color = isSell ? "var(--fall-light)" : status.includes("買") ? "var(--rise-light)" : "var(--neutral)";
+  const bg = isSell
+    ? "rgba(107, 142, 90, 0.15)"
+    : status.includes("買")
+    ? "rgba(200, 75, 60, 0.15)"
+    : "rgba(138, 129, 112, 0.15)";
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        padding: "2px 8px",
+        borderRadius: 10,
+        background: bg,
+        color,
+        display: "inline-block",
+        marginTop: 10,
+      }}
+    >
+      {status} {isBig ? "⚠️" : ""}
+    </span>
+  );
+}
+
+export function InstitutionalLive() {
+  const [d, setD] = useState<InstitutionalData | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`${API}/api/institutional/overview?days=5`, { cache: "no-store" });
+        const j = (await r.json()) as InstitutionalData;
+        if (!cancelled) setD(j);
+      } catch {/* */}
+    }
+    load();
+  }, []);
+
+  if (!d) {
+    return (
+      <div style={{ padding: 16, color: "var(--text-muted)", fontStyle: "italic", gridColumn: "1 / -1" }}>
+        呱呱查三大法人⋯
+      </div>
+    );
+  }
+  if (d.error || !d.today) {
+    return (
+      <div style={{ padding: 16, color: "var(--text-muted)", gridColumn: "1 / -1" }}>
+        {d.error || "今日尚無三大法人資料"}
+      </div>
+    );
+  }
+
+  const cards = [
+    { icon: "🌍", title: "外資", today: d.today.foreign, fiveDay: d.five_day?.foreign ?? 0, status: d.status?.foreign ?? "" },
+    { icon: "🏦", title: "投信", today: d.today.invt, fiveDay: d.five_day?.invt ?? 0, status: d.status?.invt ?? "" },
+    { icon: "🏛️", title: "自營商", today: d.today.dealer, fiveDay: d.five_day?.dealer ?? 0, status: d.status?.dealer ?? "" },
+  ];
+
+  return (
+    <>
+      {cards.map((c) => {
+        const todayYi = toYi(c.today);
+        const fiveYi = toYi(c.fiveDay);
+        const dir = c.today > 0 ? "rise" : c.today < 0 ? "fall" : "neutral";
+        return (
+          <div key={c.title} className={styles.flowCard}>
+            <div className={styles.flowTitle}>
+              {c.icon} {c.title}
+              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>{d.latest_date}</span>
+            </div>
+            <div className={cx(styles.flowAmount, styles[dir])}>
+              {c.today > 0 ? "+" : ""}{todayYi} 億
+            </div>
+            <div className={styles.flowTrend}>
+              5 日累計 {c.fiveDay > 0 ? "+" : ""}{fiveYi} 億
+            </div>
+            <StatusPill status={c.status} />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+// ============================================
 // 8. 今日重點(AI 分類新聞)
 // ============================================
 type Headline = {

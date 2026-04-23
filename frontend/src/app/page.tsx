@@ -9,6 +9,7 @@ import {
   SupplyChainLive,
   USConnectLive,
   FocusStocksLive,
+  InstitutionalLive,
 } from "./home-data";
 
 export const dynamic = "force-dynamic";
@@ -369,38 +370,7 @@ export default function Home() {
           <Link className={styles.moreLink} href="/market">完整明細 →</Link>
         </div>
         <div className={styles.threeCol}>
-          <div className={styles.flowCard}>
-            <div className={styles.flowTitle}>
-              🌍 外資
-              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>盤中估算</span>
-            </div>
-            <div className={cx(styles.flowAmount, styles.fall)}>-185.3 億</div>
-            <div className={styles.flowTrend}>5 日均 +85 億 · 今日 -2.2x</div>
-            <span className={cx(styles.flowStatus, styles.sell)}>大幅賣超 ⚠️</span>
-            <div className={styles.flowPicks}>賣超前 3:台積電、創意、南亞科</div>
-          </div>
-
-          <div className={styles.flowCard}>
-            <div className={styles.flowTitle}>
-              🏦 投信
-              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>盤中估算</span>
-            </div>
-            <div className={cx(styles.flowAmount, styles.rise)}>+28.5 億</div>
-            <div className={styles.flowTrend}>連 4 日買超 · 累計 +112 億</div>
-            <span className={cx(styles.flowStatus, styles.buy)}>小幅買超</span>
-            <div className={styles.flowPicks}>買超前 3:富喬、旺宏、昇達科</div>
-          </div>
-
-          <div className={styles.flowCard}>
-            <div className={styles.flowTitle}>
-              🏛️ 自營商
-              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>盤中估算</span>
-            </div>
-            <div className={cx(styles.flowAmount, styles.neutral)}>-8.2 億</div>
-            <div className={styles.flowTrend}>震盪 · 5 日淨 +12 億</div>
-            <span className={cx(styles.flowStatus, styles.neutralBg)}>小幅賣超</span>
-            <div className={styles.flowPicks}>偏好:避險工具、選擇權對沖</div>
-          </div>
+          <InstitutionalLive />
         </div>
 
         {/* 🗺️ 產業熱力圖 */}

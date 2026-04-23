@@ -156,6 +156,70 @@ async def get_us_indices():
     return {"items": results, "tpe_now": now_tpe().isoformat()}
 
 
+@router.get("/institutional/overview")
+async def institutional_overview(days: int = Query(5, ge=1, le=10)):
+    """市場整體三大法人買賣超(彙總近 N 日 + 今日明細)"""
+    svc = FinMindService()
+    start = (now_tpe().date() - timedelta(days=days + 3)).isoformat()
+    try:
+        rows, _ = svc.get_institutional_total(start_date=start)
+    except Exception as e:
+        return {"error": str(e)[:200]}
+    if not rows:
+        return {"today": None, "five_day": None}
+
+    rows_sorted = sorted(rows, key=lambda r: r.get("date", ""), reverse=True)
+    latest_date = rows_sorted[0]["date"]
+    today_rows = [r for r in rows_sorted if r["date"] == latest_date]
+
+    totals = {"Foreign_Investor": 0, "Investment_Trust": 0, "Dealer_self": 0, "Dealer_Hedging": 0}
+    dates_seen: set[str] = set()
+    for r in rows_sorted:
+        dates_seen.add(r.get("date", ""))
+        if len(dates_seen) > days:
+            break
+        name = r.get("name", "")
+        if name in totals:
+            totals[name] += (r.get("buy") or 0) - (r.get("sell") or 0)
+
+    today_net: dict[str, float] = {}
+    for r in today_rows:
+        nm = r.get("name", "")
+        today_net[nm] = (r.get("buy") or 0) - (r.get("sell") or 0)
+
+    foreign_today = today_net.get("Foreign_Investor", 0)
+    invt_today = today_net.get("Investment_Trust", 0)
+    dealer_today = today_net.get("Dealer_self", 0) + today_net.get("Dealer_Hedging", 0)
+
+    def classify(net: float) -> str:
+        if net > 5e9:
+            return "大幅買超"
+        if net > 1e9:
+            return "小幅買超"
+        if net < -5e9:
+            return "大幅賣超"
+        if net < -1e9:
+            return "小幅賣超"
+        return "平穩"
+
+    return {
+        "latest_date": latest_date,
+        "today": {"foreign": foreign_today, "invt": invt_today, "dealer": dealer_today},
+        "five_day": {
+            "foreign": totals["Foreign_Investor"],
+            "invt": totals["Investment_Trust"],
+            "dealer": totals["Dealer_self"] + totals["Dealer_Hedging"],
+            "avg_foreign_per_day": totals["Foreign_Investor"] / max(1, days),
+        },
+        "status": {
+            "foreign": classify(foreign_today),
+            "invt": classify(invt_today),
+            "dealer": classify(dealer_today),
+        },
+        "tpe_now": now_tpe().isoformat(),
+    }
+
+
 @router.get("/market/overview")
 async def get_market_overview():
     """一次拿 TAIEX + 台指期 + 美股主要指數(前端大盤頁一支 API 解決)"""

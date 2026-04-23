@@ -156,6 +156,20 @@ class FinMindService:
         data = self._fetch("TaiwanStockInstitutionalInvestorsBuySell", params)
         return data, FetchMeta("finmind", now_tpe(), "TaiwanStockInstitutionalInvestorsBuySell", params)
 
+    def get_institutional_total(
+        self,
+        start_date: str | date,
+        end_date: str | date | None = None,
+    ) -> tuple[list[dict], FetchMeta]:
+        """市場整體三大法人買賣超(不分個股,每日一筆)"""
+        s = start_date.isoformat() if isinstance(start_date, date) else start_date
+        e = end_date.isoformat() if isinstance(end_date, date) else end_date
+        params = {"start_date": s}
+        if e:
+            params["end_date"] = e
+        data = self._fetch("TaiwanStockTotalInstitutionalInvestors", params)
+        return data, FetchMeta("finmind", now_tpe(), "TaiwanStockTotalInstitutionalInvestors", params)
+
     def get_margin_short(
         self,
         stock_id: str,
