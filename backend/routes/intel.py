@@ -18,6 +18,7 @@ from fastapi import APIRouter, Header, HTTPException, Query
 
 from backend.services.article_analyzer import ArticleAnalyzer
 from backend.services.intel_crawler import IntelCrawler
+from backend.services.people_extractor import extract_statements as _extract_people
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import get_service_client
 from backend.utils.time_utils import now_tpe
@@ -69,16 +70,31 @@ async def cron_tick(
     x_admin_token: str | None = Header(default=None),
     crawl: bool = Query(True),
     analyze: bool = Query(True),
+    extract_people: bool = Query(True),
     analyze_limit: int = Query(15, ge=1, le=30),
 ) -> dict[str, Any]:
-    """一次跑完:抓 RSS + AI 分析 — 給 Zeabur cron / GitHub Actions 打。"""
+    """一次跑完:抓 RSS + AI 分析 + 人物發言萃取 — 給 GitHub Actions 打。"""
     _require_admin(x_admin_token)
     out: dict[str, Any] = {"tpe_now": now_tpe().isoformat()}
     if crawl:
         out["crawl"] = IntelCrawler().run_all()
     if analyze:
         out["analyze"] = ArticleAnalyzer().run_batch(analyze_limit)
+    if extract_people:
+        # 掃近 14 日文章匹配 40 位 watched_people
+        out["extract_people"] = _extract_people(days=14, limit=200)
     return out
+
+
+@router.post("/intel/people/extract")
+async def extract_people_now(
+    x_admin_token: str | None = Header(default=None),
+    days: int = Query(14, ge=1, le=60),
+    limit: int = Query(200, ge=10, le=1000),
+) -> dict[str, Any]:
+    """手動觸發:掃 intel_articles 萃取重點人物發言(Phase 2.1)"""
+    _require_admin(x_admin_token)
+    return _extract_people(days=days, limit=limit)
 
 
 @router.post("/intel/refresh/{source_id}")

@@ -188,15 +188,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 🦆 呱呱這週挑的(帶信心度) */}
-        <div className={styles.sectionTitle}>
-          <h2>🦆 呱呱這週挑的</h2>
-          <div className={styles.divider}></div>
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>題材熱度 + 供應鏈位置</span>
-        </div>
-        <div style={{ padding: "12px 0" }}>
-          <QuackPicksLive />
-        </div>
+        {/* 🦆 呱呱這週挑的 — 階段 2.3 前暫隱
+             原因:/api/quack/picks 目前只用「題材 supply_chain seed 清單」選股,
+             沒經過四象限評分,不符合 CLAUDE.md 鐵則「每個建議都要有根據」。
+             需先做 (a) stocks 表加 current_score/tier 欄, (b) 每日 scoring
+             worker, (c) picks 改 join stocks 只回 SR/SSR。完成後恢復此區塊。 */}
 
         {/* 📰 今日重點(AI 分類新聞) */}
         <div className={styles.sectionTitle}>
