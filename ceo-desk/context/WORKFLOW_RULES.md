@@ -30,10 +30,19 @@
 Vincent 不會手動提供時間。系統必須自己處理。
 
 ### Claude Code 是時間管家
-每次寫 outbox/LATEST_REPORT.md 時,第一行必寫:
-📅 TPE: [TZ=Asia/Taipei date '+%Y-%m-%d %H:%M:%S (%A %p)' 的結果]
 
-例如:📅 TPE: 2026-04-24 22:45:30 (Friday PM)
+權威來源:backend `/api/time/now`(Python ZoneInfo Asia/Taipei)
+不用 shell `date`(容器時鐘不可信)
+
+寫 outbox 時第一行取得時間方式:
+```bash
+curl -sS https://vsis-api.zeabur.app/api/time/now
+```
+
+從回傳的 JSON 取 `year/month/day/hour/minute/second/weekday_en` 組合成:
+📅 TPE: YYYY-MM-DD HH:MM:SS (Weekday)
+
+backend 打不到時備用:`git log -1 --format="%ai"` 並標註不精準
 
 ### Claude CTO 的限制
 - 沒有內建時鐘,不准自己猜時間
