@@ -1,132 +1,149 @@
-# 任務 #004 報告 — 呱呱視覺三處精修(Vincent QA 後)
+📅 TPE: 2026-04-24 21:42:00 (Friday PM)
+   ⚠️ 時間錨點來源:**backend `/api/time/now`(權威時鐘)**
+   ⚠️ 本機 `TZ=Asia/Taipei date` 回 13:42 — **shell environment 時鐘不可信,差 8 小時**
+
+---
+
+# 任務 #005 報告 — 時間處理現況健康檢查
 
 ## 任務
-修復 Vincent 看到 hero 上線後發現的 3 個視覺問題
+驗證 Vincent 新訂「時間管理規則」涵蓋的所有環節:backend / 前端 / cron / shell environment
 
 ## 狀態
-✅ **成功**
-
-## 時間
-- Push 完成:2026-04-24 **16:54:23 TPE**
-- 線上偵測到新版:**16:59:06 TPE**(Zeabur 部署 **269 秒** = 4.5 分鐘)
-- 驗證完成:2026-04-24 **17:00 TPE**
-- 全程:含改 + 本地測 + 等 deploy + 線上驗證 ~30 分鐘
+✅ **健康度高,但發現 2 個風險點**
 
 ---
 
-## ✅ 三處全部上線驗證
+## ✅ 4 項驗證結果
 
-### 1. Hero 中央呱呱(問題 1+2:沒去背 + 太小)
+### 1. Backend `time_utils.py` ✅ 正確
 
-| 檢查 | 結果 |
-|---|---|
-| 圖片 Content-Length | **174,406 bytes**(去背版,確認) |
-| 圖片 Content-Type | `image/png` |
-| Hero wrapper class | `quackImageLink`,CSS 320px 圓圈內 290px 圖(填 91%) |
-| 動畫初始狀態 | `opacity:0; scale(0.85)`(等 framer-motion 啟動) |
-| 動畫保留 | 淡入 + 漂浮 + 搖擺 + hover + click → /chat |
-
-**從 DOM 看**:`<a href="/chat" class="quackImageLink"><div class="quackImage" style="opacity:0;..."><img alt="呱呱 — 呱呱投資招待所所主" .../></div></a>`
-
-### 2. 左上角 logo(問題 3a)
-
-| 檢查 | 結果 |
-|---|---|
-| Logo 內元素 | `<img alt="呱呱投資招待所" width="40" height="40">` |
-| 原 emoji | ✅ 已移除 |
-| Hover 動畫 | 保留(rotate -8° + scale 1.1x) |
-
-### 3. 右下角全站 floating(問題 3b)
-
-| 檢查 | 結果 |
-|---|---|
-| 浮鈕 class | `fixed bottom-6 right-6` ✅ |
-| QuackAvatar 內 | `<span aria-label="呱呱" width:48px><img alt="呱呱" width=48 height=48></span>` |
-| 全站共用 | ✅ QuackAvatar 改一處,全站凡用此 component 都升級 |
-| 動畫 | calm/thinking/observing/sleeping 4 種狀態切換照舊 |
-
-### 額外健康指標
-
-| 項目 | 數值 |
-|---|---|
-| 首頁 HTTP | 200 in **0.60s** |
-| 圖片 14 處 references in HTML | ✅(srcSet 1x/2x + preload + 3 個位置 = 預期內) |
-| Cache-Control(HTML) | `private, no-cache, no-store, must-revalidate` ✅ |
-
----
-
-## 🤔 任何視覺怪怪的地方?
-
-**從技術 DOM / build / response 看 — 沒有**。
-但**我無法實際渲染畫面看視覺**,以下是「預期」應該的樣子,你親眼開頁面確認:
-
-| 地方 | 預期 | 你需要看 |
+| 檔案 | 內容 | 評估 |
 |---|---|---|
-| Hero 中央 | 呱呱填滿米色圓圈 ~91%,周圍只剩薄薄一圈 | 圖會不會「太擠」?太貼邊? |
-| Hero 動畫 | 0.8s 淡入 → 漂浮 + 搖擺 | 動畫流暢嗎?手機上會不會卡? |
-| Logo | 40px 完整呱呱在「呱呱投資招待所」字樣旁 | 大小比例配字體看順眼嗎? |
-| Floating 浮鈕 | 48px 呱呱頭像在右下圓角按鈕內 | 在白底卡片背景上去背邊緣看得出來嗎? |
-| 透明邊緣 | remove.bg 的去背通常很乾淨 | 仔細看頭頂 / 服裝邊有無殘留白邊? |
+| `backend/utils/time_utils.py:22` | `TZ = ZoneInfo("Asia/Taipei")` | ✅ 用 Python 標準 zoneinfo,正確 |
+| `now_tpe()` 函式 | `return datetime.now(TZ)` | ✅ 帶 timezone-aware datetime |
 
-如果有任何一個你覺得不對,告訴我,我馬上修。
+### 2. Backend `/api/time/now` 線上實測 ✅ 正確
 
----
-
-## 📦 Git 變動
-
-```
-066b795 Merge branch 'hotfix/guagua-refine-2026-04-24'   ← 當前 main
-119a489 feat(brand): 🦆 呱呱視覺三處精修
-cd55db1 Merge branch 'hotfix/guagua-hero-2026-04-24'     ← 前一版(Hero v1)
+```json
+{
+  "iso":"2026-04-24T21:42:00.307+08:00",
+  "weekday_en":"Friday",
+  "hero_en":"Friday · April 24 · 2026 · 21:42 TPE",
+  "timezone":"Asia/Taipei"
+}
 ```
 
-5 個檔變動:
-```
-M  ceo-desk/assets/characters/guagua/guagua_official_v1.png   1.14 MB → 174 KB
-M  frontend/public/characters/guagua_official_v1.png          同步
-M  frontend/src/app/page.module.css                          .quackImageLink 240→290
-M  frontend/src/app/page.tsx                                 logo emoji → Image
-M  frontend/src/components/quack/QuackAvatar.tsx             全 4 size emoji → Image
-```
+`/api/market/overview` 也帶 `tpe_now: 2026-04-24T21:42:00+08:00` ✅
 
----
+### 3. 前端 Hero 時間來源 ✅ 正確(但全站有風險點 — 見下)
 
-## 🆘 Rollback(備用,目前不需)
-
-```bash
-git revert --no-edit 066b795   # 回到 cd55db1 (Hero v1, 有方底版)
-git push origin main
-# 不會回到 emoji 版本(因為 cd55db1 已經是 Hero PNG 版了)
-# 若要連 Hero PNG 都退,再 revert cd55db1 一次
-```
-
----
-
-## 🎯 建議 Vincent 下一步
-
-| 候選 | 預估 | 為什麼適合 |
+| 元件 | 時間來源 | 評估 |
 |---|---|---|
-| 🎨 **6 個其他 agents 視覺生成 prompt 起草** | 30-45 分鐘 | 趁呱呱本尊上線氣勢正旺,接著生其他角色 |
-| 📝 PRODUCT_VISION.md 色盤同步到 v1 實際色 | 5 分鐘 | 順手清債(現在 v1 色盤跟 PRODUCT_VISION 略有差異) |
-| 🛠️ Phase 2.2 產業熱力圖 backend(技術線) | 1.5-2 小時 | 想換腦袋做點工程 |
-| 🌙 收工 | 0 分鐘 | 已經完成兩個有意義的任務,可以停 |
+| `HeroDate.tsx` | fetch `/api/time/now` 用 backend `hero_en` | ✅ 權威來源 |
+| `HeroFloats.tsx` | fetch `/api/market/overview` 用 backend tpe_now | ✅ 權威 |
+| `MarketPanorama.tsx:110`、`stocks/[code]/page.tsx:98`、`market/page.tsx:41` | `toLocaleString({ timeZone: "Asia/Taipei" })` 強制 TPE | ✅ 顯式時區 |
 
-**CTO 視角建議**:你今晚已經完成
-- 凌晨稽核(系統健康度確認)
-- 端點飢餓修復(底層架構)
-- 呱呱 Visual v1.0 入庫(品牌資產)
-- 呱呱 Hero 上線 + 三處精修(對外形象)
+### 4. GitHub workflows cron ✅ 全部正確 + 全部有 TZ env
 
-「**先收工,明天用清醒的腦袋繼續**」是個合理選項。或者如果你還想做點「設計腦」的事,可以起草其他 6 agents 的生成 prompt(不用立刻產圖)。
+| Workflow | cron (UTC) | 註解 (TPE) | TZ env |
+|---|---|---|---|
+| morning-report | `50 23 * * 0-4` | 隔日 07:50 TPE | ✅ Asia/Taipei |
+| day-trade-pick | `20 0 * * 1-5` | 08:20 TPE | ✅ |
+| intraday-monitor | `55 0 * * 1-5` | 08:55 TPE | ✅ |
+| closing-report | `20 6 * * 1-5` | 14:20 TPE | ✅ |
+| scoring-daily | `30 7 * * 1-5` | 15:30 TPE | ✅ |
+| us-market | 3 個 cron(`55 12/15/20`)| 20:55 / 23:55 / 04:55 TPE | ✅ |
+| intel-cron | `*/15 * * * *` | 每 15 分(高頻無 TPE 註解) | ✅ |
+
+**所有 7 個 workflow 都正確用 UTC cron + 註解標 TPE + 設 `TZ: Asia/Taipei` env**。零警告。
+
+---
+
+## 🔴 2 個風險點(需 Vincent 決定要不要修)
+
+### 風險 #1:本機 shell environment 時鐘**錯 8 小時**(本次發現)
+
+- 本機 `TZ=Asia/Taipei date` 回:`2026-04-24 13:42`
+- Backend 同時間回:`2026-04-24 21:42`
+- **差 8 小時**
+
+**含義**:
+- 規則「outbox 第一行用 `TZ=Asia/Taipei date`」**在我這個 environment 會給錯時間**
+- 任何依賴 shell `date` 的腳本都會錯(GitHub Actions 雖有 TZ env 但是不同 environment,線上正常 — 已驗證)
+
+**建議**(等 Vincent 決定):
+- (a) 規則保持原狀,但 Claude Code 寫 outbox 第一行時**雙錨點**(shell + backend),如本檔示範
+- (b) 規則改成「以 backend `/api/time/now` 為權威來源」
+- (c) Vincent 不管,我私下用 backend 為主
+
+### 風險 #2:前端 3 處用「手動 +8」推算 TPE — **對非 TPE 使用者有 bug**
+
+| 檔案 + 行 | 程式碼 |
+|---|---|
+| `frontend/src/app/page.tsx:39-42` | `tpeNow()` helper(歡迎詞 / session 判斷) |
+| `frontend/src/components/quack/QuackFloating.tsx:30-34` | `stateForTpeHour()`(右下浮鈕情緒) |
+| `frontend/src/components/quack/QuackTodayCard.tsx:57-60` | `sessionFor()`(今日卡片盤前/盤中/盤後) |
+
+寫法都是:
+```js
+const d = new Date();
+const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+const tpe = new Date(utcMs + 8 * 3600 * 1000);
+```
+
+**問題**:
+- `d.getTime()` 已經是 UTC ms(JS 標準)
+- `d.getTimezoneOffset()` 對使用者**本地時區**回傳(東 8 區是 -480)
+- 這段邏輯實際上得到「使用者本地時刻當 TPE 用」 — 對 TPE 使用者**剛好正確**,對非 TPE 使用者(美國/歐洲使用者)**錯**
+
+**正確寫法**:
+```js
+const tpeStr = new Date().toLocaleString("en-US", {
+  timeZone: "Asia/Taipei",
+  hour: "numeric", minute: "numeric", hour12: false
+});
+// 解析或直接用
+```
+
+或用 `Intl.DateTimeFormat` 強制 TPE。
+
+**影響面**:
+- 目前使用者主要在 TPE → **沒人遇到**
+- 未來海外使用者(spec 路線「多使用者」階段)會遇到
+- 不急,但要記下來
+
+---
+
+## 📦 變動檔案
+
+(本任務只盤查不改 code)
+
+```
+M  ceo-desk/context/WORKFLOW_RULES.md  (+30 行,Task 1 新增時間規則段落)
+                                       commit 541c7bc 已 push
+```
+
+---
+
+## 🎯 建議下一步
+
+| 優先 | 項目 | 預估 |
+|---|---|---|
+| 🟡 LOW(等海外使用者再修) | 修前端 3 處「手動 +8」改用 `Intl.DateTimeFormat({ timeZone: "Asia/Taipei" })` | 15 分鐘 |
+| 🟢 ZERO(規則已涵蓋) | 既有 backend / cron / Hero / 個股頁時間處理全 OK | — |
+| 🟡 規則微調 | 考慮在 WORKFLOW_RULES 加一句「shell `date` 不可信時以 backend `/api/time/now` 為準」 | 5 分鐘 |
 
 ---
 
 ## 💬 給 Vincent 的白話話
 
-> 🦆 **呱呱精修版正式上線,請看 outbox**(就是這份)。
+> 系統時間整體**很乾淨**:backend、cron、Hero、個股頁全用權威時鐘。
 >
-> 三處全換完:Hero 變大去背、左上 logo、右下浮鈕。**從技術角度確認全綠**,但實際視覺得你親眼看 — 打開首頁刷新 (Ctrl+F5 確保不吃舊快取) 直接驗收。
+> 但發現 **2 個值得知道的風險**:
 >
-> 有任何一個不對(比如 Hero 太貼圓圈邊、logo 太小、邊緣有殘留白底)就回我「Hero 太擠」/「邊緣有殘留」之類具體描述,我馬上微調。
+> 1. **我這個 shell environment 的時鐘錯 8 小時**(本機回 13:42,backend 回 21:42)— 你的規則叫我用 `TZ=Asia/Taipei date` 寫 outbox 第一行,但這指令在我環境會給錯時間。本檔我用「backend 權威時鐘」做時間錨點,並標註本機的錯誤。等你決定要不要改規則。
 >
-> 沒問題的話,下一步候選見上面表。**我比較推薦先收工**(今晚成果已經多到可以開香檳),但如果還想做設計工作,「6 agents prompt 起草」是最順手的接續。
+> 2. **前端 3 處用「手動 +8 小時」推 TPE**(歡迎詞、右下浮鈕情緒、今日卡片盤前盤中)— 對 TPE 使用者剛好對,對未來海外使用者會錯。**不急,海外使用者多了再修**。
+>
+> 其他 cron 7 個 workflow、backend 4 個關鍵時間 endpoint、3 個個股頁時間顯示全部正確。CLAUDE.md 鐵則 1「時間必須動態抓取」執行得很扎實。
