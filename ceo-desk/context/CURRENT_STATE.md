@@ -1,7 +1,22 @@
 # 呱呱投資招待所 — 當前狀態
 
-**最後更新**：2026-04-24 23:52 TPE（backend 權威時鐘）
+**最後更新**：2026-04-25 01:32 TPE（backend 權威時鐘）
 **維護者**：Claude Code（每次任務完成後更新）
+
+---
+
+## 🌐 三大網域（前後台分離）
+
+| 角色 | 網址 | 給誰看 | Root Dir | Service ID |
+|---|---|---|---|---|
+| 🏪 **前台（公開）** | https://tw-stock-watcher.zeabur.app/ | 使用者（買訂閱的客人） | /frontend | 69e7a886d974b2c8b61061f9 |
+| ⚙️ **後端 API** | https://vsis-api.zeabur.app/ | 前台 + 辦公室共用 | /backend | 69e89266c2a06cbb27e7c57b |
+| 🏛️ **辦公室（內部）** | **https://quack-office.zeabur.app/** | CEO + 內部 | /office | 69eba85ec5278d4159c21dbf |
+
+**嚴格規則**：
+- 前台 (`tw-stock-watcher.zeabur.app`) **只放**使用者看的股票分析功能
+- 辦公室 (`quack-office.zeabur.app`) 放分析師名冊、系統監控、會議記錄、CEO 內部工具
+- 前後台**絕不混用**元件、nav、路由
 
 ---
 
@@ -9,11 +24,9 @@
 
 | 項目 | 值 |
 |---|---|
-| 完成度 | 40%（基礎穩 + 憲法就位 + 12 agent 記憶範本） |
-| Main HEAD | `07361f2`（2026-04-24 晚交接 commit） |
-| Frontend | https://tw-stock-watcher.zeabur.app/ |
-| Backend | https://vsis-api.zeabur.app/ |
-| DB | Supabase |
+| 完成度 | 55%（憲法 + 預測 DB + 5 分析師人設 + 辦公室 + 自動化監控） |
+| Main HEAD | 最新見 git log |
+| DB | Supabase（project gvvfzwqkobmdwmqepinx）|
 | 主 AI | claude-sonnet-4-5-20250929 |
 | 批次 AI | claude-haiku-4-5-20251001 |
 | 資料源 | FinMind Sponsor（level 3, 6000/hr） |
