@@ -13,6 +13,7 @@ import httpx
 from fastapi import APIRouter
 
 from backend.services.finmind_service import FinMindService
+from backend.services.stock_resolver import stats as resolver_stats
 
 router = APIRouter(prefix="/diag")
 
@@ -62,6 +63,18 @@ def diag_fmp():
         }
     except Exception as e:
         return {"ok": False, "error": str(e), "key_prefix": key[:10] + "..."}
+
+
+@router.get("/resolver")
+def diag_resolver():
+    """Stock resolver 載入狀態 — 從 chat/health 拆出來避免 health 端點搶鎖。
+
+    回傳:
+      count        — 目前 in-memory 載入的 4 碼台股檔數
+      loaded_at    — 上次從 FinMind 載入的 unix timestamp
+      age_seconds  — 距上次載入過了幾秒(超過 86400 會自動重載)
+    """
+    return {"resolver": resolver_stats()}
 
 
 @router.get("/env")
