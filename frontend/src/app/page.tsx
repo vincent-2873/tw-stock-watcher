@@ -121,7 +121,6 @@ export default function Home() {
             <Link className={styles.navLink} href="/stocks">自選股</Link>
             <Link className={styles.navLink} href="/map">產業地圖</Link>
             <Link className={styles.navLink} href="/chat">AI 對話</Link>
-            <Link className={styles.navLink} href="/agents">分析師</Link>
             <Link className={styles.navLink} href="/intel">情報</Link>
             <Link className={styles.navLink} href="/settings">設定</Link>
           </nav>
