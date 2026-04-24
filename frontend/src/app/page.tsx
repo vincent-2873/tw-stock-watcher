@@ -14,6 +14,7 @@ import {
 } from "./home-data";
 import { HeroDate } from "@/components/hero/HeroDate";
 import { HeroFloats } from "@/components/hero/HeroFloats";
+import { FloatingGuagua } from "@/components/hero/FloatingGuagua";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -131,9 +132,8 @@ export default function Home() {
 
           <div className={styles.heroRight}>
             <div className={styles.quackCircle}>
-              <span className={styles.quackBigEmoji} aria-hidden>
-                🦆
-              </span>
+              {/* 呱呱本尊 v1.0 — 從 emoji 升級為官方視覺,點擊跳 /chat */}
+              <FloatingGuagua />
             </div>
             <HeroFloats />
           </div>
