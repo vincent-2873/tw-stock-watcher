@@ -1,6 +1,6 @@
 {
-  "build_command": "pnpm build",
-  "start_command": "pnpm start",
+  "build_command": "npm run build",
+  "start_command": "npm start",
   "node_version": "20",
-  "install_command": "pnpm install"
+  "install_command": "npm install"
 }
