@@ -41,8 +41,7 @@ LAST_CHECK_JSON = WATCHDOG_DIR / "last_check.json"
 # 基礎 HTTP
 # --------------------------------------------------------------------------- #
 
-def http_get(url: str, timeout: int = 15) -> tuple[int, dict | str]:
-    """回 (status_code, body_json_or_text). 網路錯誤回 (0, err_msg)."""
+def _http_get_once(url: str, timeout: int) -> tuple[int, dict | str]:
     try:
         req = Request(url, headers={"User-Agent": "vsis-watchdog/1.0"})
         with urlopen(req, timeout=timeout) as r:
@@ -58,6 +57,30 @@ def http_get(url: str, timeout: int = 15) -> tuple[int, dict | str]:
         return 0, f"URLError: {e.reason}"
     except Exception as e:
         return 0, f"Exception: {type(e).__name__}: {e}"
+
+
+def http_get(url: str, timeout: int = 30, retries: int = 1) -> tuple[int, dict | str]:
+    """
+    回 (status_code, body_json_or_text). 網路錯誤回 (0, err_msg).
+    Zeabur 冷啟動:首次 timeout 是正常,retry 一次(等 3 秒)通常就熱了。
+    """
+    last_status, last_body = _http_get_once(url, timeout)
+    if last_status in (200, 201, 204, 404):  # 404 也算「回應到」
+        return last_status, last_body
+    for attempt in range(retries):
+        time.sleep(3)
+        last_status, last_body = _http_get_once(url, timeout)
+        if last_status in (200, 201, 204, 404):
+            return last_status, last_body
+    return last_status, last_body
+
+
+def warmup(url: str, timeout: int = 45) -> None:
+    """Zeabur 冷啟動喚醒:先打一下,不在乎結果。"""
+    try:
+        _http_get_once(url, timeout)
+    except Exception:
+        pass
 
 
 # --------------------------------------------------------------------------- #
@@ -233,6 +256,11 @@ def check_diag_resolver() -> dict[str, Any]:
 
 def main() -> int:
     now_utc = datetime.now(timezone.utc)
+
+    # Zeabur 冷啟動喚醒 — 先打一次 /api/time/now 讓 backend 容器熱起來
+    # (不計入結果,只是為了避免後續 check 第 1 次冷啟動 timeout)
+    warmup(f"{BACKEND_BASE}/api/time/now")
+
     checks = [
         check_time(),
         check_finmind(),
@@ -249,7 +277,14 @@ def main() -> int:
     # 取 TPE 時間(從 check_time 結果)當報告時間
     time_sample = checks[0].get("sample") or {}
     tpe_iso = time_sample.get("iso") if isinstance(time_sample, dict) else None
-    report_time = tpe_iso or (now_utc.isoformat() + " (TPE fallback)")
+    if not tpe_iso:
+        # backend 時鐘打不到,用 Python zoneinfo 算(比 UTC fallback 精準)
+        try:
+            from zoneinfo import ZoneInfo
+            tpe_iso = datetime.now(ZoneInfo("Asia/Taipei")).isoformat() + " (py-zoneinfo fallback)"
+        except Exception:
+            tpe_iso = now_utc.isoformat() + " (UTC fallback)"
+    report_time = tpe_iso
 
     summary = {
         "checked_at_utc": now_utc.isoformat(),
