@@ -172,7 +172,7 @@ function PredictionCard({ p }: { p: Prediction }) {
         {p.direction && <>方向 {p.direction} · </>}
         {p.target_price && <>目標 {p.target_price} · </>}
         {p.current_price_at_prediction && <>起始 {p.current_price_at_prediction} · </>}
-        {p.confidence != null && <>信心 {Math.round((p.confidence as number) * 100)}% · </>}
+        {p.confidence != null && <>信心 {Math.round(p.confidence > 1 ? p.confidence : p.confidence * 100)}% · </>}
         時限 {p.deadline || p.evaluate_after}
       </p>
       {p.reasoning && <p style={{ margin: "6px 0" }}>依據:{p.reasoning}</p>}
