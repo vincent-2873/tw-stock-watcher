@@ -1,0 +1,82 @@
+name: 🐺 System Watchdog (every 15 min)
+
+# 每 15 分鐘檢查 backend + frontend 健康度
+# 依據: SYSTEM_CONSTITUTION Section 13.1「系統穩定度」優先級 #1
+# 原則: 只觀察、只記錄、絕不自動改 code
+# 異常時: 把異常摘要 commit 到 ceo-desk/watchdog/ANOMALIES.md(由下次 Claude Code session 接手)
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Verbose output'
+        type: boolean
+        default: false
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # 需要 commit 異常紀錄
+  issues: write     # 嚴重異常可建 issue
+
+jobs:
+  check:
+    name: Health checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run watchdog
+        id: watchdog
+        env:
+          BACKEND_BASE: https://vsis-api.zeabur.app
+          FRONTEND_BASE: https://tw-stock-watcher.zeabur.app
+          VERBOSE: ${{ github.event.inputs.verbose || 'false' }}
+        run: python .github/scripts/watchdog.py
+
+      - name: Commit anomaly log (if any)
+        if: steps.watchdog.outputs.has_anomaly == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ceo-desk/watchdog/ANOMALIES.md ceo-desk/watchdog/last_check.json
+          git diff --cached --quiet && exit 0 || true
+          git commit -m "watchdog: anomaly detected at $(date -u +%Y-%m-%dT%H:%M:%SZ) [auto]"
+          # Pull rebase to avoid race with other GHA commits, then push
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin main && exit 0
+            echo "Retry $i..."
+            sleep 5
+          done
+          exit 1
+
+      - name: Always update last_check.json (even when healthy)
+        if: always() && steps.watchdog.outputs.has_anomaly != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # 只每小時一次更新 healthy marker(避免 commit 洪水)
+          MINUTE=$(date -u +%M)
+          if [ "$MINUTE" = "00" ] || [ "$MINUTE" = "01" ]; then
+            git add ceo-desk/watchdog/last_check.json 2>/dev/null || true
+            git diff --cached --quiet && exit 0 || true
+            git commit -m "watchdog: hourly healthy check [auto]" || exit 0
+            for i in 1 2 3; do
+              git pull --rebase origin main && git push origin main && exit 0
+              echo "Retry $i..."
+              sleep 5
+            done
+          fi
