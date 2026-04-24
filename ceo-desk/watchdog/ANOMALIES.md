@@ -75,3 +75,9 @@
   - sample: `"HTTPError: Bad Gateway"`
 
 ---
+
+## 2026-04-25T03:25:45.966960+08:00 — Self Audit 發現新問題
+
+- **watchdog_freshness**: ❌ watchdog 已 82 分鐘沒跑(>45 分,可能 GHA 壞了)
+
+---
