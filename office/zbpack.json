@@ -2,5 +2,5 @@
   "build_command": "npm run build",
   "start_command": "npm start",
   "node_version": "20",
-  "install_command": "npm install"
+  "install_command": "npm install --include=dev"
 }
