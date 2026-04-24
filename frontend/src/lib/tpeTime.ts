@@ -1,17 +1,22 @@
 /**
  * 前端用 TPE 時區工具
  *
- * 為什麼存在:
+ * 為什麼存在(重構目的,非 bug 修復):
  *   某些 UI 瞬時邏輯(歡迎詞、session 判斷、右下浮鈕情緒)不值得 fetch backend,
- *   但舊程式碼用「手動 +8 小時」推算 TPE — 那段邏輯其實是拿「使用者本地時」
- *   當 TPE 用,對 TPE 使用者剛好對,對海外使用者(美歐)會錯。
+ *   需要直接從 client 算 TPE 時間。
  *
- * 正解:用 Intl.DateTimeFormat 明確指定 `timeZone: "Asia/Taipei"`,
- *       無論使用者在哪個時區都拿到真正的 TPE 時分。
+ *   舊寫法「d.getTime() + d.getTimezoneOffset()*60000 + 8h」經 Chrome 實測
+ *   在 LA / NY / UK / Tokyo / TPE 五個 timezone 都回傳正確 TPE 時分
+ *   ——因為 offset 和 8h 在本地 getHours() 解讀時剛好互相抵消。
  *
- * 背景紀錄:
- *   - `CURRENT_STATE.md` 技術債清單
- *   - `ceo-desk/logs/2026-04-24/23-29_REPORT_005_time_audit.md` 風險 #2
+ *   這是「脆弱的正確」:任何人讀要反覆算才懂,未來改動容易引入真 bug。
+ *   本 util 用 Intl.DateTimeFormat 明確指定 `timeZone: "Asia/Taipei"`,
+ *   意圖一看就知,無暗箱數學。
+ *
+ * 背景:
+ *   - 原診斷見 `ceo-desk/logs/2026-04-24/23-29_REPORT_005_time_audit.md` 風險 #2
+ *     (診斷當時說舊寫法「海外會錯」,經 2026-04-25 Chrome 實測證明該診斷錯誤)
+ *   - 本重構仍值得保留: 可讀性、與 HeroDate.tsx 一致、防脆弱
  */
 
 const _FMT = new Intl.DateTimeFormat("en-US", {
