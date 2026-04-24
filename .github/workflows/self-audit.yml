@@ -1,0 +1,63 @@
+name: 🔍 Self Audit (every 30 min)
+
+# 系統完整度自檢 — 比 watchdog 更深
+# watchdog = 線上端點健康、 self-audit = 系統功能完成度
+# 依據: SYSTEM_CONSTITUTION.md Section 13.1 穩定度 + Vincent「自動化偵錯」要求
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # 每 30 分鐘
+  workflow_dispatch:
+
+concurrency:
+  group: self-audit
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    name: System completeness audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0   # 完整 history 給路線圖掃描用
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run self-audit
+        id: audit
+        env:
+          BACKEND_BASE: https://vsis-api.zeabur.app
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python .github/scripts/self_audit.py
+
+      - name: Commit SELF_AUDIT.md (always, with anomalies if new)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ceo-desk/watchdog/SELF_AUDIT.md
+          if [ "${{ steps.audit.outputs.new_anomaly }}" = "true" ]; then
+            git add ceo-desk/watchdog/ANOMALIES.md
+          fi
+          if git diff --cached --quiet; then
+            echo "No changes"; exit 0
+          fi
+          MSG="self-audit: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          if [ "${{ steps.audit.outputs.new_anomaly }}" = "true" ]; then
+            MSG="$MSG [new anomaly]"
+          fi
+          git commit -m "$MSG [auto]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin main && exit 0
+            echo "Retry $i..."
+            sleep 5
+          done
+          exit 1
