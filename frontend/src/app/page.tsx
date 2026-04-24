@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import styles from "./page.module.css";
 import {
@@ -82,7 +83,16 @@ export default function Home() {
       <div className={styles.topnav}>
         <div className={styles.topnavInner}>
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoQuack}>🦆</span>
+            <span className={styles.logoQuack}>
+              <Image
+                src="/characters/guagua_official_v1.png"
+                alt="呱呱投資招待所"
+                width={40}
+                height={40}
+                priority
+                draggable={false}
+              />
+            </span>
             <div className={styles.logoTextBlock}>
               <span className={styles.logoJp}>クワック・ハウス</span>
               <span className={styles.logoText}>呱呱投資招待所</span>
