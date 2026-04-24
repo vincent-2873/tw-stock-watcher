@@ -10,3 +10,32 @@
 本檔在偵測到第一個異常時開始累積紀錄。
 
 ---
+
+## 2026-04-24T16:10:24.597748+00:00 (TPE fallback) — 6 個異常
+
+
+- **time** (`/api/time/now`) status=0 latency=15419ms
+  - ❌ /api/time/now returned 0: 'Exception: TimeoutError: The read operation timed out'
+  - sample: `"Exception: TimeoutError: The read operation timed out"`
+
+- **finmind** (`/api/diag/finmind`) status=0 latency=15411ms
+  - ❌ status 0
+  - sample: `"Exception: TimeoutError: The read operation timed out"`
+
+- **market_overview** (`/api/market/overview`) status=0 latency=15327ms
+  - ❌ status 0
+  - sample: `{}`
+
+- **topics** (`/api/topics`) status=0 latency=15435ms
+  - ❌ status 0
+  - sample: `{"count": null}`
+
+- **chat_health** (`/api/chat/health`) status=0 latency=15408ms
+  - ❌ status 0
+  - sample: `"Exception: TimeoutError: The read operation timed out"`
+
+- **resolver** (`/api/diag/resolver`) status=0 latency=15350ms
+  - ❌ status 0
+  - sample: `"Exception: TimeoutError: The read operation timed out"`
+
+---

@@ -1,88 +1,57 @@
 {
-  "checked_at_utc": "2026-04-24T16:08:38.692675+00:00",
-  "checked_at_tpe": "2026-04-25T00:08:39.132246+08:00",
+  "checked_at_utc": "2026-04-24T16:10:24.597748+00:00",
+  "checked_at_tpe": "2026-04-24T16:10:24.597748+00:00 (TPE fallback)",
   "total_checks": 7,
-  "healthy_count": 7,
-  "anomaly_count": 0,
+  "healthy_count": 1,
+  "anomaly_count": 6,
   "checks": [
     {
       "name": "time",
       "endpoint": "/api/time/now",
-      "status": 200,
-      "latency_ms": 376,
-      "anomaly": null,
-      "sample": {
-        "iso": "2026-04-25T00:08:39.132246+08:00",
-        "year": 2026,
-        "month": 4,
-        "day": 25,
-        "hour": 0,
-        "minute": 8,
-        "second": 39,
-        "weekday_en": "Saturday",
-        "month_en": "April",
-        "hero_en": "Saturday · April 25 · 2026 · 00:08 TPE",
-        "timezone": "Asia/Taipei"
-      }
+      "status": 0,
+      "latency_ms": 15419,
+      "anomaly": "/api/time/now returned 0: 'Exception: TimeoutError: The read operation timed out'",
+      "sample": "Exception: TimeoutError: The read operation timed out"
     },
     {
       "name": "finmind",
       "endpoint": "/api/diag/finmind",
-      "status": 200,
-      "latency_ms": 347,
-      "anomaly": null,
-      "sample": {
-        "ok": true,
-        "user_id": "page.cinhong",
-        "level": 3,
-        "level_title": "Sponsor",
-        "api_request_limit": 6000,
-        "api_request_limit_hour": 6000,
-        "user_count": 63,
-        "auth_mode": "bearer+query",
-        "token_env_set": true,
-        "token_prefix": "eyJ0eXAiOiJKV1QiLCJh..."
-      }
+      "status": 0,
+      "latency_ms": 15411,
+      "anomaly": "status 0",
+      "sample": "Exception: TimeoutError: The read operation timed out"
     },
     {
       "name": "market_overview",
       "endpoint": "/api/market/overview",
-      "status": 200,
-      "latency_ms": 1173,
-      "anomaly": null,
-      "sample": {
-        "taiex_close": 38932.4,
-        "sox_price": 10499.79,
-        "vix_price": 18.53
-      }
+      "status": 0,
+      "latency_ms": 15327,
+      "anomaly": "status 0",
+      "sample": {}
     },
     {
       "name": "topics",
       "endpoint": "/api/topics",
-      "status": 200,
-      "latency_ms": 615,
-      "anomaly": null,
+      "status": 0,
+      "latency_ms": 15435,
+      "anomaly": "status 0",
       "sample": {
-        "count": 10
+        "count": null
       }
     },
     {
       "name": "chat_health",
       "endpoint": "/api/chat/health",
-      "status": 200,
-      "latency_ms": 157,
-      "anomaly": null,
-      "sample": {
-        "ok": true,
-        "model": "claude-sonnet-4-5-20250929",
-        "tpe_now": "2026-04-25T00:08:41.428125+08:00"
-      }
+      "status": 0,
+      "latency_ms": 15408,
+      "anomaly": "status 0",
+      "sample": "Exception: TimeoutError: The read operation timed out"
     },
     {
       "name": "frontend",
       "endpoint": "https://tw-stock-watcher.zeabur.app",
       "status": 200,
-      "latency_ms": 602,
+      "latency_ms": 1385,
       "anomaly": null,
       "sample": {
         "html_len": 219891
@@ -91,16 +60,10 @@
     {
       "name": "resolver",
       "endpoint": "/api/diag/resolver",
-      "status": 200,
-      "latency_ms": 495,
-      "anomaly": null,
-      "sample": {
-        "resolver": {
-          "count": 2508,
-          "loaded_at": 1777046922.5218112,
-          "age_seconds": 0.0032198429107666016
-        }
-      }
+      "status": 0,
+      "latency_ms": 15350,
+      "anomaly": "status 0",
+      "sample": "Exception: TimeoutError: The read operation timed out"
     }
   ]
 }
