@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { QuackAvatar, type QuackState } from "./QuackAvatar";
+import { getTpeHourMinute } from "@/lib/tpeTime";
 
 /**
  * 全站右下角浮動呱呱。根據 TPE 時間決定預設情緒:
@@ -27,11 +28,9 @@ export function QuackFloating() {
 
   useEffect(() => {
     function tick() {
-      const d = new Date();
-      // 換成 TPE(UTC+8)
-      const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
-      const tpe = new Date(utcMs + 8 * 3600 * 1000);
-      setState(stateForTpeHour(tpe.getHours(), tpe.getMinutes()));
+      // 海外安全:用 Intl 強制 Asia/Taipei,不再手動 +8(對非 TPE 使用者會錯)
+      const [h, m] = getTpeHourMinute();
+      setState(stateForTpeHour(h, m));
     }
     tick();
     const id = setInterval(tick, 60 * 1000);

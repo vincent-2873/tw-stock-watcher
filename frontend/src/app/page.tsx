@@ -36,10 +36,22 @@ function StockChip({ code, change, href }: { code: string; change?: number; href
 }
 
 function tpeNow() {
-  const d = new Date();
-  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
-  const tpe = new Date(utcMs + 8 * 3600 * 1000);
-  const hm = tpe.getHours() * 60 + tpe.getMinutes();
+  // 海外使用者安全:用 Intl.DateTimeFormat 強制 Asia/Taipei,
+  // 不再用「getTime + getTimezoneOffset + 8 小時」推算(那對非 TPE 使用者會錯)。
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Taipei",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+    hour12: false,
+  }).formatToParts(now);
+  const partMap: Record<string, string> = {};
+  for (const p of parts) partMap[p.type] = p.value;
+  const hour = parseInt(partMap.hour ?? "0", 10) % 24;
+  const minute = parseInt(partMap.minute ?? "0", 10);
+  const hm = hour * 60 + minute;
+
   let greet = "呱呱";
   let session = "盤後";
   if (hm < 8 * 60) greet = "早安";
@@ -49,20 +61,24 @@ function tpeNow() {
   else greet = "晚安";
   if (hm >= 9 * 60 && hm < 13 * 60 + 30) session = "盤中";
   else if (hm < 9 * 60) session = "盤前";
-  const date = tpe.toLocaleDateString("zh-TW", {
+
+  const date = now.toLocaleDateString("zh-TW", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     timeZone: "Asia/Taipei",
   }).replace(/\//g, ".");
-  const weekday = "日一二三四五六"[tpe.getDay()];
-  const time = tpe.toLocaleTimeString("zh-TW", {
+  const weekdayIdx = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
+    partMap.weekday ?? "Sun",
+  );
+  const weekday = "日一二三四五六"[weekdayIdx >= 0 ? weekdayIdx : 0];
+  const time = now.toLocaleTimeString("zh-TW", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
     timeZone: "Asia/Taipei",
   });
-  const dateEn = tpe.toLocaleDateString("en-US", {
+  const dateEn = now.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
