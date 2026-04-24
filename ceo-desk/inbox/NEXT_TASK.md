@@ -25,6 +25,8 @@
 - outbox 完整
 - logs 有紀錄
 - Git 推上去
+- [ ] 所有文件不再提「Resolver CRITICAL bug」
+- [ ] 改為反映稽核結果(無真 bug)
 
 ## 時間
 10-15 分鐘

@@ -109,7 +109,7 @@ A  ceo-desk/logs/2026-04-24/12-35_001_ceodesk_verify.md  (本檔副本)
 
 1. **Vincent**:
    - (3 分鐘)讀本 outbox + 貼給 CTO 確認
-   - (10 分鐘)讀 [MORNING_BRIEFING_2026-04-24.md](../../MORNING_BRIEFING_2026-04-24.md)(夜間稽核 30 秒版)
+   - (10 分鐘)讀 [MORNING_BRIEFING_2026-04-24.md](../../../MORNING_BRIEFING_2026-04-24.md)(夜間稽核 30 秒版)
    - 決定:是否現在做 P1 health 的 10 分鐘端點飢餓修復,還是直接進 Phase 2.2
 
 2. **CTO**:
@@ -134,4 +134,4 @@ A  ceo-desk/logs/2026-04-24/12-35_001_ceodesk_verify.md  (本檔副本)
 >
 > **未來你只要說「讀 ceo-desk/inbox/NEXT_TASK.md 執行」**,我就會照那邊的指令做、把報告丟進 outbox。你不用再貼長指令。
 >
-> 唯一你早上要花 3 分鐘看的是 [MORNING_BRIEFING_2026-04-24.md](../../MORNING_BRIEFING_2026-04-24.md) — 那份說了昨晚整個系統健康,只有一個小架構隱患可以順手修。
+> 唯一你早上要花 3 分鐘看的是 [MORNING_BRIEFING_2026-04-24.md](../../../MORNING_BRIEFING_2026-04-24.md) — 那份說了昨晚整個系統健康,只有一個小架構隱患可以順手修。
