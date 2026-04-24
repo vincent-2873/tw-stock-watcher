@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, type Transition } from "framer-motion";
+import Image from "next/image";
 import type { CSSProperties } from "react";
 
 export type QuackState =
@@ -56,6 +57,12 @@ const SIZES: Record<"sm" | "md" | "lg" | "xl", string> = {
   lg: "96px",
   xl: "160px",
 };
+const SIZE_PX: Record<"sm" | "md" | "lg" | "xl", number> = {
+  sm: 24,
+  md: 48,
+  lg: 96,
+  xl: 160,
+};
 
 type Props = {
   state?: QuackState;
@@ -75,6 +82,7 @@ export function QuackAvatar({
   title,
 }: Props) {
   const spec = ANIMATIONS[state];
+  const px = SIZE_PX[size];
   return (
     <motion.span
       aria-label={title ?? "呱呱"}
@@ -82,9 +90,12 @@ export function QuackAvatar({
       onClick={onClick}
       className={className}
       style={{
-        fontSize: SIZES[size],
+        width: SIZES[size],
+        height: SIZES[size],
         lineHeight: 1,
-        display: "inline-block",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
         cursor: onClick ? "pointer" : "default",
         userSelect: "none",
         ...style,
@@ -94,7 +105,20 @@ export function QuackAvatar({
       whileHover={onClick ? { scale: 1.08 } : undefined}
       title={title}
     >
-      🦆
+      <Image
+        src="/characters/guagua_official_v1.png"
+        alt={title ?? "呱呱"}
+        width={px}
+        height={px}
+        draggable={false}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      />
     </motion.span>
   );
 }
