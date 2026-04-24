@@ -117,11 +117,14 @@ export default function OfficeHome() {
           🦆 快速連結
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
-          <OfficeLink href="/agents" title="分析師名冊" desc="12 位 agent 人設 · 流派 · 命中率" />
+          <OfficeLink href="/agents" title="🦆 分析師名冊" desc="12 位 agent 人設 · 流派 · 命中率" />
+          <OfficeLink href="/meetings" title="📋 會議記錄" desc="盤前 / 午盤 / 盤後 / 週 / 月會議" />
+          <OfficeLink href="/watchdog" title="🐺 系統監控" desc="Watchdog + Self-audit 即時儀表板" />
+          <OfficeLink href="/predictions" title="📈 預測追蹤" desc="所有預測 + 命中率 (透明度承諾)" />
           <OfficeLink
             href="https://github.com/vincent-2873/tw-stock-watcher/actions"
-            title="GitHub Actions · 自動化監控"
-            desc="Watchdog 每 15 分 · Self-audit 每 30 分"
+            title="⚙️ GitHub Actions"
+            desc="Watchdog 15 分 / Self-audit 30 分 / intel-cron"
             external
           />
           <OfficeLink

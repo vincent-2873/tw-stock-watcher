@@ -62,6 +62,7 @@ from backend.routes import quack as _quack_routes  # noqa: E402
 from backend.routes import diag as _diag_routes  # noqa: E402
 from backend.routes import time_route as _time_routes  # noqa: E402
 from backend.routes import agents as _agents_routes  # noqa: E402
+from backend.routes import meetings as _meetings_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
@@ -78,6 +79,7 @@ app.include_router(_quack_routes.router, prefix="/api", tags=["quack"])
 app.include_router(_diag_routes.router, prefix="/api", tags=["diag"])
 app.include_router(_time_routes.router, prefix="/api", tags=["time"])
 app.include_router(_agents_routes.router, prefix="/api", tags=["agents"])
+app.include_router(_meetings_routes.router, prefix="/api", tags=["meetings"])
 
 
 @app.get("/")
