@@ -26,7 +26,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from backend.services.finmind_service import FinMindService
-from backend.services.stock_resolver import extract_stocks, stats as resolver_stats
+from backend.services.stock_resolver import extract_stocks
 from backend.utils.logger import get_logger
 from backend.utils.time_utils import now_tpe
 
@@ -364,9 +364,14 @@ async def chat(req: ChatRequest):
 
 @router.get("/chat/health")
 async def chat_health():
+    """輕量健康檢查 — 只回 in-memory 即時欄位,不碰任何鎖/IO。
+
+    註:resolver 載入狀態移到 GET /api/diag/resolver(避免 chat_health 跟
+    resolver reload 搶 threading.Lock 卡 event loop)。
+    詳見 night_audit/2026-04-24_P1_health.md C.2。
+    """
     return {
         "ok": bool(os.getenv("ANTHROPIC_API_KEY")),
         "model": MODEL,
-        "resolver": resolver_stats(),
         "tpe_now": now_tpe().isoformat(),
     }

@@ -17,10 +17,14 @@ router = APIRouter()
 
 
 @router.get("/time/now")
-def time_now():
+async def time_now():
     """
     回傳後端此刻的 TPE 時間(多格式)。
     前端 HeroDate client-side 每 60 秒 poll 一次。
+
+    註:函式內全為 in-memory pure CPU(now_tpe + 字串格式化),
+    改 async 是為了走 event loop fast-path,不會被 sync 端點佔用的
+    thread pool 飢餓。詳見 night_audit/2026-04-24_P1_health.md C.2。
     """
     tpe = now_tpe()
     # 英文 Hero 格式: "Thursday · April 23 · 2026 · 18:19 TPE"
