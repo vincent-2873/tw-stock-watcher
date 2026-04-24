@@ -106,3 +106,9 @@
 - **watchdog_freshness**: ❌ watchdog 已 300 分鐘沒跑(>45 分,可能 GHA 壞了)
 
 ---
+
+## 2026-04-25T07:59:43.484788+08:00 — Self Audit 發現新問題
+
+- **watchdog_freshness**: ❌ watchdog 已 356 分鐘沒跑(>45 分,可能 GHA 壞了)
+
+---
