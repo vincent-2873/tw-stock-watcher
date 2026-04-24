@@ -40,9 +40,9 @@
 
 ---
 
-## 2026-04-25T01:00:27.922143+08:00 — Self Audit 發現新問題
+## 2026-04-25T00:59:20.693612+08:00 — Self Audit 發現新問題
 
-- **watchdog_freshness**: ❌ watchdog 已 46 分鐘沒跑(>45 分,可能 GHA 壞了)
+- **agents_endpoint**: ❌ /api/agents status=502
 - **visual_assets**: ❌ 11/11 位 agent 視覺還缺(用 emoji 占位中)
 
 ---
