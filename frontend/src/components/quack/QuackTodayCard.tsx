@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { QuackAvatar, type QuackState } from "./QuackAvatar";
-import { getTpeHourMinute } from "@/lib/tpeTime";
 
 type Session = "pre" | "open" | "lunch" | "close" | "after" | "night";
 
@@ -55,9 +54,10 @@ export function QuackTodayCard() {
 
   useEffect(() => {
     function tick() {
-      // 海外安全:用 Intl 強制 Asia/Taipei,不再手動 +8
-      const [h, m] = getTpeHourMinute();
-      setSess(sessionFor(h, m));
+      const d = new Date();
+      const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+      const tpe = new Date(utcMs + 8 * 3600 * 1000);
+      setSess(sessionFor(tpe.getHours(), tpe.getMinutes()));
     }
     tick();
     const id = setInterval(tick, 60 * 1000);
