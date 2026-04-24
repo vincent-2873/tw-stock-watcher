@@ -2,5 +2,5 @@
   "build_command": "pnpm build",
   "start_command": "pnpm start",
   "node_version": "20",
-  "install_command": "pnpm install --frozen-lockfile --shamefully-hoist || pnpm install"
+  "install_command": "pnpm install"
 }
