@@ -46,3 +46,32 @@
 - **visual_assets**: ❌ 11/11 位 agent 視覺還缺(用 emoji 占位中)
 
 ---
+
+## 2026-04-25T02:03:58.965396+08:00 (py-zoneinfo fallback) — 6 個異常
+
+
+- **time** (`/api/time/now`) status=502 latency=5864ms
+  - ❌ /api/time/now returned 502: 'HTTPError: Bad Gateway'
+  - sample: `"HTTPError: Bad Gateway"`
+
+- **finmind** (`/api/diag/finmind`) status=502 latency=7581ms
+  - ❌ status 502
+  - sample: `"HTTPError: Bad Gateway"`
+
+- **market_overview** (`/api/market/overview`) status=502 latency=10476ms
+  - ❌ status 502
+  - sample: `{}`
+
+- **topics** (`/api/topics`) status=502 latency=6687ms
+  - ❌ status 502
+  - sample: `{"count": null}`
+
+- **chat_health** (`/api/chat/health`) status=502 latency=6237ms
+  - ❌ status 502
+  - sample: `"HTTPError: Bad Gateway"`
+
+- **resolver** (`/api/diag/resolver`) status=502 latency=7909ms
+  - ❌ status 502
+  - sample: `"HTTPError: Bad Gateway"`
+
+---
