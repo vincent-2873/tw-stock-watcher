@@ -81,3 +81,10 @@
 - **watchdog_freshness**: ❌ watchdog 已 82 分鐘沒跑(>45 分,可能 GHA 壞了)
 
 ---
+
+## 2026-04-25T04:05:01.596494+08:00 — Self Audit 發現新問題
+
+- **agents_endpoint**: ❌ /api/agents status=0
+- **watchdog_freshness**: ❌ watchdog 已 122 分鐘沒跑(>45 分,可能 GHA 壞了)
+
+---
