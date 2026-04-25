@@ -8,7 +8,7 @@
  *
  * NEXT_TASK_007 增量：
  *   - 5 位投資分析師卡片改用 AnalystAvatar 占位視覺（純 SVG）
- *   - display_name 用新名（辰旭/靜遠/觀棋/守拙/明川）覆蓋舊的（阿武等）
+ *   - display_name 用正式名（辰旭/靜遠/觀棋/守拙/明川)
  *     真正 DB 更新等 migration 0008
  */
 

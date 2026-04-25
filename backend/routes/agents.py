@@ -110,7 +110,7 @@ AGENT_PROFILES: dict[str, dict[str, Any]] = {
     },
     # 決策整合層 — 投資分析師 5 人(會被追蹤勝率)
     "analyst_a": {
-        "display_name": "阿武",
+        "display_name": "辰旭",
         "role": "投資分析師 · 技術派",
         "emoji": "⚔️",
         "department": "投資部門",
@@ -122,7 +122,7 @@ AGENT_PROFILES: dict[str, dict[str, Any]] = {
         "tracked": True,
     },
     "analyst_b": {
-        "display_name": "阿慧",
+        "display_name": "靜遠",
         "role": "投資分析師 · 基本面派",
         "emoji": "📚",
         "department": "投資部門",
@@ -134,7 +134,7 @@ AGENT_PROFILES: dict[str, dict[str, Any]] = {
         "tracked": True,
     },
     "analyst_c": {
-        "display_name": "阿跡",
+        "display_name": "觀棋",
         "role": "投資分析師 · 籌碼派",
         "emoji": "🔍",
         "department": "投資部門",
@@ -146,7 +146,7 @@ AGENT_PROFILES: dict[str, dict[str, Any]] = {
         "tracked": True,
     },
     "analyst_d": {
-        "display_name": "阿數",
+        "display_name": "守拙",
         "role": "投資分析師 · 量化派",
         "emoji": "🧮",
         "department": "投資部門",
@@ -158,7 +158,7 @@ AGENT_PROFILES: dict[str, dict[str, Any]] = {
         "tracked": True,
     },
     "analyst_e": {
-        "display_name": "阿和",
+        "display_name": "明川",
         "role": "投資分析師 · 綜合派",
         "emoji": "☯️",
         "department": "投資部門",

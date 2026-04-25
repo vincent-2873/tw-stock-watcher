@@ -188,7 +188,7 @@ export default function OfficeHome() {
         </h2>
         <ul style={{ padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
           <TodoItem text="11 位 agent 視覺(Vincent 用 DALL-E 生,放 frontend/public/characters/)" />
-          <TodoItem text="5 位投資分析師代號重新命名(阿武/阿慧等太土,等 CEO 最終定案)" />
+          <TodoItem text="11 位 agent PNG 視覺(5 位投資分析師代號 008c-cleanup 已正名:辰旭/靜遠/觀棋/守拙/明川)" />
           <TodoItem text="會議系統 backend + cron(憲法 Section 7 未實作)" />
           <TodoItem text="預測結算器(每交易日 14:30 抓收盤比對)" />
           <TodoItem text="社群爬蟲(PTT / Dcard / Mobile01)" />

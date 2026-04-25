@@ -108,7 +108,7 @@ export default function PredictionsPage() {
                 <br />
                 1. 會議系統 cron 實作 (憲法 Section 7)
                 <br />
-                2. 分析師 A-E (阿武/阿慧/阿跡/阿數/阿和) 首場正式預測
+                2. 分析師 A-E (辰旭/靜遠/觀棋/守拙/明川) 首場正式預測
                 <br />
                 3. 每日 14:30 結算器比對實際收盤
               </p>
