@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   AnalystAvatar,
@@ -135,11 +136,22 @@ export default function OfficeHome() {
       </section>
 
       <section style={{ marginBottom: 36 }}>
-        <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, marginBottom: 14 }}>
-          🦆 快速連結
+        <h2
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: 20,
+            fontWeight: 500,
+            marginBottom: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Image src="/characters/guagua_official_v1.png" alt="呱呱" width={24} height={24} />
+          快速連結
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
-          <OfficeLink href="/agents" title="🦆 分析師名冊" desc="12 位 agent 人設 · 流派 · 命中率" />
+          <OfficeLink href="/agents" title="分析師名冊" desc="12 位 agent 人設 · 流派 · 命中率" />
           <OfficeLink href="/meetings" title="📋 會議記錄" desc="盤前 / 午盤 / 盤後 / 週 / 月會議" />
           <OfficeLink href="/watchdog" title="🐺 系統監控" desc="Watchdog + Self-audit 即時儀表板" />
           <OfficeLink href="/predictions" title="📈 預測追蹤" desc="所有預測 + 命中率 (透明度承諾)" />

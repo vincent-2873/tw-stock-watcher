@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   AnalystAvatar,
@@ -112,8 +113,19 @@ export default function AgentsPage() {
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}>
       <BackLink />
-      <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 500, marginBottom: 4 }}>
-        🦆 分析師名冊
+      <h1
+        style={{
+          fontFamily: "var(--font-serif)",
+          fontSize: 28,
+          fontWeight: 500,
+          marginBottom: 4,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <Image src="/characters/guagua_official_v1.png" alt="呱呱" width={32} height={32} />
+        分析師名冊
       </h1>
       <p style={{ color: "var(--muted-fg)", fontSize: 13, marginBottom: 8 }}>
         12 位分析師,每位流派不同、風險偏好不同、「命中」標準自己定義。<br />
@@ -123,7 +135,7 @@ export default function AgentsPage() {
         ※ 系統剛上線,勝率為 0 筆。首場會議產生預測後,勝率會開始累積。
       </p>
 
-      <Section title="🦆 所主" agents={owner} highlight />
+      <Section title="所主 · 呱呱" agents={owner} highlight />
       <Section title="👤 投資部門 · 決策整合層(被追蹤勝率)" agents={investment} highlight />
       <Section title="📡 資訊生產層 · 4 部門主管" agents={information} />
       <Section title="🦊 監督學習層" agents={supervision} />

@@ -110,6 +110,7 @@ type Topic = {
   stage: string | null;
   ai_summary: string | null;
   supply_chain: Record<string, Tier> | null;
+  updated_at?: string; // NEXT_TASK_008a Bug #1:用 DB 時間取代 client now()
 };
 
 const STAGE_LABEL: Record<string, string> = {
@@ -248,15 +249,54 @@ const TIER_TEXT_ON: Record<string, string> = {
 
 type TierLevel = "SR" | "R" | "N";
 
+// NEXT_TASK_008a 階段 2:呱呱中樞 AI 推理結果(10 檔 + 呱呱口吻理由)
+type QuackPick = {
+  symbol: string;
+  name: string;
+  category: string; // 穩健派 / 進攻派 / 逆勢派 / 題材派
+  quack_reason: string;
+  target_price?: number;
+  stop_loss?: number;
+  confidence?: number;
+};
+
+const CATEGORY_TONE: Record<string, { bg: string; fg: string; border: string }> = {
+  "穩健派": { bg: "rgba(93, 122, 79, 0.10)", fg: "#5d7a4f", border: "rgba(93, 122, 79, 0.35)" },
+  "進攻派": { bg: "rgba(200, 75, 60, 0.10)", fg: "#c84b3c", border: "rgba(200, 75, 60, 0.35)" },
+  "逆勢派": { bg: "rgba(180, 130, 40, 0.10)", fg: "#8a6620", border: "rgba(180, 130, 40, 0.35)" },
+  "題材派": { bg: "rgba(30, 58, 95, 0.10)", fg: "#1e3a5f", border: "rgba(30, 58, 95, 0.35)" },
+};
+
 export function QuackPicksLive() {
-  const [picks, setPicks] = useState<Pick[] | null>(null);
-  // NEXT_TASK_007 修正 #4: 三層 auto-fallback — SR/SSR → R → 全空冷清提示
+  // NEXT_TASK_008a:走 /api/quack/weekly_picks(AI 中樞)為主路徑;失敗才退舊 picks
+  const [aiPicks, setAiPicks] = useState<QuackPick[] | null>(null);
+  const [aiGeneratedAt, setAiGeneratedAt] = useState<string | null>(null);
+  const [legacyPicks, setLegacyPicks] = useState<Pick[] | null>(null);
   const [activeTier, setActiveTier] = useState<TierLevel>("SR");
   const [exhausted, setExhausted] = useState(false);
+  const [usingLegacy, setUsingLegacy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      // 1. 主路徑:呱呱中樞 AI 推理
+      try {
+        const r = await fetch(`${API}/api/quack/weekly_picks`, { cache: "no-store" });
+        if (r.ok) {
+          const j = await r.json();
+          const arr: QuackPick[] = j?.picks ?? [];
+          if (!cancelled && arr.length > 0) {
+            setAiPicks(arr);
+            setAiGeneratedAt(j?.generated_at ?? null);
+            return;
+          }
+        }
+      } catch {
+        /* fall through to legacy */
+      }
+
+      // 2. 退路:既有 four-quadrant evaluator(若 AI endpoint 失敗或回 0 檔)
+      if (!cancelled) setUsingLegacy(true);
       const tryTiers: TierLevel[] = ["SR", "R"];
       for (const t of tryTiers) {
         try {
@@ -268,7 +308,7 @@ export function QuackPicksLive() {
           const arr: Pick[] = j.picks ?? [];
           if (!cancelled && arr.length > 0) {
             setActiveTier(t);
-            setPicks(arr);
+            setLegacyPicks(arr);
             return;
           }
         } catch {
@@ -276,14 +316,146 @@ export function QuackPicksLive() {
         }
       }
       if (!cancelled) {
-        setPicks([]);
+        setLegacyPicks([]);
         setExhausted(true);
       }
     }
     load();
   }, []);
 
-  if (picks === null) {
+  // ============ AI 主路徑(10 檔精準推薦) ============
+  if (aiPicks !== null) {
+    if (aiPicks.length === 0) return null;
+    return (
+      <div>
+        {aiGeneratedAt && (
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--text-muted)",
+              marginBottom: 8,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            呱呱中樞 AI · {new Date(aiGeneratedAt).toLocaleString("zh-TW", {
+              timeZone: "Asia/Taipei",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        )}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: 12,
+          }}
+        >
+          {aiPicks.map((p, idx) => {
+            const tone = CATEGORY_TONE[p.category] ?? CATEGORY_TONE["穩健派"];
+            return (
+              <Link
+                key={`${p.symbol}-${idx}`}
+                href={`/stocks/${p.symbol}`}
+                style={{
+                  padding: 14,
+                  borderRadius: 6,
+                  background: "var(--bg-elevated)",
+                  border: "1px solid rgba(201, 169, 97, 0.15)",
+                  textDecoration: "none",
+                  color: "inherit",
+                  display: "block",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    marginBottom: 6,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      color: "var(--text-primary)",
+                      fontSize: 18,
+                      fontWeight: 500,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {p.symbol}
+                  </span>
+                  <span
+                    style={{
+                      padding: "2px 8px",
+                      background: tone.bg,
+                      color: tone.fg,
+                      border: `1px solid ${tone.border}`,
+                      fontSize: 11,
+                      fontFamily: "'Shippori Mincho', serif",
+                      borderRadius: 2,
+                    }}
+                  >
+                    {p.category}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: "var(--text-primary)",
+                    marginBottom: 8,
+                    fontFamily: "'Shippori Mincho', serif",
+                  }}
+                >
+                  {p.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.5,
+                    marginBottom: 8,
+                    fontStyle: "italic",
+                  }}
+                >
+                  「{p.quack_reason}」
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    fontSize: 10,
+                    color: "var(--text-muted)",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    borderTop: "1px solid rgba(201, 169, 97, 0.08)",
+                    paddingTop: 6,
+                  }}
+                >
+                  {p.target_price != null && (
+                    <span>目標 {p.target_price}</span>
+                  )}
+                  {p.stop_loss != null && (
+                    <span>停損 {p.stop_loss}</span>
+                  )}
+                  {p.confidence != null && (
+                    <span style={{ marginLeft: "auto" }}>
+                      信心 {Math.round(p.confidence * 100)}%
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ============ 退路:legacy four-quadrant evaluator ============
+  if (legacyPicks === null) {
     return (
       <div style={{ padding: 16, color: "var(--text-muted)", fontStyle: "italic" }}>
         呱呱正在挑選⋯⋯
@@ -291,15 +463,13 @@ export function QuackPicksLive() {
     );
   }
 
-  // 三層都沒料 → 冷清提示 + 大盤觀察重點
-  if (exhausted && picks.length === 0) {
-    return (
-      <QuackPicksColdNote />
-    );
+  if (exhausted && legacyPicks.length === 0) {
+    return <QuackPicksColdNote />;
   }
-  if (picks.length === 0) {
+  if (legacyPicks.length === 0) {
     return null;
   }
+  const picks = legacyPicks;
 
   return (
     <div>
@@ -510,13 +680,28 @@ function QuackPicksColdNote() {
 
 // ============================================
 // 4. 呱呱今日功課(從 topics + 市場狀況即時生成)
+// NEXT_TASK_008a Bug #1: updatedAt 改用 DB topics.updated_at(真實資料新鮮度)
+//                        而非 client `new Date()`(說謊的客戶端時間)
 // ============================================
 type MorningData = {
   topTopic?: Topic;
   avoid?: Topic;
   marketDown: boolean;
-  updatedAt: string;
+  dbUpdatedAt: string | null; // ISO,從 DB 抓最新一筆 topic.updated_at
 };
+
+function formatRelative(iso: string | null): string {
+  if (!iso) return "尚未更新";
+  const updated = new Date(iso).getTime();
+  const now = Date.now();
+  const diffMin = Math.floor((now - updated) / 60_000);
+  if (diffMin < 1) return "剛剛更新";
+  if (diffMin < 60) return `${diffMin} 分鐘前更新`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} 小時前更新`;
+  const diffDay = Math.floor(diffHr / 24);
+  return `${diffDay} 天前更新`;
+}
 
 export function QuackMorningLive() {
   const [d, setD] = useState<MorningData | null>(null);
@@ -539,17 +724,18 @@ export function QuackMorningLive() {
           (x) => (x.heat_score ?? 0) >= 90 && x.heat_trend !== "falling",
         );
         const marketDown = (m?.taiex?.day_change_pct ?? 0) < -0.5;
+        // 取所有 topics 中最新的 updated_at(若都沒有則為 null,表示資料從未被 cron 更新過)
+        const dbUpdatedAt = topics
+          .map((tp) => tp.updated_at)
+          .filter((x): x is string => Boolean(x))
+          .sort()
+          .reverse()[0] ?? null;
         if (!cancelled) {
           setD({
             topTopic: rising ?? topics[0],
             avoid: overheated,
             marketDown,
-            updatedAt: new Date().toLocaleTimeString("zh-TW", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-              timeZone: "Asia/Taipei",
-            }),
+            dbUpdatedAt,
           });
         }
       } catch {/* */}
@@ -577,7 +763,9 @@ export function QuackMorningLive() {
         <div>
           <div className={styles.quackTitle}>呱呱今日功課 · 即時</div>
           <div className={styles.quackTime}>
-            {d?.updatedAt ? `${d.updatedAt} · 呱呱剛從 DB 讀完題材熱度` : "呱呱翻資料中⋯"}
+            {d
+              ? `${formatRelative(d.dbUpdatedAt)} · 取自 topics 表`
+              : "呱呱翻資料中⋯"}
           </div>
         </div>
       </div>
@@ -1065,6 +1253,7 @@ type Statement = {
   ai_urgency?: number;
   ai_market_impact?: string;
   ai_affected_stocks?: Array<{ code: string; name?: string; impact?: string }>;
+  tw_impact_score?: number; // NEXT_TASK_008a: DB 欄位,0-10
   person?: {
     id: number;
     name: string;
@@ -1082,13 +1271,14 @@ type Statement = {
  *   - 此元件現在自己管理區塊標題 + loading/empty/data 三狀態
  *   - 空時 return null,外層看不到標題也看不到空殼
  */
-// NEXT_TASK_007 修正 #3: 過濾「會影響台股」
-// 真正的 tw_impact_score 欄位 + 後端 AI 評分尚未實作（需另開後端任務 + DB migration）。
-// 這版改用前端過濾啟發式：
-//   keep if  ai_urgency >= 6                               // AI 認定有市場影響度
-//        OR  ai_affected_stocks 至少 1 檔 ticker 是純數字 // 直接點到台股
-// 排除：純美股個股 CEO（除非 affected_stocks 有台股）
+// NEXT_TASK_008a 階段 1 Bug #2:tw_impact_score 已 migrate 進 DB(migration 0009)。
+// 優先使用 DB 欄位,只有當欄位為 null/0(尚未被 backfill)時才走啟發式過渡。
 function isTWImpact(s: Statement): boolean {
+  // DB 欄位優先(true source of truth)
+  if (typeof s.tw_impact_score === "number") {
+    return s.tw_impact_score >= 4;
+  }
+  // 退路啟發式:當 backfill 還沒跑或新進資料無 score 時
   if ((s.ai_urgency ?? 0) >= 6) return true;
   const affected = s.ai_affected_stocks ?? [];
   if (affected.length === 0) return false;

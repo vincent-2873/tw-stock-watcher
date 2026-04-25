@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -60,9 +61,19 @@ export default async function QuackJournalPage() {
             fontSize: 32,
             marginTop: 6,
             color: "var(--sumi)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "center",
           }}
         >
-          🦆 呱呱日記
+          <Image
+            src="/characters/guagua_official_v1.png"
+            alt="呱呱"
+            width={36}
+            height={36}
+          />
+          呱呱日記
         </h1>
         <p style={{ color: "var(--sumi-soft)", marginTop: 8 }}>
           呱呱自己追蹤的命中率 · 講對的肯定、講錯的反省
@@ -218,7 +229,9 @@ function bestType(rows: Prediction[]): string | null {
 function EmptyState({ note }: { note?: string }) {
   return (
     <div className="wabi-card" style={{ padding: 40, textAlign: "center" }}>
-      <div style={{ fontSize: 48, opacity: 0.5 }}>🦆💭</div>
+      <div style={{ opacity: 0.5, display: "flex", justifyContent: "center", marginBottom: 6 }}>
+        <Image src="/characters/guagua_official_v1.png" alt="呱呱" width={56} height={56} />
+      </div>
       <div
         style={{
           fontFamily: "var(--font-serif)",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -143,7 +144,14 @@ export default function IntelListPage() {
               borderRadius: 8,
             }}
           >
-            <div style={{ fontSize: 36, marginBottom: 8, opacity: 0.4 }}>🦆💤</div>
+            <div style={{ marginBottom: 8, opacity: 0.6 }}>
+              <Image
+                src="/characters/guagua_official_v1.png"
+                alt="呱呱"
+                width={48}
+                height={48}
+              />
+            </div>
             <div style={{ fontFamily: "var(--font-serif)", fontSize: 15 }}>
               還沒抓到文章,呱呱還在睡。
             </div>
@@ -192,7 +200,7 @@ export default function IntelListPage() {
                           border: `1px solid ${s.color}`,
                         }}
                       >
-                        {hasAI ? s.text : "🦆 尚未分析"}
+                        {hasAI ? s.text : "尚未分析"}
                         {hasAI && a.ai_confidence != null && `  ·  信心 ${a.ai_confidence}%`}
                       </span>
                       <span style={{ fontSize: 11, color: "var(--muted-fg)" }}>

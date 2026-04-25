@@ -8,6 +8,9 @@ Quack 智慧升級路由 — Phase 2(19_V2_UPGRADE_BRIEF.md)
   POST /api/quack/predictions     記錄新預測(需 Admin Token)
   GET  /api/quack/social/hot      社群熱度排行(過去 6 小時)
   GET  /api/quack/alerts          自動警示(unread / all)
+  GET  /api/quack/headline        呱呱觀點(hero 副標,24h cache,008a)
+  GET  /api/quack/weekly_picks    呱呱挑 10 檔(24h cache,008a)
+  POST /api/quack/homework/refresh 手動觸發 topics 重評(Bug #1,需 admin)
 
 全部都對資料庫 graceful degrade — 表不存在時 200 但 data=[],
 不打斷前端。前提是 migration 0003_quack_phase2.sql 執行過。
@@ -398,6 +401,136 @@ async def auto_search_run(x_admin_token: Optional[str] = Header(default=None)):
     from backend.services import auto_search
 
     return auto_search.run()
+
+
+# =========================================================================
+# GET /api/quack/headline — 呱呱觀點(hero 副標)
+# =========================================================================
+@router.get("/quack/headline")
+async def get_quack_headline(
+    force: bool = Query(False, description="忽略快取重算(需 Admin Token)"),
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    """產出 hero 副標的「呱呱觀點」(NEXT_TASK_008a 階段 2 縮水版)。
+
+    24h cache via quack_judgments(judgment_type='headline')。
+    沒快取時自動呼 Claude 產生並寫入。
+    """
+    from backend.services import quack_brain
+
+    today = now_tpe().date()
+
+    # 1. 嘗試讀快取
+    if not force:
+        cached = quack_brain.get_cached_judgment("headline", today)
+        if cached and cached.get("content_json"):
+            return {
+                "date": today.isoformat(),
+                "cached": True,
+                **cached["content_json"],
+                "generated_at": cached.get("created_at"),
+                "model": cached.get("model"),
+            }
+
+    if force:
+        _require_admin(x_admin_token)
+
+    # 2. 沒快取 → 呼叫 Claude
+    try:
+        result = quack_brain.quack_judge_headline(today)
+    except Exception as e:
+        log.exception("quack_judge_headline failed: %s", e)
+        raise HTTPException(500, f"headline generation failed: {e}")
+
+    # 3. 寫入 quack_judgments(寫不進不影響回傳)
+    quack_brain.save_judgment("headline", today, result)
+
+    return {
+        "date": today.isoformat(),
+        "cached": False,
+        "water_status": result["water_status"],
+        "quack_view": result["quack_view"],
+        "reason": result["reason"],
+        "watch_for": result["watch_for"],
+        "generated_at": result["generated_at"],
+        "model": result["model"],
+    }
+
+
+# =========================================================================
+# GET /api/quack/weekly_picks — 呱呱本週挑的 10 檔
+# =========================================================================
+@router.get("/quack/weekly_picks")
+async def get_quack_weekly_picks(
+    force: bool = Query(False, description="忽略快取重算(需 Admin Token)"),
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    """呱呱挑的 10 檔精準推薦(NEXT_TASK_008a 階段 2 縮水版)。
+
+    24h cache via quack_judgments(judgment_type='weekly_picks')。
+    """
+    from backend.services import quack_brain
+
+    today = now_tpe().date()
+
+    if not force:
+        cached = quack_brain.get_cached_judgment("weekly_picks", today)
+        if cached and cached.get("content_json"):
+            return {
+                "date": today.isoformat(),
+                "cached": True,
+                **cached["content_json"],
+                "generated_at": cached.get("created_at"),
+                "model": cached.get("model"),
+            }
+
+    if force:
+        _require_admin(x_admin_token)
+
+    try:
+        result = quack_brain.quack_judge_weekly_picks(today)
+    except Exception as e:
+        log.exception("quack_judge_weekly_picks failed: %s", e)
+        raise HTTPException(500, f"weekly_picks generation failed: {e}")
+
+    quack_brain.save_judgment("weekly_picks", today, result)
+
+    return {
+        "date": today.isoformat(),
+        "cached": False,
+        "picks": result["picks"],
+        "generated_at": result["generated_at"],
+        "model": result["model"],
+    }
+
+
+# =========================================================================
+# POST /api/quack/homework/refresh — Bug #1 手動觸發
+# =========================================================================
+@router.post("/quack/homework/refresh")
+async def refresh_quack_homework(
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    """Bug #1 手動觸發:重新評估 topics.heat_score + heat_trend + ai_summary。
+
+    呼叫 quack_refresh_topics 後 topics.updated_at 會更新,
+    前端 QuackMorningLive 抓到的「資料更新時間」就是真實的 DB updated_at。
+
+    這個 endpoint 設計給:
+      - admin 手動 curl 觸發(週六/週日驗證用)
+      - GHA cron 定期呼叫(週一-週五 盤中每 30 分、盤後每 2 小時)
+    """
+    _require_admin(x_admin_token)
+
+    from backend.services import quack_brain
+
+    try:
+        result = quack_brain.quack_refresh_topics(now_tpe().date())
+    except Exception as e:
+        log.exception("quack_refresh_topics failed: %s", e)
+        raise HTTPException(500, f"homework refresh failed: {e}")
+
+    return {"ok": True, **result}
 
 
 # =========================================================================

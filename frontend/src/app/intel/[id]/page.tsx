@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -95,7 +96,7 @@ export default async function IntelDetail({ params }: { params: Promise<{ id: st
                   border: `1px solid ${sentiment.color}`,
                 }}
               >
-                {hasAI ? sentiment.text : "🦆 尚未分析"}
+                {hasAI ? sentiment.text : "尚未分析"}
                 {hasAI && a.ai_confidence != null && `  · 信心 ${a.ai_confidence}%`}
               </span>
               {hasAI && a.ai_importance != null && (
@@ -166,7 +167,14 @@ export default async function IntelDetail({ params }: { params: Promise<{ id: st
                 color: "var(--muted-fg)",
               }}
             >
-              <div style={{ fontSize: 32, opacity: 0.5, marginBottom: 6 }}>🦆</div>
+              <div style={{ marginBottom: 6, opacity: 0.6, display: "flex", justifyContent: "center" }}>
+                <Image
+                  src="/characters/guagua_official_v1.png"
+                  alt="呱呱"
+                  width={40}
+                  height={40}
+                />
+              </div>
               <div style={{ fontFamily: "var(--font-serif)", fontSize: 14 }}>呱呱正在分析中⋯</div>
               <div style={{ fontSize: 11, marginTop: 4 }}>
                 AI 批次 5 分鐘跑一次,稍等就會有分析。
@@ -326,8 +334,24 @@ export default async function IntelDetail({ params }: { params: Promise<{ id: st
                     borderRadius: 6,
                   }}
                 >
-                  <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 14, color: "var(--gold)", marginBottom: 6 }}>
-                    🦆 呱呱視角
+                  <h2
+                    style={{
+                      fontFamily: "var(--font-serif)",
+                      fontSize: 14,
+                      color: "var(--gold)",
+                      marginBottom: 6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <Image
+                      src="/characters/guagua_official_v1.png"
+                      alt="呱呱"
+                      width={20}
+                      height={20}
+                    />
+                    呱呱視角
                   </h2>
                   <div style={{ fontFamily: "var(--font-serif)", fontSize: 15, lineHeight: 1.7, color: "var(--fg)" }}>
                     「{a.ai_quack_perspective}」

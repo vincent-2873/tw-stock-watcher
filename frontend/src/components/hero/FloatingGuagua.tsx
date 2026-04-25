@@ -9,7 +9,7 @@ import styles from "../../app/page.module.css";
  * Hero 中央呱呱本尊 (v1.0 official)
  *
  * 設計:
- * - 取代原本的 🦆 emoji 占位
+ * - 取代原本的 emoji 占位
  * - 外層 .quackCircle 的呼吸 + 漣漪動畫保留(設計意圖就是給呱呱當舞台)
  * - 本元件負責「人物」部分:淡入 + 漂浮 + 搖擺 + 點擊互動
  * - 點擊整隻呱呱跳 /chat — 第一眼吸引使用者進對話

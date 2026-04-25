@@ -153,7 +153,7 @@ export default function Home() {
         {/* 即時 30 秒更新 */}
         <MarketPulseLive />
 
-        {/* 🦆 呱呱今日功課(即時資料生成) */}
+        {/* 呱呱今日功課(即時資料生成) */}
         <QuackMorningLive />
 
         {/* 🎤 今日關鍵發言 — 空時整塊隱藏 (PeopleStatementsLive 自管標題) */}
@@ -193,12 +193,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 🦆 呱呱這週挑的 — Phase 2.3 真四象限評分版 */}
+        {/* 呱呱這週挑的 — NEXT_TASK_008a 階段 2 縮水:走呱呱中樞 AI 推理(10 檔精準)
+            Bug #3:標題 emoji 換 PNG */}
         <div className={styles.sectionTitle}>
-          <h2>🦆 呱呱這週挑的</h2>
+          <h2 style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Image
+              src="/characters/guagua_official_v1.png"
+              alt="呱呱"
+              width={32}
+              height={32}
+              style={{ display: "inline-block", verticalAlign: "middle" }}
+            />
+            呱呱這週挑的
+          </h2>
           <div className={styles.divider}></div>
           <span style={{ color: "var(--text-muted)", fontSize: 12 }}>
-            四象限 SR/SSR · 每日 15:30 TPE 重算
+            呱呱中樞 AI · 10 檔精準推薦(穩健 / 進攻 / 逆勢 / 題材)
           </span>
         </div>
         <div style={{ padding: "12px 0" }}>

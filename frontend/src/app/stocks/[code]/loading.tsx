@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function Loading() {
   return (
     <main
@@ -26,12 +28,16 @@ export default function Loading() {
         >
           <span
             style={{
-              fontSize: 32,
               animation: "breathe 2s ease-in-out infinite",
               display: "inline-block",
             }}
           >
-            🦆
+            <Image
+              src="/characters/guagua_official_v1.png"
+              alt="呱呱"
+              width={40}
+              height={40}
+            />
           </span>
           <div>
             <div style={{ fontSize: 20, fontWeight: 500, color: "var(--fg)" }}>
