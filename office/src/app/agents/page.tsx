@@ -5,12 +5,31 @@
  *
  * 從前台 frontend/ 移出(前後台分網域),放在獨立的 office/ service。
  * 這裡顯示 12 位 agent 的完整 persona + 命中率。
+ *
+ * NEXT_TASK_007 增量：
+ *   - 5 位投資分析師卡片改用 AnalystAvatar 占位視覺（純 SVG）
+ *   - display_name 用新名（辰旭/靜遠/觀棋/守拙/明川）覆蓋舊的（阿武等）
+ *     真正 DB 更新等 migration 0008
  */
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  AnalystAvatar,
+  ANALYSTS,
+  type AnalystSlug,
+} from "../../components/AnalystAvatar";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "https://vsis-api.zeabur.app";
+
+// agent_id → AnalystSlug 對應
+const AGENT_TO_SLUG: Record<string, AnalystSlug> = {
+  analyst_a: "chenxu",
+  analyst_b: "jingyuan",
+  analyst_c: "guanqi",
+  analyst_d: "shouzhuo",
+  analyst_e: "mingchuan",
+};
 
 type AgentStats = {
   total_predictions: number;
@@ -159,6 +178,12 @@ function AgentCard({ agent }: { agent: Agent }) {
       : agent.stats.total_predictions === 0
         ? "—"
         : "計算中";
+
+  // NEXT_TASK_007: 投資分析師用 AnalystAvatar；舊 display_name 覆蓋為新名
+  const analystSlug = AGENT_TO_SLUG[agent.agent_id];
+  const meta = analystSlug ? ANALYSTS[analystSlug] : null;
+  const displayName = meta ? `${meta.name}（${meta.pinyin}）` : agent.display_name;
+
   return (
     <article
       style={{
@@ -172,24 +197,28 @@ function AgentCard({ agent }: { agent: Agent }) {
       }}
     >
       <header style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div
-          style={{
-            fontSize: 32,
-            width: 48,
-            height: 48,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "var(--bg-raised)",
-            border: "1px solid var(--border)",
-            borderRadius: 6,
-          }}
-        >
-          {agent.emoji}
-        </div>
+        {analystSlug ? (
+          <AnalystAvatar slug={analystSlug} size="sm" />
+        ) : (
+          <div
+            style={{
+              fontSize: 32,
+              width: 48,
+              height: 48,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "var(--bg-raised)",
+              border: "1px solid var(--border)",
+              borderRadius: 6,
+            }}
+          >
+            {agent.emoji}
+          </div>
+        )}
         <div style={{ flex: 1 }}>
           <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 500, margin: 0 }}>
-            {agent.display_name}
+            {displayName}
           </h3>
           <p style={{ fontSize: 11, color: "var(--muted-fg)", margin: "2px 0 0" }}>{agent.role}</p>
         </div>

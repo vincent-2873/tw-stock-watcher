@@ -16,6 +16,7 @@ import {
 import { HeroDate } from "@/components/hero/HeroDate";
 import { HeroFloats } from "@/components/hero/HeroFloats";
 import { FloatingGuagua } from "@/components/hero/FloatingGuagua";
+import { HeroHeadline } from "@/components/hero/HeroHeadline";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -102,6 +103,7 @@ export default function Home() {
           <nav className={styles.navLinks}>
             <Link className={cx(styles.navLink, styles.active)} href="/">今日重點</Link>
             <Link className={styles.navLink} href="/pond">題材熱度</Link>
+            <Link className={styles.navLink} href="/analysts">分析師團隊</Link>
             <Link className={styles.navLink} href="/stocks">自選股</Link>
             <Link className={styles.navLink} href="/map">產業地圖</Link>
             <Link className={styles.navLink} href="/chat">AI 對話</Link>
@@ -118,15 +120,8 @@ export default function Home() {
             <div className={styles.heroDate}>
               <HeroDate />
             </div>
-            <h1>
-              今天池塘的水<br />
-              有點<span className={styles.accent}>混</span>。
-            </h1>
-            <div className={styles.heroQuote}>
-              昨夜 Tesla 一句「CAPEX 250 億 + 負現金流」,
-              <br />
-              引爆 AI 泡沫疑慮。拉高的別追,跌深的先等。
-            </div>
+            {/* NEXT_TASK_007 修正 #1: 動態狀態詞 + 副標 */}
+            <HeroHeadline />
             <div className={styles.heroActions}>
               <Link className={cx(styles.btnZen, styles.btnZenPrimary)} href="#quack-morning">
                 📄 看完整晨報
@@ -254,22 +249,7 @@ export default function Home() {
              TODO: 等後端建 /api/sectors/heatmap + /api/market/fund-rotation 再加回。
              參考 /sectors 子頁提供部份此類資料。 */}
 
-        {/* 📊 自選股空狀態 */}
-        <div className={styles.sectionTitle}>
-          <h2>📊 我的自選股</h2>
-          <div className={styles.divider}></div>
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>0 檔</span>
-        </div>
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>🦆💤</div>
-          <div className={styles.emptyTitle}>筆記本還是空白的</div>
-          <div className={styles.emptySubtitle}>呱呱幫你準備了幾個開始的方式</div>
-          <div className={styles.emptyActions}>
-            <Link className={cx(styles.btn, styles.primary)} href="/pond">🔥 從今日熱門題材開始</Link>
-            <Link className={styles.btn} href="/pond/ecosystem/2330">🏆 看台股龍頭生態系</Link>
-            <Link className={styles.btn} href="/stocks">📖 快速導覽(30 秒)</Link>
-          </div>
-        </div>
+        {/* 📊 我的自選股區塊 — NEXT_TASK_007 修正 #6 移除（DB 資料保留、/stocks 路由保留） */}
 
         {/* 🔔 小鈴鐺 — 階段 1 刪 (CLAUDE.md 鐵則 4: 空狀態整塊隱藏)
              Phase 3 接 /api/quack/alerts 有資料時再整塊 return 出來 */}

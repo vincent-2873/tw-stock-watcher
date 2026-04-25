@@ -15,8 +15,27 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  AnalystAvatar,
+  ANALYSTS,
+  ANALYST_SLUGS,
+  type AvatarStatus,
+} from "../components/AnalystAvatar";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "https://vsis-api.zeabur.app";
+
+// NEXT_TASK_007 Stage 4.3: 規則式 status（之後接真實預測 / 會議 lifecycle）
+function statusForNow(): AvatarStatus {
+  const tpe = new Date(Date.now() + (8 * 60 + new Date().getTimezoneOffset()) * 60_000);
+  const day = tpe.getDay(); // 0=日 6=六
+  const hm = tpe.getHours() * 60 + tpe.getMinutes();
+  const isTradingDay = day >= 1 && day <= 5;
+  if (!isTradingDay) return "resting";
+  if (hm >= 8 * 60 && hm < 8 * 60 + 45) return "meeting";
+  if (hm >= 14 * 60 && hm < 14 * 60 + 30) return "meeting";
+  if (hm >= 9 * 60 && hm < 13 * 60 + 30) return "thinking";
+  return "resting";
+}
 
 type HealthCheck = {
   time_ok: boolean;
@@ -88,6 +107,9 @@ export default function OfficeHome() {
           {health?.tpe_now || "連線中 ⋯"}
         </p>
       </header>
+
+      {/* NEXT_TASK_007 Stage 4.3: 5 位投資分析師當前狀態 */}
+      <AnalystStatusBoard />
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, marginBottom: 14 }}>
@@ -236,6 +258,74 @@ function OfficeLink({
     <Link href={href} style={style}>
       {body}
     </Link>
+  );
+}
+
+function AnalystStatusBoard() {
+  const [status, setStatus] = useState<AvatarStatus>("resting");
+  useEffect(() => {
+    setStatus(statusForNow());
+    const t = setInterval(() => setStatus(statusForNow()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const statusLabel: Record<AvatarStatus, string> = {
+    thinking: "思考中（盤中）",
+    meeting: "會議中",
+    resting: "休息",
+    predicting: "下預測中",
+  };
+
+  return (
+    <section style={{ marginBottom: 36 }}>
+      <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, marginBottom: 14 }}>
+        👥 分析師動態
+      </h2>
+      <div
+        style={{
+          display: "flex",
+          gap: 18,
+          padding: "18px 20px",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          borderRadius: 6,
+          flexWrap: "wrap",
+        }}
+      >
+        {ANALYST_SLUGS.map((slug) => {
+          const a = ANALYSTS[slug];
+          return (
+            <Link
+              key={slug}
+              href="/agents"
+              style={{ textDecoration: "none", color: "inherit", display: "block" }}
+              title={`${a.name} · ${a.school} · ${statusLabel[status]}`}
+            >
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <AnalystAvatar slug={slug} size="sm" status={status} />
+                <div style={{ fontSize: 11, color: "var(--muted-fg)", textAlign: "center" }}>
+                  <div style={{ fontWeight: 500 }}>{a.name}</div>
+                  <div style={{ fontSize: 10 }}>{a.school}</div>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+        <div
+          style={{
+            marginLeft: "auto",
+            alignSelf: "center",
+            fontSize: 11,
+            color: "var(--muted-fg)",
+            fontStyle: "italic",
+          }}
+        >
+          ⓘ status 為規則式（08:00-08:45 會議 / 09:00-13:30 思考 / 14:00-14:30 會議 / 其他休息），
+          <br />
+          第二波接真實 lifecycle。
+        </div>
+      </div>
+    </section>
   );
 }
 

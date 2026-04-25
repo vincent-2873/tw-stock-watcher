@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 
@@ -249,24 +250,38 @@ type TierLevel = "SR" | "R" | "N";
 
 export function QuackPicksLive() {
   const [picks, setPicks] = useState<Pick[] | null>(null);
-  const [minTier, setMinTier] = useState<TierLevel>("SR");
+  // NEXT_TASK_007 修正 #4: 三層 auto-fallback — SR/SSR → R → 全空冷清提示
+  const [activeTier, setActiveTier] = useState<TierLevel>("SR");
+  const [exhausted, setExhausted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      try {
-        const r = await fetch(
-          `${API}/api/quack/picks?limit=6&min_tier=${minTier}`,
-          { cache: "no-store" },
-        );
-        const j = await r.json();
-        if (!cancelled) setPicks(j.picks ?? []);
-      } catch {
-        /* */
+      const tryTiers: TierLevel[] = ["SR", "R"];
+      for (const t of tryTiers) {
+        try {
+          const r = await fetch(
+            `${API}/api/quack/picks?limit=5&min_tier=${t}`,
+            { cache: "no-store" },
+          );
+          const j = await r.json();
+          const arr: Pick[] = j.picks ?? [];
+          if (!cancelled && arr.length > 0) {
+            setActiveTier(t);
+            setPicks(arr);
+            return;
+          }
+        } catch {
+          /* try next tier */
+        }
+      }
+      if (!cancelled) {
+        setPicks([]);
+        setExhausted(true);
       }
     }
     load();
-  }, [minTier]);
+  }, []);
 
   if (picks === null) {
     return (
@@ -276,50 +291,10 @@ export function QuackPicksLive() {
     );
   }
 
-  // 無 SR/SSR → 給 CTA 切到 R
-  if (picks.length === 0 && minTier === "SR") {
+  // 三層都沒料 → 冷清提示 + 大盤觀察重點
+  if (exhausted && picks.length === 0) {
     return (
-      <div style={{ padding: 16, fontSize: 13, color: "var(--text-muted)" }}>
-        今日無 SR/SSR 評級股 — 市場偏弱,呱呱暫不挑。
-        <button
-          onClick={() => setMinTier("R")}
-          style={{
-            marginLeft: 8,
-            padding: "2px 10px",
-            fontSize: 11,
-            border: "1px solid var(--border)",
-            background: "transparent",
-            color: "inherit",
-            cursor: "pointer",
-            borderRadius: 4,
-          }}
-        >
-          看 R 級觀察名單 →
-        </button>
-      </div>
-    );
-  }
-  // 無 R → 給 CTA 切到 N
-  if (picks.length === 0 && minTier === "R") {
-    return (
-      <div style={{ padding: 16, fontSize: 13, color: "var(--text-muted)" }}>
-        今日亦無 R 級股 — 整體估值 / 籌碼 / 技術面都偏弱。
-        <button
-          onClick={() => setMinTier("N")}
-          style={{
-            marginLeft: 8,
-            padding: "2px 10px",
-            fontSize: 11,
-            border: "1px solid var(--border)",
-            background: "transparent",
-            color: "inherit",
-            cursor: "pointer",
-            borderRadius: 4,
-          }}
-        >
-          看 N 級觀察池 TOP 6 →
-        </button>
-      </div>
+      <QuackPicksColdNote />
     );
   }
   if (picks.length === 0) {
@@ -327,14 +302,30 @@ export function QuackPicksLive() {
   }
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-        gap: 12,
-      }}
-    >
-      {picks.map((p) => {
+    <div>
+      {activeTier === "R" && (
+        <div
+          style={{
+            padding: "8px 12px",
+            marginBottom: 12,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            background: "rgba(201, 169, 97, 0.06)",
+            border: "1px solid rgba(201, 169, 97, 0.15)",
+            borderRadius: 4,
+          }}
+        >
+          ⚠️ 今日 SR/SSR 評級暫無，先列 R 級觀察名單。市場偏弱時呱呱降一階挑。
+        </div>
+      )}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 12,
+        }}
+      >
+        {picks.map((p) => {
         const tier = p.tier || "N";
         const tierBg = TIER_COLOR[tier];
         const tierFg = TIER_TEXT_ON[tier];
@@ -447,6 +438,72 @@ export function QuackPicksLive() {
           </Link>
         );
       })}
+      </div>
+    </div>
+  );
+}
+
+// NEXT_TASK_007 修正 #4: 三層 fallback 都沒料時的「冷清提示」
+function QuackPicksColdNote() {
+  const [taiex, setTaiex] = useState<{ day_change_pct?: number; close?: number } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API}/api/market/overview`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!cancelled) setTaiex(j?.taiex ?? null);
+      })
+      .catch(() => {/**/});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div
+      style={{
+        padding: "20px 24px",
+        background: "rgba(201, 169, 97, 0.06)",
+        border: "1px solid rgba(201, 169, 97, 0.15)",
+        borderRadius: 6,
+        fontFamily: "'Shippori Mincho', serif",
+      }}
+    >
+      <div style={{ fontSize: 15, color: "var(--text-primary)", marginBottom: 6 }}>
+        🍵 本週市場冷清，呱呱建議觀望
+      </div>
+      <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7 }}>
+        基本面 · 籌碼 · 技術 · 題材 四象限都沒挑出 SR/SSR/R 級個股。<br />
+        這種時候追高最容易套牢。先看大盤、等訊號。
+      </div>
+      {taiex && (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "8px 12px",
+            background: "var(--bg-elevated)",
+            borderRadius: 4,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 12,
+            color: "var(--text-secondary)",
+          }}
+        >
+          📊 加權今日 {taiex.close?.toLocaleString() ?? "—"} ·{" "}
+          <span
+            style={{
+              color:
+                (taiex.day_change_pct ?? 0) > 0
+                  ? "#a94236"
+                  : (taiex.day_change_pct ?? 0) < 0
+                    ? "#2c7a3f"
+                    : "var(--text-muted)",
+            }}
+          >
+            {(taiex.day_change_pct ?? 0) > 0 ? "+" : ""}
+            {(taiex.day_change_pct ?? 0).toFixed(2)}%
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -507,7 +564,16 @@ export function QuackMorningLive() {
   return (
     <div className={styles.quackMorning}>
       <div className={styles.quackHeader}>
-        <div className={styles.quackAvatar}>🦆</div>
+        <div className={styles.quackAvatar}>
+          <Image
+            src="/characters/guagua_official_v1.png"
+            alt="呱呱所主"
+            width={48}
+            height={48}
+            style={{ display: "block" }}
+            priority
+          />
+        </div>
         <div>
           <div className={styles.quackTitle}>呱呱今日功課 · 即時</div>
           <div className={styles.quackTime}>
@@ -1016,15 +1082,52 @@ type Statement = {
  *   - 此元件現在自己管理區塊標題 + loading/empty/data 三狀態
  *   - 空時 return null,外層看不到標題也看不到空殼
  */
+// NEXT_TASK_007 修正 #3: 過濾「會影響台股」
+// 真正的 tw_impact_score 欄位 + 後端 AI 評分尚未實作（需另開後端任務 + DB migration）。
+// 這版改用前端過濾啟發式：
+//   keep if  ai_urgency >= 6                               // AI 認定有市場影響度
+//        OR  ai_affected_stocks 至少 1 檔 ticker 是純數字 // 直接點到台股
+// 排除：純美股個股 CEO（除非 affected_stocks 有台股）
+function isTWImpact(s: Statement): boolean {
+  if ((s.ai_urgency ?? 0) >= 6) return true;
+  const affected = s.ai_affected_stocks ?? [];
+  if (affected.length === 0) return false;
+  return affected.some((x) => /^\d{4,6}$/.test(x.code ?? ""));
+}
+
 export function PeopleStatementsLive() {
   const [items, setItems] = useState<Statement[] | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        const r = await fetch(`${API}/api/intel/people/statements?limit=3`, { cache: "no-store" });
+        const r = await fetch(`${API}/api/intel/people/statements?limit=10`, { cache: "no-store" });
         const j = await r.json();
-        if (!cancelled) setItems(j.statements ?? []);
+        const all: Statement[] = j.statements ?? [];
+        const filtered = all.filter(isTWImpact).slice(0, 4);
+        if (filtered.length > 0) {
+          if (!cancelled) {
+            setItems(filtered);
+            setUsingFallback(false);
+          }
+          return;
+        }
+        // 三層 fallback：當日無強影響 → 拉近 7 日累積前 3 強
+        try {
+          const r2 = await fetch(`${API}/api/intel/people/statements?limit=30&days=7`, {
+            cache: "no-store",
+          });
+          const j2 = await r2.json();
+          const all2: Statement[] = j2.statements ?? [];
+          const filtered2 = all2.filter(isTWImpact).slice(0, 3);
+          if (!cancelled) {
+            setItems(filtered2);
+            setUsingFallback(filtered2.length > 0);
+          }
+        } catch {
+          if (!cancelled) setItems([]);
+        }
       } catch {
         if (!cancelled) setItems([]);
       }
@@ -1034,10 +1137,10 @@ export function PeopleStatementsLive() {
     return () => { cancelled = true; clearInterval(t); };
   }, []);
 
-  // loading — 用極簡佔位符 (不算空殼,因還在載入)
+  // loading
   if (items === null) return null;
 
-  // 空 — 整塊隱藏,連標題都不 render
+  // 三層 fallback 都沒料 → 整塊隱藏（CLAUDE.md 鐵則 4）
   if (items.length === 0) return null;
 
   return (
@@ -1047,6 +1150,21 @@ export function PeopleStatementsLive() {
         <div className={styles.divider}></div>
         <Link className={styles.moreLink} href="/intel">所有情報 →</Link>
       </div>
+      {usingFallback && (
+        <div
+          style={{
+            padding: "8px 12px",
+            marginBottom: 10,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            background: "rgba(201, 169, 97, 0.06)",
+            border: "1px solid rgba(201, 169, 97, 0.15)",
+            borderRadius: 4,
+          }}
+        >
+          ⚠️ 今日暫無強影響台股發言，列出近 7 日累積影響。
+        </div>
+      )}
       <div style={{ display: "grid", gap: 10 }}>
       {items.map((s) => (
         <div
@@ -1123,10 +1241,11 @@ export function HeadlinesLive() {
   if (items.length === 0) {
     return <div style={{ padding: "16px 0", color: "var(--text-muted)" }}>—— 近 24 小時無重要新聞 ——</div>;
   }
-  const SENT_LABEL: Record<string, { text: string; color: string }> = {
-    bull: { text: "利多", color: "var(--rise-light, #E89968)" },
-    bear: { text: "利空", color: "var(--fall-light, #8FA87C)" },
-    neutral: { text: "中立", color: "var(--neutral, #8A8170)" },
+  // NEXT_TASK_007 修正 #5: 利多 / 中立 / 利空 三色 + emoji（侘寂友善色）
+  const SENT_LABEL: Record<string, { text: string; emoji: string; bg: string; fg: string; border: string }> = {
+    bull: { text: "利多", emoji: "📈", bg: "rgba(34, 134, 58, 0.10)", fg: "#2c7a3f", border: "rgba(34, 134, 58, 0.35)" },
+    neutral: { text: "中立", emoji: "⚖️", bg: "rgba(180, 130, 40, 0.10)", fg: "#8a6620", border: "rgba(180, 130, 40, 0.30)" },
+    bear: { text: "利空", emoji: "📉", bg: "rgba(180, 60, 50, 0.10)", fg: "#a94236", border: "rgba(180, 60, 50, 0.35)" },
   };
   return (
     <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -1140,15 +1259,15 @@ export function HeadlinesLive() {
                 fontSize: 11,
                 padding: "2px 8px",
                 borderRadius: 10,
-                background: "rgba(26,24,21,0.5)",
-                color: s.color,
-                border: `1px solid ${s.color}`,
-                minWidth: "2.6rem",
+                background: s.bg,
+                color: s.fg,
+                border: `1px solid ${s.border}`,
+                minWidth: "3.2rem",
                 textAlign: "center",
                 alignSelf: "flex-start",
               }}
             >
-              {s.text}
+              {s.emoji} {s.text}
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <a
@@ -1187,7 +1306,7 @@ export function HeadlinesLive() {
               style={{
                 flexShrink: 0,
                 fontSize: 12,
-                color: s.color,
+                color: s.fg,
                 fontFamily: "var(--font-mono, monospace)",
                 alignSelf: "flex-start",
               }}
