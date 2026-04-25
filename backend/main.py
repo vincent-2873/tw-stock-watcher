@@ -70,6 +70,7 @@ from backend.routes import agents as _agents_routes  # noqa: E402
 from backend.routes import meetings as _meetings_routes  # noqa: E402
 from backend.routes import health as _health_routes  # noqa: E402
 from backend.routes import hero as _hero_routes  # noqa: E402
+from backend.routes import analysts as _analysts_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
@@ -89,6 +90,7 @@ app.include_router(_agents_routes.router, prefix="/api", tags=["agents"])
 app.include_router(_meetings_routes.router, prefix="/api", tags=["meetings"])
 app.include_router(_health_routes.router, prefix="/api", tags=["health"])
 app.include_router(_hero_routes.router, prefix="/api", tags=["hero"])
+app.include_router(_analysts_routes.router, prefix="/api", tags=["analysts"])
 
 
 @app.get("/")
