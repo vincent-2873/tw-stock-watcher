@@ -132,7 +132,7 @@ export default function AgentsPage() {
         投資部門 5 位被追蹤勝率 —— 本所的透明承諾。
       </p>
       <p style={{ color: "var(--muted-fg)", fontSize: 11, marginBottom: 32, fontStyle: "italic" }}>
-        ※ 系統剛上線,勝率為 0 筆。首場會議產生預測後,勝率會開始累積。
+        ※ 008d-1 完成 90 天歷史回溯後,投資部門 5 位會看到實際勝率。
       </p>
 
       <Section title="所主 · 呱呱" agents={owner} highlight />

@@ -26,6 +26,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { use, useEffect, useState } from "react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
 import { ANALYSTS, AnalystSlug, AnalystAvatar } from "@/components/AnalystAvatar";
 import { ANALYST_INTROS } from "./intros";
 
@@ -87,6 +88,12 @@ type AnalystResponse = {
     win_rate?: number | null;
     last_30d_predictions?: number;
     last_30d_win_rate?: number | null;
+    last_90d_predictions?: number;
+    last_90d_win_rate?: number | null;
+    best_symbol?: string | null;
+    best_symbol_win_rate?: number | null;
+    worst_symbol?: string | null;
+    worst_symbol_win_rate?: number | null;
   };
   holdings: Holding[];
   holdings_count: number;
@@ -108,6 +115,7 @@ export default function AnalystDetailPage({
   const [data, setData] = useState<AnalystResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<Array<{ date: string; rolling_30d: number | null; cumulative: number | null; cumulative_n: number; rolling_30d_n: number }>>([]);
 
   useEffect(() => {
     if (!a) return;
@@ -126,6 +134,16 @@ export default function AnalystDetailPage({
       } finally {
         if (!cancelled) setLoading(false);
       }
+    })();
+    // 同時抓 winrate timeline
+    (async () => {
+      try {
+        const r = await fetch(`${API}/api/analysts/${slug}/winrate_timeline?days=120`, { cache: "no-store" });
+        if (r.ok) {
+          const j = await r.json();
+          if (!cancelled) setTimeline(j.timeline || []);
+        }
+      } catch {/**/}
     })();
     return () => {
       cancelled = true;
@@ -247,14 +265,45 @@ export default function AnalystDetailPage({
           </Section>
         )}
 
-        {/* 3. 績效報告(008d 後接通) */}
-        <Section title="績效報告">
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-            <Placeholder title="勝率走勢" note={winRate} hint={totalPreds > 0 ? "預測樣本累積中,需 6 個月歷史回溯後解鎖走勢圖。" : "預測樣本到 30 筆後出現曲線。"} />
-            <Placeholder title="最佳標的" note={"—"} hint="6 個月歷史回溯(008d)後解鎖。" />
-            <Placeholder title="最差標的" note={"—"} hint="6 個月歷史回溯(008d)後解鎖。" />
-            <Placeholder title="近 30 日勝率" note={stats?.last_30d_win_rate != null ? `${Math.round((stats.last_30d_win_rate as number) * 100)}%` : "累積中"} hint={`${stats?.last_30d_predictions ?? 0} 筆樣本`} />
+        {/* 3. 績效報告(008d-1 接通真實 90 天回溯) */}
+        <Section title="績效報告 · 90 天歷史回溯">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
+            <KeyStat label="累積勝率" value={winRate} />
+            <KeyStat label="近 30 日勝率" value={stats?.last_30d_win_rate != null ? `${Math.round(stats.last_30d_win_rate * 100)}%` : "—"} />
+            <KeyStat label="最佳標的" value={stats?.best_symbol || "—"} sub={stats?.best_symbol_win_rate != null ? `${Math.round(stats.best_symbol_win_rate * 100)}%` : ""} />
+            <KeyStat label="最差標的" value={stats?.worst_symbol || "—"} sub={stats?.worst_symbol_win_rate != null ? `${Math.round(stats.worst_symbol_win_rate * 100)}%` : ""} />
           </div>
+          {timeline.length > 0 ? (
+            <div style={{ background: "rgba(255,255,255,0.55)", borderRadius: 8, padding: 16, border: "1px solid rgba(93,74,62,0.1)" }}>
+              <div style={{ fontSize: 12, color: "#5d4a3e", marginBottom: 8, fontFamily: "var(--font-serif, serif)" }}>
+                勝率走勢({timeline.length} 個交易日)— <span style={{ color: a.primary, fontWeight: 600 }}>橘色</span> 累積勝率 / 灰色 滾動 30 天
+              </div>
+              <div style={{ width: "100%", height: 220 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeline} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                    <CartesianGrid stroke="#e8d9b0" strokeDasharray="3 3" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#888" }} tickFormatter={(v: string) => v.slice(5)} interval={Math.max(1, Math.floor(timeline.length / 8))} />
+                    <YAxis domain={[0, 1]} tick={{ fontSize: 10, fill: "#888" }} tickFormatter={(v: number) => `${Math.round(v * 100)}%`} />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        const v = Array.isArray(value) ? value[0] : value;
+                        const display = v != null && v !== "" ? `${Math.round(Number(v) * 100)}%` : "—";
+                        const label = name === "rolling_30d" ? "滾動 30 天" : "累積";
+                        return [display, label];
+                      }}
+                      labelFormatter={(d) => `日期 ${d}`}
+                      contentStyle={{ fontSize: 11, fontFamily: "var(--font-mono)" }}
+                    />
+                    <ReferenceLine y={0.5} stroke="#bbb" strokeDasharray="4 4" />
+                    <Line type="monotone" dataKey="rolling_30d" stroke="#9b8a73" strokeWidth={1.5} dot={false} connectNulls />
+                    <Line type="monotone" dataKey="cumulative" stroke={a.primary} strokeWidth={2.5} dot={false} connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <CenteredHint>勝率走勢資料整理中…</CenteredHint>
+          )}
         </Section>
 
         {/* 4. 當前持倉 */}
@@ -533,11 +582,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function KeyStat({ label, value }: { label: string; value: string }) {
+function KeyStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div style={{ padding: "10px 12px", background: "rgba(255,255,255,0.6)", borderRadius: 6, textAlign: "center" }}>
       <div style={{ fontSize: 11, color: "#888", marginBottom: 4 }}>{label}</div>
       <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 16, fontWeight: 500 }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: "#999", marginTop: 2, fontFamily: "var(--font-mono, monospace)" }}>{sub}</div>}
     </div>
   );
 }

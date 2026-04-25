@@ -311,6 +311,49 @@ def get_analyst_daily_picks(slug: str, days: int = Query(7, ge=1, le=30)) -> dic
     return {"agent_id": agent_id, "slug": slug, "count": len(rows), "picks": rows}
 
 
+@router.get("/analysts/{slug}/winrate_timeline")
+def get_analyst_winrate_timeline(slug: str, days: int = Query(90, ge=7, le=365)) -> dict[str, Any]:
+    """008d-1: 該分析師滾動勝率走勢(給前台勝率走勢圖用)。
+    回傳:
+      {
+        "agent_id": "...",
+        "timeline": [
+          {"date": "...", "rolling_30d": 0.62, "rolling_30d_n": 8, "cumulative": 0.62, "cumulative_n": 8},
+          ...
+        ]
+      }
+    """
+    agent_id = _resolve(slug)
+    sb = _sb()
+    rows = (
+        sb.table("analyst_winrate_timeline")
+        .select("timeline_date,rolling_30d_winrate,rolling_30d_predictions,cumulative_winrate,cumulative_predictions,cumulative_hits,cumulative_misses")
+        .eq("agent_id", agent_id)
+        .order("timeline_date", desc=False)
+        .limit(days)
+        .execute()
+        .data
+    ) or []
+    timeline = [
+        {
+            "date": r["timeline_date"],
+            "rolling_30d": float(r["rolling_30d_winrate"]) if r.get("rolling_30d_winrate") is not None else None,
+            "rolling_30d_n": r.get("rolling_30d_predictions") or 0,
+            "cumulative": float(r["cumulative_winrate"]) if r.get("cumulative_winrate") is not None else None,
+            "cumulative_n": r.get("cumulative_predictions") or 0,
+            "cumulative_hits": r.get("cumulative_hits") or 0,
+            "cumulative_misses": r.get("cumulative_misses") or 0,
+        }
+        for r in rows
+    ]
+    return {
+        "agent_id": agent_id,
+        "slug": slug,
+        "count": len(timeline),
+        "timeline": timeline,
+    }
+
+
 @router.get("/analysts/{slug}/meetings")
 def get_analyst_meetings(slug: str, limit: int = Query(10, ge=1, le=30)) -> dict[str, Any]:
     """該分析師出席的會議記錄。"""

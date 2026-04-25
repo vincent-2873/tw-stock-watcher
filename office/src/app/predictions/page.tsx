@@ -36,15 +36,22 @@ type Prediction = {
   evidence?: Record<string, unknown> | null;
 };
 
+const PAGE_SIZE = 50;
+
 export default function PredictionsPage() {
-  const [data, setData] = useState<{ count: number; hit_rate: number | null; predictions: Prediction[] } | null>(null);
+  const [data, setData] = useState<{ count: number; hit_rate: number | null; evaluated_count?: number; predictions: Prediction[] } | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [days, setDays] = useState<number>(120);
+  const [agentFilter, setAgentFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState<number>(1);
 
   useEffect(() => {
     let cancelled = false;
+    setPage(1);
     (async () => {
       try {
-        const r = await fetch(`${API}/api/quack/predictions?days=30`, { cache: "no-store" });
+        const r = await fetch(`${API}/api/quack/predictions?days=${days}`, { cache: "no-store" });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
         if (!cancelled) setData(j);
@@ -55,7 +62,18 @@ export default function PredictionsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [days]);
+
+  const filtered = (data?.predictions || []).filter((p) => {
+    if (agentFilter !== "all" && p.agent_id !== agentFilter) return false;
+    if (statusFilter !== "all" && (p.status || p.hit_or_miss) !== statusFilter) return false;
+    return true;
+  });
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const agentOptions = Array.from(new Set((data?.predictions || []).map((p) => p.agent_id).filter(Boolean))) as string[];
+  const statusOptions = Array.from(new Set((data?.predictions || []).map((p) => p.status || p.hit_or_miss).filter(Boolean))) as string[];
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}>
@@ -78,44 +96,55 @@ export default function PredictionsPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
               gap: 10,
-              marginBottom: 24,
+              marginBottom: 16,
             }}
           >
-            <StatCard label="總預測數" value={String(data.count ?? 0)} />
+            <StatCard label="期間總筆數" value={String(data.count ?? 0)} />
+            <StatCard label="已結算" value={String(data.evaluated_count ?? 0)} />
             <StatCard label="總命中率" value={data.hit_rate != null ? `${data.hit_rate}%` : "—"} />
-            <StatCard label="資料範圍" value="近 30 天" />
+            <StatCard label="篩選後" value={`${filtered.length} 筆`} />
           </div>
 
-          {data.predictions.length === 0 ? (
-            <div
-              style={{
-                padding: 24,
-                background: "var(--card)",
-                border: "1px solid var(--border)",
-                borderRadius: 6,
-              }}
-            >
-              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 16, margin: 0 }}>
-                尚無預測紀錄
-              </h3>
-              <p style={{ fontSize: 13, color: "var(--muted-fg)", marginTop: 8 }}>
-                預測系統 schema 已就緒 (migration 0006),但還沒有首場會議產生預測。
-              </p>
-              <p style={{ fontSize: 12, color: "var(--muted-fg)", marginTop: 8 }}>
-                下一步:
-                <br />
-                1. 會議系統 cron 實作 (憲法 Section 7)
-                <br />
-                2. 分析師 A-E (辰旭/靜遠/觀棋/守拙/明川) 首場正式預測
-                <br />
-                3. 每日 14:30 結算器比對實際收盤
-              </p>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16, alignItems: "center", fontSize: 12 }}>
+            <label>
+              區間:
+              <select value={days} onChange={(e) => setDays(Number(e.target.value))} style={selectStyle}>
+                <option value={30}>近 30 天</option>
+                <option value={60}>近 60 天</option>
+                <option value={120}>近 120 天</option>
+                <option value={180}>近 180 天</option>
+              </select>
+            </label>
+            <label>
+              分析師:
+              <select value={agentFilter} onChange={(e) => { setAgentFilter(e.target.value); setPage(1); }} style={selectStyle}>
+                <option value="all">全部</option>
+                {agentOptions.map((a) => (<option key={a} value={a}>{a}</option>))}
+              </select>
+            </label>
+            <label>
+              狀態:
+              <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={selectStyle}>
+                <option value="all">全部</option>
+                {statusOptions.map((s) => (<option key={s} value={s}>{s}</option>))}
+              </select>
+            </label>
+            <span style={{ marginLeft: "auto", color: "var(--muted-fg)" }}>
+              第 {page}/{totalPages} 頁(每頁 {PAGE_SIZE})
+            </span>
+            <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} style={btnStyle}>上一頁</button>
+            <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} style={btnStyle}>下一頁</button>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div style={{ padding: 24, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6 }}>
+              <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 16, margin: 0 }}>沒有符合條件的預測</h3>
             </div>
           ) : (
             <div style={{ display: "grid", gap: 10 }}>
-              {data.predictions.map((p, idx) => (
+              {pageRows.map((p, idx) => (
                 <PredictionCard key={p.prediction_id || p.id || idx} p={p} />
               ))}
             </div>
@@ -125,6 +154,13 @@ export default function PredictionsPage() {
     </main>
   );
 }
+
+const selectStyle: React.CSSProperties = {
+  marginLeft: 6, padding: "4px 8px", fontSize: 12, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 4,
+};
+const btnStyle: React.CSSProperties = {
+  padding: "4px 10px", fontSize: 12, background: "var(--card)", border: "1px solid var(--border)", borderRadius: 4, cursor: "pointer",
+};
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (

@@ -122,12 +122,31 @@ function relTime(iso?: string | null): string {
   return `${Math.floor(hr / 24)} 天前`;
 }
 
+type AnalystStatusItem = {
+  agent_id: string;
+  display_name: string;
+  stats: {
+    total_predictions?: number;
+    hits?: number;
+    misses?: number;
+    win_rate?: number | null;
+    last_30d_predictions?: number;
+    last_30d_win_rate?: number | null;
+    last_90d_predictions?: number;
+    last_90d_win_rate?: number | null;
+    backfill_period_start?: string | null;
+    backfill_period_end?: string | null;
+  };
+  holdings_count?: number;
+};
+
 export default function WatchdogPage() {
   const [health, setHealth] = useState<HealthAll | null>(null);
   const [errors, setErrors] = useState<ErrorRow[]>([]);
   const [siteChecks, setSiteChecks] = useState<SiteCheck[]>([]);
   const [anomalies, setAnomalies] = useState<string | null>(null);
   const [audit, setAudit] = useState<string | null>(null);
+  const [analystStatus, setAnalystStatus] = useState<AnalystStatusItem[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -169,6 +188,15 @@ export default function WatchdogPage() {
       } catch (_e) {
         // 失敗忽略
       }
+
+      // 4a. /api/analysts 取得 5 位 backfill 狀態
+      try {
+        const r = await fetch(`${API_BASE}/api/analysts`, { cache: "no-store" });
+        if (r.ok && !cancelled) {
+          const j = await r.json();
+          setAnalystStatus(j.analysts || []);
+        }
+      } catch (_e) { /* 忽略 */ }
 
       // 4. ANOMALIES.md / SELF_AUDIT.md(GitHub raw)
       try {
@@ -425,6 +453,58 @@ export default function WatchdogPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </Section>
+      )}
+
+      {/* ⑨ 歷史回溯狀態 — 008d-1 後加入 */}
+      {analystStatus.length > 0 && (
+        <Section
+          title="⑨ 歷史回溯狀態(008d-1)"
+          subtitle="5 位投資分析師 90 天回溯結果"
+        >
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "var(--card)", borderRadius: 4 }}>
+              <thead style={{ background: "var(--bg-elev)" }}>
+                <tr>
+                  <Th>分析師</Th>
+                  <Th>總預測</Th>
+                  <Th>命中</Th>
+                  <Th>未命中</Th>
+                  <Th>累積勝率</Th>
+                  <Th>近 90 日</Th>
+                  <Th>近 30 日</Th>
+                  <Th>當前持倉</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {analystStatus.map((a) => {
+                  const wr = a.stats?.win_rate;
+                  const wr90 = a.stats?.last_90d_win_rate;
+                  const wr30 = a.stats?.last_30d_win_rate;
+                  const wrColor = wr == null ? "var(--muted-fg)" : wr >= 0.6 ? STATUS_COLOR.healthy : wr >= 0.4 ? STATUS_COLOR.warning : STATUS_COLOR.fail;
+                  return (
+                    <tr key={a.agent_id} style={{ borderTop: "1px solid var(--border)" }}>
+                      <Td><strong>{a.display_name}</strong> <span style={{ color: "var(--muted-fg)" }}>({a.agent_id})</span></Td>
+                      <Td mono>{a.stats?.total_predictions ?? 0}</Td>
+                      <Td mono>{a.stats?.hits ?? 0}</Td>
+                      <Td mono>{a.stats?.misses ?? 0}</Td>
+                      <Td>
+                        <span style={{ color: wrColor, fontWeight: 600, fontFamily: "var(--font-mono)" }}>
+                          {wr != null ? `${Math.round(wr * 100)}%` : "—"}
+                        </span>
+                      </Td>
+                      <Td mono>{wr90 != null ? `${Math.round(wr90 * 100)}% (n=${a.stats?.last_90d_predictions ?? 0})` : "—"}</Td>
+                      <Td mono>{wr30 != null ? `${Math.round(wr30 * 100)}% (n=${a.stats?.last_30d_predictions ?? 0})` : "—"}</Td>
+                      <Td mono>{a.holdings_count ?? 0}</Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p style={{ fontSize: 10, color: "var(--muted-fg)", marginTop: 6 }}>
+              ※ 008d-1 完成 90 天回溯後,5 位都會有實際勝率(目標範圍 50-70%)
+            </p>
           </div>
         </Section>
       )}
