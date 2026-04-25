@@ -143,16 +143,29 @@ def _build_market_snapshot(target_count: int = 60) -> dict[str, Any]:
     sb = _sb()
     snapshot: dict[str, Any] = {"date": now_tpe().date().isoformat()}
 
-    # stocks top by score
+    # stocks top by score(欄位:stock_id / stock_name / current_score / score_breakdown / industry)
     try:
         r = (
             sb.table("stocks")
-            .select("symbol,name,score,score_breakdown,industry,market_cap,price")
-            .order("score", desc=True)
+            .select("stock_id,stock_name,current_score,current_tier,score_breakdown,industry")
+            .eq("is_active", True)
+            .order("current_score", desc=True)
             .limit(target_count)
             .execute()
         )
-        snapshot["stock_universe"] = r.data or []
+        rows = r.data or []
+        # 改成 Claude 看得懂的標準欄位名
+        snapshot["stock_universe"] = [
+            {
+                "symbol": s.get("stock_id"),
+                "name": s.get("stock_name"),
+                "score": s.get("current_score"),
+                "tier": s.get("current_tier"),
+                "industry": s.get("industry"),
+                "score_breakdown": s.get("score_breakdown"),
+            }
+            for s in rows
+        ]
     except Exception as e:
         log.warning(f"stocks fetch fail: {e}")
         snapshot["stock_universe"] = []
@@ -301,11 +314,15 @@ def simulate_holdings_meeting(today: date_type) -> dict:
             except Exception:
                 deadline_days = 7
             deadline = (datetime.combine(today, datetime.min.time()) + timedelta(days=deadline_days)).replace(hour=13, minute=30)
+            reasoning_text = (h.get("reasoning") or "")[:1000]
+            # 注意:quack_predictions 沒有 reasoning 欄位(憲法 5.1 要求但 migration 0006 漏了)
+            # 暫時寫進 prediction 欄位 + evidence JSONB
+            pred_text = f"{h.get('symbol','')} {h.get('name','')},{h.get('direction','bullish')} 目標 {h.get('target_price')} | 理由:{reasoning_text}"
             row = {
                 "date": today.isoformat(),
                 "prediction_type": "stock_pick",
                 "subject": str(h.get("symbol", "")),
-                "prediction": f"{h.get('symbol','')} {h.get('name','')},{h.get('direction','bullish')} 目標 {h.get('target_price')}",
+                "prediction": pred_text[:1500],
                 "confidence": int(h.get("confidence", 60)),
                 "timeframe": f"{deadline_days}d",
                 "evaluate_after": (today + timedelta(days=deadline_days)).isoformat(),
@@ -317,22 +334,20 @@ def simulate_holdings_meeting(today: date_type) -> dict:
                 "target_price": h.get("target_price"),
                 "current_price_at_prediction": h.get("current_price_at_prediction"),
                 "deadline": deadline.isoformat(),
-                "reasoning": (h.get("reasoning") or "")[:1000],
                 "success_criteria": (h.get("success_criteria") or profile["success_criteria_style"])[:500],
                 "supporting_departments": _infer_departments(profile["school"]),
+                "evidence": {
+                    "reasoning": reasoning_text,
+                    "deadline_days": deadline_days,
+                    "school": profile["school"],
+                },
                 "status": "active",
                 "meeting_id": meeting_id,
             }
             inserted_predictions.append(row)
             pred_ids.append(pid)
 
-    # batch insert(分 batch 避免太大)
-    BATCH = 30
-    for i in range(0, len(inserted_predictions), BATCH):
-        chunk = inserted_predictions[i:i + BATCH]
-        sb.table("quack_predictions").insert(chunk).execute()
-
-    # 寫 meetings
+    # 先 upsert meetings(因為 quack_predictions 有 FK 指向 meetings)
     started = datetime.combine(today, datetime.min.time()).replace(hour=8)
     ended = started + timedelta(minutes=45)
     meeting_payload = {
@@ -353,6 +368,12 @@ def simulate_holdings_meeting(today: date_type) -> dict:
         "predictions_settled": [],
     }
     sb.table("meetings").upsert(meeting_payload, on_conflict="meeting_id").execute()
+
+    # batch insert predictions(分 batch 避免太大)
+    BATCH = 30
+    for i in range(0, len(inserted_predictions), BATCH):
+        chunk = inserted_predictions[i:i + BATCH]
+        sb.table("quack_predictions").insert(chunk).execute()
 
     # 更新 agent_stats.total_predictions(+25 each)
     for agent_id in ANALYSTS_ORDER:
@@ -572,9 +593,9 @@ def analyst_pick_daily(agent_id: str, today: date_type) -> dict:
     profile = ANALYSTS[agent_id]
     sb = _sb()
 
-    holdings = (
+    raw_holdings = (
         sb.table("quack_predictions")
-        .select("target_symbol,target_name,direction,target_price,current_price_at_prediction,confidence,reasoning")
+        .select("target_symbol,target_name,direction,target_price,current_price_at_prediction,confidence,evidence,prediction")
         .eq("agent_id", agent_id)
         .eq("status", "active")
         .order("confidence", desc=True)
@@ -582,6 +603,12 @@ def analyst_pick_daily(agent_id: str, today: date_type) -> dict:
         .execute()
         .data
     ) or []
+    # 把 evidence.reasoning 拉出來給 prompt 看
+    holdings = []
+    for h in raw_holdings:
+        ev = h.get("evidence") or {}
+        h["reasoning"] = (ev.get("reasoning") if isinstance(ev, dict) else None) or h.get("prediction", "")
+        holdings.append(h)
 
     if not holdings:
         return {"picks": []}

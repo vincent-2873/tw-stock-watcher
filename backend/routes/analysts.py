@@ -164,10 +164,11 @@ def get_analyst(slug: str) -> dict[str, Any]:
     stats = _agent_stats(agent_id)
 
     # active holdings(回前 25 筆)
+    # 注意:quack_predictions 沒有 reasoning 欄位,reasoning 寫在 evidence JSONB 中
     try:
         h = (
             sb.table("quack_predictions")
-            .select("id,target_symbol,target_name,direction,target_price,current_price_at_prediction,deadline,confidence,reasoning,success_criteria,status,supporting_departments,meeting_id,created_at")
+            .select("id,target_symbol,target_name,direction,target_price,current_price_at_prediction,deadline,confidence,evidence,success_criteria,status,supporting_departments,meeting_id,created_at,prediction")
             .eq("agent_id", agent_id)
             .eq("status", "active")
             .order("confidence", desc=True)
@@ -175,6 +176,11 @@ def get_analyst(slug: str) -> dict[str, Any]:
             .execute()
         )
         holdings = h.data or []
+        # 把 evidence.reasoning 拉到頂層 reasoning 欄位給前端
+        for hd in holdings:
+            ev = hd.get("evidence") or {}
+            if isinstance(ev, dict):
+                hd["reasoning"] = ev.get("reasoning") or hd.get("prediction", "").split("理由:", 1)[-1].strip()
     except Exception as e:
         log.exception(f"holdings fetch {agent_id}: {e}")
         holdings = []

@@ -116,6 +116,48 @@ jobs:
             [ $i -lt 3 ] && sleep 90
           done
 
+      # NEXT_TASK_008c 階段 2:5 位分析師大盤觀點(平日 07:30 / 週末 20:00)
+      - name: Refresh analyst market_views (5 analysts)
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == '' }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            HTTP=$(curl -sS -o /tmp/amv.json -w "%{http_code}" -X POST \
+              "$API_BASE/api/analysts/refresh_market_views" \
+              -H "X-Admin-Token: $ADMIN_TOKEN" \
+              --max-time 180 || echo "000")
+            echo "analyst market_views attempt $i: HTTP $HTTP"
+            head -c 600 /tmp/amv.json; echo
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ analyst market_views ok"; break
+            fi
+            if [ $i -lt 3 ]; then sleep 60; else
+              echo "- [$(date -u +%Y-%m-%dT%H:%M:%SZ)] analyst market_views failed (HTTP $HTTP)" \
+                >> ceo-desk/watchdog/ANOMALIES.md || true
+            fi
+          done
+
+      # NEXT_TASK_008c 階段 3:5 位分析師每日推薦(平日 08:00 only)
+      - name: Refresh analyst daily_picks (weekdays 08:00 only)
+        if: ${{ (github.event.schedule == '0 0 * * 1-5' || github.event.inputs.target == 'all') }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            HTTP=$(curl -sS -o /tmp/adp.json -w "%{http_code}" -X POST \
+              "$API_BASE/api/analysts/refresh_daily_picks" \
+              -H "X-Admin-Token: $ADMIN_TOKEN" \
+              --max-time 240 || echo "000")
+            echo "analyst daily_picks attempt $i: HTTP $HTTP"
+            head -c 600 /tmp/adp.json; echo
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ analyst daily_picks ok"; break
+            fi
+            if [ $i -lt 3 ]; then sleep 90; else
+              echo "- [$(date -u +%Y-%m-%dT%H:%M:%SZ)] analyst daily_picks failed (HTTP $HTTP)" \
+                >> ceo-desk/watchdog/ANOMALIES.md || true
+            fi
+          done
+
       - name: Commit ANOMALIES.md if changed
         if: always()
         run: |
