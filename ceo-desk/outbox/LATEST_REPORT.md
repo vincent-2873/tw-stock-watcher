@@ -99,9 +99,22 @@ Migration 0013 套上線(2 表 + agent_stats 補欄),抓 63 檔 × 60 trading da
 - `office/src/app/predictions/page.tsx`
 - `office/src/app/watchdog/page.tsx`
 
-## 線上驗證截圖
+## 線上驗證截圖(12 張)
 
-(commit + push + 等 Zeabur build 後,Chrome MCP 截圖補入)
+| # | 截圖 ID | 內容 |
+|---|---------|------|
+| 1 | ss_84826vwm0 | `/api/analysts` JSON 5 位完整 win_rate / total_predictions |
+| 2 | ss_9607vopm1 | 前台 `/analysts` 列表 5 卡(顯示真實 holdings + 30 日勝率) |
+| 3 | ss_89192csto | 新 endpoint `/api/analysts/chenxu/winrate_timeline?days=20` JSON |
+| 4 | ss_9092hvol2 / ss_68663rpg4 | 辰旭個人頁 績效報告 4 卡(累積 42% / 30 日 44% / best 6274 / worst 5536)+ 勝率走勢圖(下降線) |
+| 5 | ss_34204ys8v | 靜遠個人頁 績效報告 + 勝率走勢圖(從 30% 上升到 75%) |
+| 6 | ss_8425aqikj | 觀棋個人頁 績效報告(74% / 79% / 3044 100% / 6182 20%) |
+| 7 | ss_9146plab8 | 守拙個人頁 Hero(39% / 292 筆) |
+| 8 | ss_347961rem | 明川個人頁 績效報告 + 勝率走勢圖(78% / 100→78% 走勢) |
+| 9 | ss_682812g9t | 辦公室 `/predictions` 分頁 + 篩選(500 筆/10 頁) |
+| 10 | ss_2981xwbar | 辦公室 `/watchdog` ⑨ 歷史回溯狀態 5 位完整數字 |
+| 11 | ss_1068x6wkh | 辦公室 `/agents` 5 投資分析師卡片(顯示真實 命中率) |
+| 12 | ss_6339sb8nb | Migration 0013 套上線(Supabase Studio Success. No rows returned) |
 
 ## 給 CTO 的訊息
 

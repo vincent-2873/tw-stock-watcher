@@ -107,9 +107,21 @@
 
 ## 部署紀錄
 
-- **Commit**:`(填入) feat(agents): NEXT_TASK_008d-1 - 90-day historical backtest`
+- **Commit**:`bc115d3 feat(agents): NEXT_TASK_008d-1 - 90-day historical backtest`
 - **Push**:已 push 到 main ✅
 - **Zeabur build**:後端 + 前端 + 辦公室 all green
+
+---
+
+## 線上驗證(12 張截圖見 outbox/LATEST_REPORT.md)
+
+- ✅ `/api/analysts` JSON 5 位真實 win_rate(42 / 68 / 74 / 39 / 78%)
+- ✅ `/api/analysts/chenxu/winrate_timeline?days=20` 新 endpoint 回 timeline 陣列
+- ✅ 前台 `/analysts` 列表顯示真實勝率(不再「累積中」)
+- ✅ 前台 5 個個人頁:績效報告 + 勝率走勢圖(recharts LineChart)
+- ✅ 辦公室 `/predictions` 分頁(500/10 頁)+ 區間/分析師/狀態 篩選
+- ✅ 辦公室 `/watchdog` ⑨ 歷史回溯狀態 5 位完整數字
+- ✅ 辦公室 `/agents` 5 位投資分析師真實命中率
 
 ---
 
