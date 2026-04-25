@@ -145,7 +145,18 @@ timeline 擴展到 180 天(5 × 88 = 440 筆),前後台全部接通 v1/v2 對比
 
 ## 階段 8:部署
 
-(待 commit + push 後填)
+- **Commit**:`3ca44e0 feat(agents): NEXT_TASK_008d-2 - architecture v2 + back 30d backtest`
+- **Diff**:23 files changed, 2,040 insertions, 517 deletions
+- **Push**:`6c9ed92..3ca44e0  main -> main` ✅
+- **Zeabur build**:後端 / 前端 / 辦公室 all green(~5 min)
+
+線上驗證(curl):
+- ✅ `/api/analysts` 回 5 位完整 v2 stats(trait_label / v1_winrate / v2_winrate / normalized_winrate)
+- ✅ `/api/analysts/chenxu` 回 architecture_evolution + decision_quirks + strictness_coefficient
+- ✅ `/api/analysts/chenxu/winrate_timeline?days=240` 回 88 筆 + architecture_transitions(2 切換點)
+- ✅ `/api/agents` 5 位投資分析師 role/school 全 v2 化
+- ✅ 6 個前台頁(/analysts + 5 個 [slug])HTTP 200
+- ✅ 3 個辦公室頁(/agents /predictions /watchdog)HTTP 200
 
 ## 改動的檔案
 

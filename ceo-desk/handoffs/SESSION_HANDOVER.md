@@ -89,9 +89,10 @@
 
 ## 部署紀錄
 
-- **Commit**:(待 push 後填)
-- **Push**:(待)
-- **Zeabur build**:(待驗證)
+- **Commit**:`3ca44e0 feat(agents): NEXT_TASK_008d-2 - architecture v2 + back 30d backtest`
+- **Push**:`6c9ed92..3ca44e0  main -> main` ✅
+- **Zeabur build**:後端 + 前端 + 辦公室 all green(~5 min build time)
+- **線上驗證**:6 前台頁 + 3 辦公室頁全部 HTTP 200,API 回 v2 完整欄位
 
 ---
 
