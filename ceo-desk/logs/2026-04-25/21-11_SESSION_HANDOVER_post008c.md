@@ -1,25 +1,17 @@
 # Session 接棒文件
 
 > 給下一個 Claude Code session 看的。預計閱讀時間:5 分鐘。
-> 上次更新:NEXT_TASK_008c-cleanup 完成(2026-04-25 21:11 TPE)
-> 舊版:`ceo-desk/logs/2026-04-25/21-11_SESSION_HANDOVER_post008c.md`
+> 上次更新:NEXT_TASK_008c 完成(2026-04-25 19:55 TPE)
+> 舊版:`ceo-desk/logs/2026-04-25/19-55_SESSION_HANDOVER_pre008c.md`
 
 ---
 
 ## 你現在的位置
 
-- **最後完成的任務**:NEXT_TASK_008c-cleanup — 技術債 + 命名統一
-- **完成時間**:2026-04-25T21:11+08:00
-- **上一個 session 跑了多久**:約 1 小時(快速 cleanup task)
+- **最後完成的任務**:NEXT_TASK_008c — 5 位分析師當下資料活起來
+- **完成時間**:2026-04-25T19:55+08:00
+- **上一個 session 跑了多久**:約 4 小時(從讀檔到 outbox + handover,含 3 次 init 跑,2 次 bug fix)
 - **下一個任務**:NEXT_TASK_008d(6 個月歷史回溯,CTO 撰寫中)
-
-### 008c-cleanup 重點摘要
-
-- **Migration 0012 套上線**:reasoning 欄位獨立(125/130 NOT NULL)+ DB 5 位舊名→新名大替換
-- **全系統 active code/docs 0 舊名**:active py/tsx/ts/md 全淨;DB 全淨;前後台渲染全淨
-- **保留歷史**:logs / migrations 0007/0008 / inbox/NEXT_TASK / SESSION_SUMMARY / 5 位 MEMORY.md「曾用名」一行
-- **新名最終定版**:辰旭(analyst_a) / 靜遠(analyst_b) / 觀棋(analyst_c) / 守拙(analyst_d) / 明川(analyst_e)
-- **Commit**:`336577b chore(全站): NEXT_TASK_008c-cleanup`(12 files, +187/-57)
 
 ---
 
@@ -35,7 +27,7 @@
 **階段 1 模擬會議產出 125 持倉**:
 - `analyst_brain.simulate_holdings_meeting(date)` — 5 位獨立 Claude call 產 25 檔 + 1 個會議記錄 call
 - 寫入 `quack_predictions`(5×25=125)+ `meetings` 表(MEET-2026-0425-HOLDINGS,4065 字)
-- 5 位完全分化:辰旭多看空講「破線縮手」/ 守拙統計用語「N=95 勝率 71% 布林下軌」/ 明川「我小看多」混合時間框架
+- 5 位完全分化:辰旭多看空講「破線縮手」/ 守拙統計用語「N=95 勝率 71% 布林下軌」/ 阿和「我小看多」混合時間框架
 
 **階段 2 大盤觀點**:
 - `analyst_judge_market(agent_id, date)` + `analyst_market_views` 表
@@ -83,7 +75,7 @@
 | 9 | `ss_7311idyg6` | 戰情室會議全文(法人說明會風格 4065 字) |
 | 10 | `ss_9266tmbdr` | 辦公室 `/agents` 5 位 ×26 筆 |
 | 11 | `ss_8326wq68o` | 守拙(量化派)持倉(統計用語 N=95、勝率 71%、布林下軌) |
-| 12 | `ss_3229yexy8` | 明川(綜合派)持倉(「我小看多」+ 混合時間框架) |
+| 12 | `ss_3229yexy8` | 阿和(綜合派)持倉(「我小看多」+ 混合時間框架) |
 
 ---
 
@@ -270,7 +262,7 @@ cd projects/tw-stock-watcher && python scripts/init_analyst_data.py
 - **憲法**:`ceo-desk/context/SYSTEM_CONSTITUTION.md`
 - **靈魂宣言**:`ceo-desk/context/GUAGUA_SOUL.md`
 - **路線圖**:`ceo-desk/ROADMAP_FULL.md`(008c-i 完整路線)
-- **5 位分析師人設**:`ceo-desk/context/agents/analyst_a..e_MEMORY.md`(正式名:辰旭/靜遠/觀棋/守拙/明川,曾用名 008c-cleanup 歷史標記行)
+- **5 位分析師人設**:`ceo-desk/context/agents/analyst_a..e_MEMORY.md`(舊名:阿武/阿慧/阿跡/阿數/阿和)
 - **5 位分析師新名**:`frontend/src/components/AnalystAvatar.tsx`(辰旭/靜遠/觀棋/守拙/明川)
 - **呱呱中樞 AI(008a)**:`backend/services/quack_brain.py`
 - **新:Analyst 中樞(008c)**:`backend/services/analyst_brain.py`
