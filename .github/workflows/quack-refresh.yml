@@ -1,0 +1,128 @@
+name: 🦆 Quack Refresh (topics + headline)
+
+# NEXT_TASK_008b 階段 4:topics cron 排程化
+# 平日 08:00 / 09:30 / 10:30 / 12:00 / 13:00 / 14:30 — 6 次
+# 週末 10:00 / 16:00 / 20:00 — 3 次
+# 失敗時自動重試 3 次,持續失敗寫 ANOMALIES.md
+on:
+  schedule:
+    # 平日(週一-五):每次刷 topics + headline
+    - cron: '0 0 * * 1-5'    # 08:00 TPE
+    - cron: '30 1 * * 1-5'   # 09:30 TPE
+    - cron: '30 2 * * 1-5'   # 10:30 TPE
+    - cron: '0 4 * * 1-5'    # 12:00 TPE
+    - cron: '0 5 * * 1-5'    # 13:00 TPE
+    - cron: '30 6 * * 1-5'   # 14:30 TPE
+    # 週末:呱呱準備下週
+    - cron: '0 2 * * 6,0'    # 10:00 TPE Sat/Sun
+    - cron: '0 8 * * 6,0'    # 16:00 TPE Sat/Sun
+    - cron: '0 12 * * 6,0'   # 20:00 TPE Sat/Sun
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Refresh target'
+        type: choice
+        options: [all, topics, headline, weekly_picks]
+        default: all
+
+concurrency:
+  group: quack-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Quack Refresh w/ retry
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      TZ: Asia/Taipei
+      API_BASE: https://vsis-api.zeabur.app
+      ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+    steps:
+      - name: Refresh topics (with 3-retry)
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'topics' || github.event.inputs.target == '' }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            echo "::group::topics refresh attempt $i"
+            HTTP=$(curl -sS -o /tmp/topics.json -w "%{http_code}" -X POST \
+              "$API_BASE/api/quack/homework/refresh" \
+              -H "X-Admin-Token: $ADMIN_TOKEN" \
+              --max-time 240 || echo "000")
+            echo "HTTP $HTTP"
+            cat /tmp/topics.json | head -c 600
+            echo
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ topics refresh ok"
+              echo "::endgroup::"
+              break
+            fi
+            echo "::endgroup::"
+            if [ $i -lt 3 ]; then
+              echo "Retry in 60s…"
+              sleep 60
+            else
+              echo "🔴 topics refresh failed after 3 attempts"
+              # 寫 ANOMALIES.md
+              echo "- [$(date -u +%Y-%m-%dT%H:%M:%SZ)] quack-refresh topics failed (HTTP $HTTP)" \
+                >> ceo-desk/watchdog/ANOMALIES.md || true
+              # 即使最後一次失敗也不 fail GHA(避免阻擋下一次)
+              # 失敗已透過 errors 表記錄
+            fi
+          done
+
+      - name: Refresh headline (with 3-retry)
+        if: ${{ github.event.inputs.target == 'all' || github.event.inputs.target == 'headline' || github.event.inputs.target == '' }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            echo "::group::headline refresh attempt $i"
+            HTTP=$(curl -sS -o /tmp/headline.json -w "%{http_code}" \
+              "$API_BASE/api/quack/headline?force=true" \
+              -H "X-Admin-Token: $ADMIN_TOKEN" \
+              --max-time 180 || echo "000")
+            echo "HTTP $HTTP"
+            cat /tmp/headline.json | head -c 600
+            echo
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ headline refresh ok"
+              echo "::endgroup::"
+              break
+            fi
+            echo "::endgroup::"
+            if [ $i -lt 3 ]; then
+              echo "Retry in 60s…"
+              sleep 60
+            else
+              echo "🔴 headline refresh failed after 3 attempts"
+              echo "- [$(date -u +%Y-%m-%dT%H:%M:%SZ)] quack-refresh headline failed (HTTP $HTTP)" \
+                >> ceo-desk/watchdog/ANOMALIES.md || true
+            fi
+          done
+
+      - name: Refresh weekly_picks (週六 16:00 / 週日 20:00 only)
+        if: ${{ (github.event.schedule == '0 8 * * 6,0' || github.event.schedule == '0 12 * * 6,0' || github.event.inputs.target == 'weekly_picks') }}
+        run: |
+          set +e
+          for i in 1 2 3; do
+            HTTP=$(curl -sS -o /tmp/wp.json -w "%{http_code}" \
+              "$API_BASE/api/quack/weekly_picks?force=true" \
+              -H "X-Admin-Token: $ADMIN_TOKEN" \
+              --max-time 240 || echo "000")
+            echo "weekly_picks attempt $i: HTTP $HTTP"
+            if [ "$HTTP" = "200" ]; then
+              echo "✅ weekly_picks ok"; break
+            fi
+            [ $i -lt 3 ] && sleep 90
+          done
+
+      - name: Commit ANOMALIES.md if changed
+        if: always()
+        run: |
+          if ! git diff --quiet ceo-desk/watchdog/ANOMALIES.md 2>/dev/null; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add ceo-desk/watchdog/ANOMALIES.md
+            git commit -m "chore(watchdog): record quack-refresh anomaly [auto]" || true
+            git push || true
+          fi

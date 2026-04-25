@@ -54,9 +54,23 @@ function stateFromWaterStatus(s: string | undefined): State | null {
 type QuackHeadline = {
   water_status?: string;
   quack_view?: string;
+  headline?: string;
   reason?: string;
-  watch_for?: string;
+  watch_for?: string | string[];
   generated_at?: string;
+  mode?: string;
+  source?: string;
+  us_overnight?: Record<string, { symbol: string; price: number; change_pct?: number }>;
+  triggered_events?: Array<{ event_zh: string; correlation_score: number }>;
+};
+
+const MODE_BADGE: Record<string, string> = {
+  pre_market: "盤前",
+  intraday: "盤中",
+  after_close: "盤後",
+  weekly_recap: "本週",
+  next_week_preview: "下週",
+  us_session: "美股盤中",
 };
 
 type Headline = {
@@ -77,22 +91,44 @@ export function HeroHeadline() {
     let cancelled = false;
 
     async function load() {
-      // 先嘗試呱呱觀點 endpoint(008a 主路徑)
+      // 008b 主路徑:/api/hero/headline 自動依時段切換內容
       let gotQuack = false;
       try {
-        const qRes = await fetch(`${API}/api/quack/headline`, { cache: "no-store" });
-        if (qRes.ok) {
-          const qj: QuackHeadline = await qRes.json();
-          if (!cancelled && qj.quack_view) {
-            setQuack(qj);
-            const s = stateFromWaterStatus(qj.water_status);
+        const hRes = await fetch(`${API}/api/hero/headline`, { cache: "no-store" });
+        if (hRes.ok) {
+          const hj: QuackHeadline = await hRes.json();
+          if (!cancelled && (hj.quack_view || hj.headline)) {
+            setQuack(hj);
+            const s = stateFromWaterStatus(hj.water_status) ||
+              (hj.mode === "pre_market" ? "stirred" : (hj.mode === "us_session" ? "stirred" : null));
             if (s) {
               setState(s);
+              gotQuack = true;
+            } else if (hj.quack_view) {
+              setState("stirred");
               gotQuack = true;
             }
           }
         }
       } catch {/* fall through to legacy path */}
+
+      // 退路 1:008a 既有 /api/quack/headline
+      if (!gotQuack) {
+        try {
+          const qRes = await fetch(`${API}/api/quack/headline`, { cache: "no-store" });
+          if (qRes.ok) {
+            const qj: QuackHeadline = await qRes.json();
+            if (!cancelled && qj.quack_view) {
+              setQuack(qj);
+              const s = stateFromWaterStatus(qj.water_status);
+              if (s) {
+                setState(s);
+                gotQuack = true;
+              }
+            }
+          }
+        } catch {/* fall through */}
+      }
 
       // 退路:既有的市場 + 新聞 headline 路徑
       if (!gotQuack) {
@@ -180,6 +216,23 @@ export function HeroHeadline() {
       <div className={styles.heroQuote}>
         {quack?.quack_view ? (
           <>
+            {quack.mode && MODE_BADGE[quack.mode] && (
+              <span
+                style={{
+                  display: "inline-block",
+                  fontSize: 10,
+                  padding: "1px 6px",
+                  borderRadius: 3,
+                  background: "var(--accent-gold, #C9A961)",
+                  color: "var(--bg, #fff)",
+                  marginRight: 8,
+                  verticalAlign: "middle",
+                  fontStyle: "normal",
+                }}
+              >
+                {MODE_BADGE[quack.mode]}
+              </span>
+            )}
             {quack.quack_view}
             {quack.reason && (
               <span
@@ -196,10 +249,23 @@ export function HeroHeadline() {
                   <>
                     {" · "}
                     <span style={{ color: "var(--accent-gold, #C9A961)" }}>
-                      下個關卡:{quack.watch_for}
+                      下個關卡:{Array.isArray(quack.watch_for) ? quack.watch_for.join(" / ") : quack.watch_for}
                     </span>
                   </>
                 )}
+              </span>
+            )}
+            {quack.triggered_events && quack.triggered_events.length > 0 && (
+              <span
+                style={{
+                  display: "block",
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  marginTop: 3,
+                  fontStyle: "normal",
+                }}
+              >
+                觸發:{quack.triggered_events.slice(0, 3).map((e) => e.event_zh).join(" · ")}
               </span>
             )}
           </>

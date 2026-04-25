@@ -88,11 +88,15 @@ class IntelCrawler:
                 total_scanned += scanned
                 total_new += new
                 per_source.append({"name": s["name"], "scanned": scanned, "new": new})
+                # NEXT_TASK_008b 健康度:寫 last_success_at + today_count
+                self._mark_source_success(s["id"], new)
             except Exception as e:
                 msg = f"{s.get('name')}: {type(e).__name__}: {e}"
                 log.warning(f"crawl fail {msg}")
                 errors.append(msg[:200])
                 per_source.append({"name": s["name"], "error": str(e)[:120]})
+                # NEXT_TASK_008b 健康度:寫 last_error_at + 失敗訊息
+                self._mark_source_error(s["id"], str(e)[:200])
         return {
             "scanned": total_scanned,
             "new": total_new,
@@ -100,6 +104,63 @@ class IntelCrawler:
             "per_source": per_source,
             "tpe_now": now_tpe().isoformat(),
         }
+
+    # ==========================================
+    # NEXT_TASK_008b 健康度追蹤
+    # ==========================================
+    def _mark_source_success(self, source_id: int, new_count: int) -> None:
+        """成功抓取後更新 last_success_at + today_count(累加)"""
+        try:
+            today = now_tpe().date().isoformat()
+            now_iso = now_tpe().isoformat()
+            # 先讀現有 today_count_date 判斷要重置或累加
+            cur = (
+                self.sb.table("intel_sources")
+                .select("today_count,today_count_date")
+                .eq("id", source_id)
+                .limit(1)
+                .execute()
+                .data
+                or [{}]
+            )[0]
+            if cur.get("today_count_date") == today:
+                new_today = (cur.get("today_count") or 0) + max(new_count, 0)
+            else:
+                new_today = max(new_count, 0)
+            self.sb.table("intel_sources").update(
+                {
+                    "last_success_at": now_iso,
+                    "today_count": new_today,
+                    "today_count_date": today,
+                }
+            ).eq("id", source_id).execute()
+        except Exception as e:
+            log.debug(f"_mark_source_success skipped: {e}")
+
+    def _mark_source_error(self, source_id: int, msg: str) -> None:
+        """失敗時記錄 last_error_at + msg(欄位不存在不阻擋)"""
+        try:
+            self.sb.table("intel_sources").update(
+                {
+                    "last_error_at": now_tpe().isoformat(),
+                    "last_error_msg": msg[:500],
+                }
+            ).eq("id", source_id).execute()
+            # 也寫進 errors 表(graceful)
+            try:
+                self.sb.table("errors").insert(
+                    {
+                        "severity": "warning",
+                        "source": "crawler",
+                        "service": "intel_crawler",
+                        "message": msg[:500],
+                        "context": {"source_id": source_id},
+                    }
+                ).execute()
+            except Exception:
+                pass
+        except Exception as e:
+            log.debug(f"_mark_source_error skipped: {e}")
 
     def run_single(self, source_id: int) -> dict:
         res = self.sb.table("intel_sources").select("*").eq("id", source_id).limit(1).execute()

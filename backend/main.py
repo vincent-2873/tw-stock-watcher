@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.services.finmind_service import FinMindService
 from backend.services.fmp_service import FMPService
+from backend.utils.error_middleware import ErrorHandlingMiddleware
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import health_check
 from backend.utils.time_utils import now_tpe
@@ -46,6 +47,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# NEXT_TASK_008b 商業級錯誤處理:任何 /api/* 的 unhandled exception
+# 都會寫進 errors 表並回 200 + structured error,給前端 fallback UI 用
+app.add_middleware(ErrorHandlingMiddleware)
+
 # 掛載 API 路由
 from backend.routes import admin as _admin_routes  # noqa: E402
 from backend.routes import analysis as _analysis_routes  # noqa: E402
@@ -63,6 +68,8 @@ from backend.routes import diag as _diag_routes  # noqa: E402
 from backend.routes import time_route as _time_routes  # noqa: E402
 from backend.routes import agents as _agents_routes  # noqa: E402
 from backend.routes import meetings as _meetings_routes  # noqa: E402
+from backend.routes import health as _health_routes  # noqa: E402
+from backend.routes import hero as _hero_routes  # noqa: E402
 
 app.include_router(_analysis_routes.router, prefix="/api", tags=["analysis"])
 app.include_router(_chat_routes.router, prefix="/api", tags=["chat"])
@@ -80,6 +87,8 @@ app.include_router(_diag_routes.router, prefix="/api", tags=["diag"])
 app.include_router(_time_routes.router, prefix="/api", tags=["time"])
 app.include_router(_agents_routes.router, prefix="/api", tags=["agents"])
 app.include_router(_meetings_routes.router, prefix="/api", tags=["meetings"])
+app.include_router(_health_routes.router, prefix="/api", tags=["health"])
+app.include_router(_hero_routes.router, prefix="/api", tags=["hero"])
 
 
 @app.get("/")
