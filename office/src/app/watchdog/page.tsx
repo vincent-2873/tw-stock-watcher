@@ -125,6 +125,8 @@ function relTime(iso?: string | null): string {
 type AnalystStatusItem = {
   agent_id: string;
   display_name: string;
+  trait_label?: string;
+  strictness_coefficient?: number;
   stats: {
     total_predictions?: number;
     hits?: number;
@@ -136,6 +138,11 @@ type AnalystStatusItem = {
     last_90d_win_rate?: number | null;
     backfill_period_start?: string | null;
     backfill_period_end?: string | null;
+    v1_predictions?: number;
+    v1_winrate?: number | null;
+    v2_predictions?: number;
+    v2_winrate?: number | null;
+    normalized_winrate?: number | null;
   };
   holdings_count?: number;
 };
@@ -457,45 +464,61 @@ export default function WatchdogPage() {
         </Section>
       )}
 
-      {/* ⑨ 歷史回溯狀態 — 008d-1 後加入 */}
+      {/* ⑨ 歷史回溯狀態 — 008d-1 + 008d-2 後加入 */}
       {analystStatus.length > 0 && (
         <Section
-          title="⑨ 歷史回溯狀態(008d-1)"
-          subtitle="5 位投資分析師 90 天回溯結果"
+          title="⑨ 歷史回溯狀態(008d-1 + 008d-2 v2 架構)"
+          subtitle="5 位投資分析師 180 天回溯 + 架構演進"
         >
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, background: "var(--card)", borderRadius: 4 }}>
               <thead style={{ background: "var(--bg-elev)" }}>
                 <tr>
                   <Th>分析師</Th>
+                  <Th>個性</Th>
                   <Th>總預測</Th>
-                  <Th>命中</Th>
-                  <Th>未命中</Th>
-                  <Th>累積勝率</Th>
-                  <Th>近 90 日</Th>
+                  <Th>v1 勝率</Th>
+                  <Th>v2 勝率</Th>
+                  <Th>合併勝率</Th>
+                  <Th>Normalized</Th>
                   <Th>近 30 日</Th>
-                  <Th>當前持倉</Th>
+                  <Th>持倉</Th>
                 </tr>
               </thead>
               <tbody>
                 {analystStatus.map((a) => {
-                  const wr = a.stats?.win_rate;
-                  const wr90 = a.stats?.last_90d_win_rate;
-                  const wr30 = a.stats?.last_30d_win_rate;
+                  const aa = a as typeof a & {
+                    trait_label?: string;
+                    strictness_coefficient?: number;
+                    stats?: typeof a.stats & {
+                      v1_predictions?: number;
+                      v1_winrate?: number | null;
+                      v2_predictions?: number;
+                      v2_winrate?: number | null;
+                      normalized_winrate?: number | null;
+                    };
+                  };
+                  const wr = aa.stats?.win_rate;
+                  const wr30 = aa.stats?.last_30d_win_rate;
+                  const v1wr = aa.stats?.v1_winrate;
+                  const v2wr = aa.stats?.v2_winrate;
+                  const norm = aa.stats?.normalized_winrate;
                   const wrColor = wr == null ? "var(--muted-fg)" : wr >= 0.6 ? STATUS_COLOR.healthy : wr >= 0.4 ? STATUS_COLOR.warning : STATUS_COLOR.fail;
+                  const fmt = (x?: number | null) => x == null ? "—" : `${(x * 100).toFixed(1)}%`;
                   return (
                     <tr key={a.agent_id} style={{ borderTop: "1px solid var(--border)" }}>
                       <Td><strong>{a.display_name}</strong> <span style={{ color: "var(--muted-fg)" }}>({a.agent_id})</span></Td>
+                      <Td>{aa.trait_label || "—"}</Td>
                       <Td mono>{a.stats?.total_predictions ?? 0}</Td>
-                      <Td mono>{a.stats?.hits ?? 0}</Td>
-                      <Td mono>{a.stats?.misses ?? 0}</Td>
+                      <Td mono>{fmt(v1wr)} <span style={{ color: "var(--muted-fg)" }}>({aa.stats?.v1_predictions ?? 0})</span></Td>
+                      <Td mono>{fmt(v2wr)} <span style={{ color: "var(--muted-fg)" }}>({aa.stats?.v2_predictions ?? 0})</span></Td>
                       <Td>
                         <span style={{ color: wrColor, fontWeight: 600, fontFamily: "var(--font-mono)" }}>
-                          {wr != null ? `${Math.round(wr * 100)}%` : "—"}
+                          {fmt(wr)}
                         </span>
                       </Td>
-                      <Td mono>{wr90 != null ? `${Math.round(wr90 * 100)}% (n=${a.stats?.last_90d_predictions ?? 0})` : "—"}</Td>
-                      <Td mono>{wr30 != null ? `${Math.round(wr30 * 100)}% (n=${a.stats?.last_30d_predictions ?? 0})` : "—"}</Td>
+                      <Td mono>{fmt(norm)} <span style={{ color: "var(--muted-fg)" }}>(coef {aa.strictness_coefficient ?? "—"})</span></Td>
+                      <Td mono>{wr30 != null ? `${(wr30 * 100).toFixed(1)}%` : "—"}</Td>
                       <Td mono>{a.holdings_count ?? 0}</Td>
                     </tr>
                   );
@@ -503,7 +526,8 @@ export default function WatchdogPage() {
               </tbody>
             </table>
             <p style={{ fontSize: 10, color: "var(--muted-fg)", marginTop: 6 }}>
-              ※ 008d-1 完成 90 天回溯後,5 位都會有實際勝率(目標範圍 50-70%)
+              ※ v1 = 008d-1 單一面向架構(2026-01-26 ~ 04-25,1589 筆) / v2 = 008d-2 全盤+個性架構(2025-12-08 ~ 2026-01-23 + 之後每日累積) /
+              Normalized = win_rate × strictness_coefficient(公平比較)
             </p>
           </div>
         </Section>

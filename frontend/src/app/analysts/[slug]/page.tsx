@@ -75,12 +75,22 @@ type MeetingMeta = {
   predictions_count: number;
 };
 
+type ArchitectureEvolution = {
+  v1: { label: string; summary: string; predictions: number; winrate: number | null };
+  v2: { label: string; summary: string; predictions: number; winrate: number | null };
+  transition_date: string;
+};
+
 type AnalystResponse = {
   display_name: string;
   school: string;
+  trait_label?: string | null;
   weights: string;
   personality: string;
   catchphrase: string[];
+  decision_quirks?: string[];
+  strictness_coefficient?: number | null;
+  success_criteria_style?: string;
   stats: {
     total_predictions?: number;
     hits?: number;
@@ -94,14 +104,32 @@ type AnalystResponse = {
     best_symbol_win_rate?: number | null;
     worst_symbol?: string | null;
     worst_symbol_win_rate?: number | null;
+    v1_predictions?: number;
+    v1_winrate?: number | null;
+    v2_predictions?: number;
+    v2_winrate?: number | null;
+    normalized_winrate?: number | null;
   };
   holdings: Holding[];
   holdings_count: number;
   latest_market_view: MarketView | null;
   daily_picks: DailyPick[];
   meetings_attended: MeetingMeta[];
-  learning_notes: Array<{ note_id: number; date: string; lesson: string }>;
+  learning_notes: Array<{ note_id: number; date: string; lesson: string; context?: string; mistake?: string; correction_plan?: string }>;
+  architecture_evolution?: ArchitectureEvolution;
 };
+
+function pct(x?: number | null): string {
+  return x == null ? "—" : `${(x * 100).toFixed(1)}%`;
+}
+
+function strictnessLabel(coef?: number | null): string {
+  if (coef == null) return "—";
+  if (coef >= 0.95) return "Strict";
+  if (coef >= 0.85) return "Quant 90%";
+  if (coef >= 0.75) return "Loose 80%";
+  return "Segmented 66%";
+}
 
 export default function AnalystDetailPage({
   params,
@@ -115,7 +143,8 @@ export default function AnalystDetailPage({
   const [data, setData] = useState<AnalystResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeline, setTimeline] = useState<Array<{ date: string; rolling_30d: number | null; cumulative: number | null; cumulative_n: number; rolling_30d_n: number }>>([]);
+  const [timeline, setTimeline] = useState<Array<{ date: string; rolling_30d: number | null; cumulative: number | null; cumulative_n: number; rolling_30d_n: number; architecture_version?: string }>>([]);
+  const [architectureTransitions, setArchitectureTransitions] = useState<Array<{ date: string; label: string }>>([]);
 
   useEffect(() => {
     if (!a) return;
@@ -135,13 +164,16 @@ export default function AnalystDetailPage({
         if (!cancelled) setLoading(false);
       }
     })();
-    // 同時抓 winrate timeline
+    // 同時抓 winrate timeline (180 天涵蓋 v1+v2)
     (async () => {
       try {
-        const r = await fetch(`${API}/api/analysts/${slug}/winrate_timeline?days=120`, { cache: "no-store" });
+        const r = await fetch(`${API}/api/analysts/${slug}/winrate_timeline?days=240`, { cache: "no-store" });
         if (r.ok) {
           const j = await r.json();
-          if (!cancelled) setTimeline(j.timeline || []);
+          if (!cancelled) {
+            setTimeline(j.timeline || []);
+            setArchitectureTransitions(j.architecture_transitions || []);
+          }
         }
       } catch {/**/}
     })();
@@ -168,6 +200,10 @@ export default function AnalystDetailPage({
   const winRate = stats?.win_rate != null ? `${Math.round(stats.win_rate * 100)}%` : "累積中";
   const totalPreds = stats?.total_predictions ?? 0;
   const holdingsCount = data?.holdings_count ?? 0;
+  const trait = data?.trait_label ?? a?.school;
+  const strictMode = strictnessLabel(data?.strictness_coefficient);
+  const normalized = stats?.normalized_winrate;
+  const arch = data?.architecture_evolution;
 
   return (
     <div style={{ background: "var(--bg, #F2E8D5)", minHeight: "100vh" }}>
@@ -195,8 +231,18 @@ export default function AnalystDetailPage({
         >
           <AnalystAvatar slug={a.slug} size="lg" />
           <div>
-            <div style={{ fontSize: 12, color: a.primary, fontWeight: 600, marginBottom: 6 }}>
-              {a.school}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 12, color: a.primary, fontWeight: 600 }}>
+                {trait}(全盤分析)
+              </span>
+              <span title={`Strictness coefficient ${data?.strictness_coefficient ?? "—"} — normalized = win_rate × coef`} style={{ fontSize: 10, padding: "1px 6px", background: "rgba(93,74,62,0.08)", border: "1px solid rgba(93,74,62,0.15)", borderRadius: 4, color: "#5d4a3e" }}>
+                {strictMode}
+              </span>
+              {(stats?.v2_predictions ?? 0) > 0 && (
+                <span style={{ fontSize: 10, padding: "1px 6px", background: "#3a7d4a22", color: "#2d6539", borderRadius: 4 }}>
+                  v2 已啟用
+                </span>
+              )}
             </div>
             <h1 style={{ fontFamily: "var(--font-serif, serif)", fontSize: 38, fontWeight: 500, margin: 0 }}>
               {a.name}
@@ -222,9 +268,9 @@ export default function AnalystDetailPage({
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginTop: 18 }}>
               <KeyStat label="當前持倉" value={`${holdingsCount} 檔`} />
-              <KeyStat label="總預測數" value={String(totalPreds)} />
-              <KeyStat label="勝率" value={winRate} />
-              <KeyStat label="平均報酬" value="累積中" />
+              <KeyStat label="總預測數" value={String(totalPreds)} sub={`v1 ${stats?.v1_predictions ?? 0} / v2 ${stats?.v2_predictions ?? 0}`} />
+              <KeyStat label="勝率" value={winRate} sub={normalized != null ? `normalized ${pct(normalized)}` : ""} />
+              <KeyStat label="近 30 日勝率" value={stats?.last_30d_win_rate != null ? `${Math.round(stats.last_30d_win_rate * 100)}%` : "—"} />
             </div>
 
             <button
@@ -265,10 +311,44 @@ export default function AnalystDetailPage({
           </Section>
         )}
 
-        {/* 3. 績效報告(008d-1 接通真實 90 天回溯) */}
-        <Section title="績效報告 · 90 天歷史回溯">
+        {/* 2.5 架構演進(2026-04-26 NEXT_TASK_008d-2 後啟用) */}
+        {arch && (arch.v1.predictions > 0 || arch.v2.predictions > 0) && (
+          <Section title="架構演進 · v1 → v2">
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+              <div style={{ padding: 14, background: "rgba(255,255,255,0.45)", borderRadius: 8, borderLeft: "3px solid #aaa" }}>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 4, fontFamily: "var(--font-mono, monospace)" }}>v1 舊架構</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#5d4a3e", marginBottom: 6 }}>{arch.v1.label}</div>
+                <div style={{ fontSize: 12, color: "#5d4a3e", lineHeight: 1.6, marginBottom: 8 }}>{arch.v1.summary}</div>
+                <div style={{ display: "flex", gap: 12, fontSize: 12, fontFamily: "var(--font-mono, monospace)" }}>
+                  <span>{arch.v1.predictions} 筆</span>
+                  <span style={{ color: "#888" }}>勝率 {pct(arch.v1.winrate)}</span>
+                </div>
+              </div>
+              <div style={{ padding: 14, background: `${a.primary}11`, borderRadius: 8, borderLeft: `3px solid ${a.primary}` }}>
+                <div style={{ fontSize: 11, color: a.primary, marginBottom: 4, fontFamily: "var(--font-mono, monospace)" }}>v2 新架構(自 {arch.transition_date})</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: "#5d4a3e", marginBottom: 6 }}>{arch.v2.label}</div>
+                <div style={{ fontSize: 12, color: "#5d4a3e", lineHeight: 1.6, marginBottom: 8 }}>{arch.v2.summary}</div>
+                <div style={{ display: "flex", gap: 12, fontSize: 12, fontFamily: "var(--font-mono, monospace)" }}>
+                  <span>{arch.v2.predictions} 筆</span>
+                  <span style={{ color: a.primary }}>勝率 {pct(arch.v2.winrate)}</span>
+                </div>
+              </div>
+            </div>
+            {data?.decision_quirks && data.decision_quirks.length > 0 && (
+              <div style={{ marginTop: 14, padding: 14, background: "rgba(255,255,255,0.4)", borderRadius: 8 }}>
+                <div style={{ fontSize: 11, color: "#888", marginBottom: 6, fontFamily: "var(--font-mono, monospace)" }}>決策怪癖(v2)</div>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: "#5d4a3e", lineHeight: 1.7 }}>
+                  {data.decision_quirks.map((q, i) => <li key={i}>{q}</li>)}
+                </ul>
+              </div>
+            )}
+          </Section>
+        )}
+
+        {/* 3. 績效報告(008d-1+d-2 接通真實 180 天回溯) */}
+        <Section title="績效報告 · 180 天歷史回溯">
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 16 }}>
-            <KeyStat label="累積勝率" value={winRate} />
+            <KeyStat label="累積勝率" value={winRate} sub={normalized != null ? `normalized ${pct(normalized)}` : ""} />
             <KeyStat label="近 30 日勝率" value={stats?.last_30d_win_rate != null ? `${Math.round(stats.last_30d_win_rate * 100)}%` : "—"} />
             <KeyStat label="最佳標的" value={stats?.best_symbol || "—"} sub={stats?.best_symbol_win_rate != null ? `${Math.round(stats.best_symbol_win_rate * 100)}%` : ""} />
             <KeyStat label="最差標的" value={stats?.worst_symbol || "—"} sub={stats?.worst_symbol_win_rate != null ? `${Math.round(stats.worst_symbol_win_rate * 100)}%` : ""} />
@@ -295,6 +375,9 @@ export default function AnalystDetailPage({
                       contentStyle={{ fontSize: 11, fontFamily: "var(--font-mono)" }}
                     />
                     <ReferenceLine y={0.5} stroke="#bbb" strokeDasharray="4 4" />
+                    {architectureTransitions.map((t) => (
+                      <ReferenceLine key={t.date} x={t.date} stroke="#3a7d4a" strokeDasharray="2 4" label={{ value: t.label, fontSize: 9, fill: "#3a7d4a", position: "insideTopRight" }} />
+                    ))}
                     <Line type="monotone" dataKey="rolling_30d" stroke="#9b8a73" strokeWidth={1.5} dot={false} connectNulls />
                     <Line type="monotone" dataKey="cumulative" stroke={a.primary} strokeWidth={2.5} dot={false} connectNulls />
                   </LineChart>

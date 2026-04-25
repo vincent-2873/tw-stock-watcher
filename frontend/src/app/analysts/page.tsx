@@ -23,12 +23,20 @@ type AnalystListItem = {
   slug: string | null;
   display_name: string;
   school: string;
+  trait_label?: string | null;
+  strictness_coefficient?: number | null;
+  success_criteria_style?: string;
   holdings_count: number;
   stats: {
     total_predictions?: number;
     win_rate?: number | null;
     last_30d_predictions?: number;
     last_30d_win_rate?: number | null;
+    v1_predictions?: number;
+    v1_winrate?: number | null;
+    v2_predictions?: number;
+    v2_winrate?: number | null;
+    normalized_winrate?: number | null;
   };
   latest_market_view: {
     market_view: string;
@@ -37,6 +45,18 @@ type AnalystListItem = {
     view_date?: string;
   } | null;
 };
+
+function pct(x?: number | null): string {
+  return x == null ? "—" : `${(x * 100).toFixed(1)}%`;
+}
+
+function strictnessLabel(coef?: number | null): string {
+  if (coef == null) return "—";
+  if (coef >= 0.95) return "Strict";
+  if (coef >= 0.85) return "Quant 90%";
+  if (coef >= 0.75) return "Loose 80%";
+  return "Segmented 66%";
+}
 
 export default function AnalystsIndex() {
   const [items, setItems] = useState<Record<string, AnalystListItem>>({});
@@ -76,9 +96,9 @@ export default function AnalystsIndex() {
             分析師團隊
           </h1>
           <p style={{ marginTop: 12, fontFamily: "var(--font-serif, serif)", fontSize: 15, lineHeight: 1.7, color: "#5d4a3e", maxWidth: 720 }}>
-            吶,五位分析師,五種看法。<br />
-            技術派、基本面、籌碼、量化、綜合 ——<br />
-            每位都有自己的戰績、自己的個性、自己定義什麼叫「命中」。<br />
+            吶,五位分析師,五種**個性**。<br />
+            **每位都看全盤**(技術 + 基本面 + 籌碼 + 量化 + 題材 + 消息)——<br />
+            差異是個性、權重、風險偏好、時間框架,以及自己定義什麼叫「命中」。<br />
             選一位你願意託付的,跟著一起往前走。
           </p>
         </header>
@@ -87,10 +107,12 @@ export default function AnalystsIndex() {
           {ANALYST_SLUGS.map((slug) => {
             const a = ANALYSTS[slug as AnalystSlug];
             const item = items[slug];
-            const winRate = item?.stats?.win_rate != null ? `${Math.round((item.stats.win_rate as number) * 100)}%` : "累積中";
-            const last30 = item?.stats?.last_30d_win_rate != null
-              ? `${Math.round((item.stats.last_30d_win_rate as number) * 100)}%`
-              : "累積中";
+            const winRate = item?.stats?.win_rate != null ? `${(item.stats.win_rate * 100).toFixed(1)}%` : "累積中";
+            const normalized = item?.stats?.normalized_winrate;
+            const trait = item?.trait_label || a.school;
+            const strictMode = strictnessLabel(item?.strictness_coefficient);
+            const v2Count = item?.stats?.v2_predictions ?? 0;
+            void winRate;
             return (
               <article
                 key={slug}
@@ -111,8 +133,28 @@ export default function AnalystsIndex() {
                       {a.name}
                       <span style={{ fontSize: 13, color: "#888", marginLeft: 8, fontWeight: 400 }}>{a.pinyin}</span>
                     </h2>
-                    <div style={{ fontSize: 12, color: a.primary, fontWeight: 600, marginTop: 4, marginBottom: 8 }}>
-                      {a.school}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, marginBottom: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 12, color: a.primary, fontWeight: 600 }}>
+                        {trait}(全盤)
+                      </span>
+                      <span
+                        title={`Strictness coefficient ${item?.strictness_coefficient ?? "—"} — normalized winrate = win_rate × coefficient`}
+                        style={{
+                          fontSize: 10,
+                          padding: "1px 6px",
+                          background: "rgba(93,74,62,0.08)",
+                          border: "1px solid rgba(93,74,62,0.15)",
+                          borderRadius: 4,
+                          color: "#5d4a3e",
+                        }}
+                      >
+                        {strictMode}
+                      </span>
+                      {v2Count > 0 && (
+                        <span style={{ fontSize: 10, padding: "1px 6px", background: "#3a7d4a22", color: "#2d6539", borderRadius: 4 }}>
+                          v2 已啟用
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>
                       {a.personality.join(" · ")}
@@ -143,7 +185,7 @@ export default function AnalystsIndex() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateColumns: "repeat(3, 1fr)",
                     gap: 8,
                     paddingTop: 10,
                     borderTop: "1px solid rgba(93, 74, 62, 0.08)",
@@ -156,10 +198,27 @@ export default function AnalystsIndex() {
                       {loading ? "…" : `${item?.holdings_count ?? 0} 檔`}
                     </div>
                   </div>
-                  <div>
-                    <div style={{ color: "#888" }}>近 30 日勝率</div>
+                  <div title={normalized != null ? `Normalized: ${pct(normalized)}` : "尚無 normalized"}>
+                    <div style={{ color: "#888" }}>累積勝率</div>
                     <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 14 }}>
-                      {loading ? "…" : last30}
+                      {loading ? "…" : pct(item?.stats?.win_rate)}
+                      {normalized != null && (
+                        <span style={{ fontSize: 10, color: "#888", marginLeft: 4 }}>
+                          ↪{pct(normalized)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div title="v1=舊單一面向架構 / v2=全盤+個性新架構">
+                    <div style={{ color: "#888" }}>v1 / v2</div>
+                    <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12 }}>
+                      {loading ? "…" : (
+                        <>
+                          <span>{pct(item?.stats?.v1_winrate)}</span>
+                          <span style={{ color: "#888", margin: "0 3px" }}>/</span>
+                          <span style={{ color: a.primary }}>{pct(item?.stats?.v2_winrate)}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

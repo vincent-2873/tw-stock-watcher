@@ -70,7 +70,7 @@ def _sb():
 
 
 def _profile_summary(agent_id: str) -> dict:
-    """從 analyst_brain.ANALYSTS 拉摘要(展示給前端用)"""
+    """從 analyst_brain.ANALYSTS 拉摘要(展示給前端用)。v2 加入 trait_label / decision_quirks / strictness_coefficient。"""
     p = analyst_brain.ANALYSTS.get(agent_id, {})
     return {
         "agent_id": agent_id,
@@ -78,15 +78,69 @@ def _profile_summary(agent_id: str) -> dict:
         "display_name": p.get("display_name"),
         "frontend_name": p.get("frontend_name"),
         "school": p.get("school"),
+        "trait_label": p.get("trait_label"),
         "weights": p.get("weights"),
         "personality": p.get("personality"),
         "catchphrase": p.get("catchphrase"),
+        "decision_quirks": p.get("decision_quirks"),
         "timeframe_short_days": p.get("timeframe_short_days"),
         "timeframe_long_days": p.get("timeframe_long_days"),
         "stop_loss_pct": p.get("stop_loss_pct"),
         "max_position_pct": p.get("max_position_pct"),
         "success_criteria_style": p.get("success_criteria_style"),
+        "strictness_coefficient": p.get("strictness_coefficient"),
     }
+
+
+def _v1v2_split_stats(agent_id: str) -> dict:
+    """從 quack_predictions 動態計算 v1 / v2 分別的勝率(架構切換對比用)。
+    透過 evidence->>'architecture_version' 判定。
+    """
+    sb = _sb()
+    out = {
+        "v1": {"total": 0, "hits": 0, "misses": 0, "active": 0, "winrate": None},
+        "v2": {"total": 0, "hits": 0, "misses": 0, "active": 0, "winrate": None},
+    }
+    PAGE = 500
+    offset = 0
+    while True:
+        r = (
+            sb.table("quack_predictions")
+            .select("status,evidence")
+            .eq("agent_id", agent_id)
+            .range(offset, offset + PAGE - 1)
+            .execute()
+        )
+        batch = r.data or []
+        if not batch:
+            break
+        for row in batch:
+            ev = row.get("evidence") or {}
+            arch = ev.get("architecture_version") or "v1"
+            bucket = out.get(arch) if arch in out else out["v1"]
+            bucket["total"] += 1
+            st = row.get("status")
+            if st == "hit":
+                bucket["hits"] += 1
+            elif st == "missed":
+                bucket["misses"] += 1
+            elif st == "active":
+                bucket["active"] += 1
+        if len(batch) < PAGE:
+            break
+        offset += PAGE
+    for k in ("v1", "v2"):
+        b = out[k]
+        settled = b["hits"] + b["misses"]
+        b["winrate"] = round(b["hits"] / settled, 4) if settled > 0 else None
+    return out
+
+
+def _normalized(win_rate: Optional[float], coefficient: Optional[float]) -> Optional[float]:
+    """normalized_winrate = win_rate × strictness_coefficient(公平比較,strict=1.0,loose<1)"""
+    if win_rate is None or coefficient is None:
+        return None
+    return round(win_rate * coefficient, 4)
 
 
 def _agent_stats(agent_id: str) -> dict:
@@ -136,6 +190,11 @@ def list_analysts() -> dict[str, Any]:
         except Exception:
             latest_view = None
 
+        # v1 vs v2 動態切分
+        v1v2 = _v1v2_split_stats(agent_id)
+        coef = profile.get("strictness_coefficient")
+        normalized = _normalized(stats.get("win_rate"), coef)
+
         items.append({
             **profile,
             "stats": {
@@ -145,6 +204,12 @@ def list_analysts() -> dict[str, Any]:
                 "win_rate": stats.get("win_rate"),
                 "last_30d_predictions": stats.get("last_30d_predictions", 0),
                 "last_30d_win_rate": stats.get("last_30d_win_rate"),
+                # v2 新增
+                "v1_predictions": v1v2["v1"]["total"],
+                "v1_winrate": v1v2["v1"]["winrate"],
+                "v2_predictions": v1v2["v2"]["total"],
+                "v2_winrate": v1v2["v2"]["winrate"],
+                "normalized_winrate": normalized,
             },
             "holdings_count": holdings_count,
             "latest_market_view": latest_view,
@@ -255,16 +320,51 @@ def get_analyst(slug: str) -> dict[str, Any]:
     except Exception:
         learning_notes = []
 
+    # v1 vs v2 動態切分
+    v1v2 = _v1v2_split_stats(agent_id)
+    coef = profile.get("strictness_coefficient")
+    normalized = _normalized(stats.get("win_rate"), coef)
+    stats_extra = {
+        **stats,
+        "v1_predictions": v1v2["v1"]["total"],
+        "v1_hits": v1v2["v1"]["hits"],
+        "v1_misses": v1v2["v1"]["misses"],
+        "v1_winrate": v1v2["v1"]["winrate"],
+        "v2_predictions": v1v2["v2"]["total"],
+        "v2_hits": v1v2["v2"]["hits"],
+        "v2_misses": v1v2["v2"]["misses"],
+        "v2_winrate": v1v2["v2"]["winrate"],
+        "normalized_winrate": normalized,
+    }
+
+    # 架構演進說明(供前台「架構演進」區塊用)
+    architecture_evolution = {
+        "v1": {
+            "label": "v1 單一面向派",
+            "summary": f"{profile.get('display_name')} 過去用單一流派(技術/基本面/籌碼/量化/綜合)為主,reasoning 多側重一個面向。",
+            "predictions": v1v2["v1"]["total"],
+            "winrate": v1v2["v1"]["winrate"],
+        },
+        "v2": {
+            "label": f"v2 全盤+{profile.get('trait_label') or '個性'}",
+            "summary": f"{profile.get('display_name')} 改為全盤分析(技術+基本面+籌碼+量化+題材+消息),但個性偏好為「{profile.get('trait_label')}」,reasoning 提到至少 2 個面向。",
+            "predictions": v1v2["v2"]["total"],
+            "winrate": v1v2["v2"]["winrate"],
+        },
+        "transition_date": "2026-04-26",
+    }
+
     return {
         "tpe_now": now_tpe().isoformat(),
         **profile,
-        "stats": stats,
+        "stats": stats_extra,
         "holdings": holdings,
         "holdings_count": len(holdings),
         "latest_market_view": latest_view,
         "daily_picks": today_picks,
         "meetings_attended": meetings_attended,
         "learning_notes": learning_notes,
+        "architecture_evolution": architecture_evolution,
     }
 
 
@@ -312,16 +412,13 @@ def get_analyst_daily_picks(slug: str, days: int = Query(7, ge=1, le=30)) -> dic
 
 
 @router.get("/analysts/{slug}/winrate_timeline")
-def get_analyst_winrate_timeline(slug: str, days: int = Query(90, ge=7, le=365)) -> dict[str, Any]:
-    """008d-1: 該分析師滾動勝率走勢(給前台勝率走勢圖用)。
-    回傳:
-      {
-        "agent_id": "...",
-        "timeline": [
-          {"date": "...", "rolling_30d": 0.62, "rolling_30d_n": 8, "cumulative": 0.62, "cumulative_n": 8},
-          ...
-        ]
-      }
+def get_analyst_winrate_timeline(slug: str, days: int = Query(180, ge=7, le=365)) -> dict[str, Any]:
+    """008d-1/d-2: 滾動勝率走勢 + v1/v2 架構標記。
+
+    架構區段(預設規則):
+      < 2026-01-26 → v2(008d-2 後 30 天)
+      2026-01-26 ~ 2026-04-25 → v1(008d-1 範圍)
+      > 2026-04-25 → v2(2026-04-26 起新架構正式啟用)
     """
     agent_id = _resolve(slug)
     sb = _sb()
@@ -334,6 +431,14 @@ def get_analyst_winrate_timeline(slug: str, days: int = Query(90, ge=7, le=365))
         .execute()
         .data
     ) or []
+
+    def _arch_for(d: str) -> str:
+        if d < "2026-01-26":
+            return "v2"
+        if d <= "2026-04-25":
+            return "v1"
+        return "v2"
+
     timeline = [
         {
             "date": r["timeline_date"],
@@ -343,14 +448,23 @@ def get_analyst_winrate_timeline(slug: str, days: int = Query(90, ge=7, le=365))
             "cumulative_n": r.get("cumulative_predictions") or 0,
             "cumulative_hits": r.get("cumulative_hits") or 0,
             "cumulative_misses": r.get("cumulative_misses") or 0,
+            "architecture_version": _arch_for(r["timeline_date"]),
         }
         for r in rows
     ]
+
+    # 架構切換點(供前台畫垂直線標記)
+    architecture_transitions = [
+        {"date": "2026-01-26", "label": "v2 → v1(008d-1 開始)"},
+        {"date": "2026-04-26", "label": "v1 → v2(架構修正啟用)"},
+    ]
+
     return {
         "agent_id": agent_id,
         "slug": slug,
         "count": len(timeline),
         "timeline": timeline,
+        "architecture_transitions": architecture_transitions,
     }
 
 

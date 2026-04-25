@@ -51,7 +51,7 @@ export default function PredictionsPage() {
     setPage(1);
     (async () => {
       try {
-        const r = await fetch(`${API}/api/quack/predictions?days=${days}`, { cache: "no-store" });
+        const r = await fetch(`${API}/api/quack/predictions?days=${days}&limit=3500`, { cache: "no-store" });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
         if (!cancelled) setData(j);
@@ -64,9 +64,15 @@ export default function PredictionsPage() {
     };
   }, [days]);
 
+  const [archFilter, setArchFilter] = useState<string>("all");
+  const archOf = (p: Prediction): string => {
+    const ev = (p.evidence || {}) as Record<string, unknown>;
+    return (ev.architecture_version as string) || "v1";
+  };
   const filtered = (data?.predictions || []).filter((p) => {
     if (agentFilter !== "all" && p.agent_id !== agentFilter) return false;
     if (statusFilter !== "all" && (p.status || p.hit_or_miss) !== statusFilter) return false;
+    if (archFilter !== "all" && archOf(p) !== archFilter) return false;
     return true;
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -74,6 +80,10 @@ export default function PredictionsPage() {
 
   const agentOptions = Array.from(new Set((data?.predictions || []).map((p) => p.agent_id).filter(Boolean))) as string[];
   const statusOptions = Array.from(new Set((data?.predictions || []).map((p) => p.status || p.hit_or_miss).filter(Boolean))) as string[];
+
+  // v1 / v2 數量
+  const v1Count = (data?.predictions || []).filter((p) => archOf(p) === "v1").length;
+  const v2Count = (data?.predictions || []).filter((p) => archOf(p) === "v2").length;
 
   return (
     <main style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px" }}>
@@ -104,6 +114,7 @@ export default function PredictionsPage() {
             <StatCard label="期間總筆數" value={String(data.count ?? 0)} />
             <StatCard label="已結算" value={String(data.evaluated_count ?? 0)} />
             <StatCard label="總命中率" value={data.hit_rate != null ? `${data.hit_rate}%` : "—"} />
+            <StatCard label="v1 / v2" value={`${v1Count} / ${v2Count}`} />
             <StatCard label="篩選後" value={`${filtered.length} 筆`} />
           </div>
 
@@ -115,6 +126,7 @@ export default function PredictionsPage() {
                 <option value={60}>近 60 天</option>
                 <option value={120}>近 120 天</option>
                 <option value={180}>近 180 天</option>
+                <option value={250}>近 250 天(含 v2 backfill)</option>
               </select>
             </label>
             <label>
@@ -129,6 +141,14 @@ export default function PredictionsPage() {
               <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} style={selectStyle}>
                 <option value="all">全部</option>
                 {statusOptions.map((s) => (<option key={s} value={s}>{s}</option>))}
+              </select>
+            </label>
+            <label>
+              架構:
+              <select value={archFilter} onChange={(e) => { setArchFilter(e.target.value); setPage(1); }} style={selectStyle}>
+                <option value="all">全部</option>
+                <option value="v1">v1 舊架構</option>
+                <option value="v2">v2 全盤+個性</option>
               </select>
             </label>
             <span style={{ marginLeft: "auto", color: "var(--muted-fg)" }}>
@@ -180,6 +200,9 @@ function StatCard({ label, value }: { label: string; value: string }) {
 
 function PredictionCard({ p }: { p: Prediction }) {
   const status = p.status || p.hit_or_miss || "active";
+  const ev = (p.evidence || {}) as Record<string, unknown>;
+  const arch = (ev.architecture_version as string) || "v1";
+  const traitLabel = (ev.trait_label as string) || "";
   const color =
     status === "hit"
       ? "var(--accent-green)"
@@ -202,7 +225,12 @@ function PredictionCard({ p }: { p: Prediction }) {
           {p.agent_name || p.agent_id || "呱呱"} · {p.target_symbol || p.subject}
           {p.target_name && ` ${p.target_name}`}
         </strong>
-        <span style={{ color, fontFamily: "var(--font-mono)" }}>{status.toUpperCase()}</span>
+        <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <span style={{ fontSize: 10, padding: "1px 6px", background: arch === "v2" ? "#3a7d4a22" : "rgba(0,0,0,0.06)", color: arch === "v2" ? "#2d6539" : "var(--muted-fg)", borderRadius: 3, fontFamily: "var(--font-mono)" }}>
+            {arch}{traitLabel ? `·${traitLabel}` : ""}
+          </span>
+          <span style={{ color, fontFamily: "var(--font-mono)" }}>{status.toUpperCase()}</span>
+        </span>
       </div>
       <p style={{ margin: "6px 0", color: "var(--muted-fg)" }}>
         {p.direction && <>方向 {p.direction} · </>}

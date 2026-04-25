@@ -240,7 +240,8 @@ async def _claude_reasoning(snapshot: dict) -> dict:
 # =========================================================================
 @router.get("/quack/predictions")
 async def list_predictions(
-    days: int = Query(30, ge=1, le=180),
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(2000, ge=50, le=5000),
 ):
     since = (now_tpe().date() - timedelta(days=days)).isoformat()
     sb = get_service_client()
@@ -250,7 +251,7 @@ async def list_predictions(
             .select("*")
             .gte("date", since)
             .order("date", desc=True)
-            .limit(500)
+            .limit(limit)
             .execute()
         )
         rows = r.data or []

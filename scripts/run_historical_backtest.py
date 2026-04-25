@@ -106,12 +106,14 @@ def phase1_fetch_prices() -> dict:
 # Phase 2: 產生預測
 # ============================================================================
 def _run_agent_backfill(agent_id: str, trading_days, end: date_type,
-                        picks_per_day: int, max_calls_per_analyst: int) -> dict:
+                        picks_per_day: int, max_calls_per_analyst: int,
+                        backfill_marker: str = "BACKFILL_008d1",
+                        architecture_version: str = "v1") -> dict:
     """單一分析師跑完整 backfill。給 ThreadPoolExecutor 用。"""
     sb = _sb()
     name = analyst_brain.ANALYSTS[agent_id]["display_name"]
 
-    # 已有的 backfill 預測日期(避免重跑)
+    # 已有的 backfill 預測日期(避免重跑)— 用 backfill_marker 判斷
     existing = (
         sb.table("quack_predictions")
         .select("date,evidence")
@@ -125,10 +127,10 @@ def _run_agent_backfill(agent_id: str, trading_days, end: date_type,
     skip_dates = set()
     for r in existing:
         ev = r.get("evidence") or {}
-        if ev.get("backfill_marker") == "BACKFILL_008d1":
+        if ev.get("backfill_marker") == backfill_marker:
             skip_dates.add(r.get("date"))
     if skip_dates:
-        print(f"  [{agent_id}] ↩  跳過已有 backfill 的 {len(skip_dates)} 天")
+        print(f"  [{agent_id}] ↩  跳過已有 {backfill_marker} 的 {len(skip_dates)} 天")
 
     summary = {"days_done": 0, "preds_inserted": 0, "errors": 0, "calls": 0}
     for i, td in enumerate(trading_days, 1):
@@ -145,7 +147,9 @@ def _run_agent_backfill(agent_id: str, trading_days, end: date_type,
             preds = hb.generate_predictions_for_day(agent_id, td, ctx,
                                                    n_picks=picks_per_day,
                                                    max_deadline_days=max_deadline)
-            inserted = hb.insert_historical_predictions(agent_id, td, preds)
+            inserted = hb.insert_historical_predictions(agent_id, td, preds,
+                                                       backfill_marker=backfill_marker,
+                                                       architecture_version=architecture_version)
             summary["days_done"] += 1
             summary["preds_inserted"] += len(inserted)
             summary["calls"] += 1

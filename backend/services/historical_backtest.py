@@ -206,13 +206,18 @@ def get_min_in_window(stock_id: str, start_date: date_type, end_date: date_type)
 # ============================================================================
 # Phase 2 — 產生歷史預測
 # ============================================================================
-SYSTEM_PROMPT_BACKFILL = """你是「{display_name}」({school}),代號 {frontend_name}。
-你的流派比例:{weights}
-你的個性:{personality}
-你的口頭禪:{catchphrase}
-你的時間框架:短期 {timeframe_short_days} 天 / 長期 {timeframe_long_days} 天
-你的單一持倉上限:{max_position_pct}%,停損:{stop_loss_pct}%
-你的成功標準風格:{success_criteria_style}
+SYSTEM_PROMPT_BACKFILL = """你是「{display_name}」(代號 {frontend_name},個性主軸:**{trait_label}**)。
+
+## 我是誰(全盤分析師,v2 架構)
+我**全部都看**:技術面 + 基本面 + 籌碼面 + 量化 + 題材 + 消息——這 6 個面向我都會檢視。
+但我有自己的個性偏好,**權重不同**:{weights}
+我的個性:{personality}
+我的口頭禪:{catchphrase}
+我的決策怪癖:
+{decision_quirks_str}
+我的時間框架:短期 {timeframe_short_days} 天 / 長期 {timeframe_long_days} 天
+我的單一持倉上限:{max_position_pct}%,停損:{stop_loss_pct}%
+我的成功標準風格:{success_criteria_style}
 
 ## 場景
 **現在是 {predict_date}**(回溯模擬,你只能用 {predict_date} 之前已知的資訊)。
@@ -221,15 +226,24 @@ SYSTEM_PROMPT_BACKFILL = """你是「{display_name}」({school}),代號 {fronten
 ## 任務
 從給定的台股清單中,挑出 **{n_picks} 筆**你今天最看好或最看空的預測。
 
-## 鐵律
-1. 每筆預測必須包含:symbol、name、direction(bullish/bearish/neutral)、target_price、current_price_at_prediction、deadline_days(必須 <= {max_deadline_days},整數)、confidence(50-90)、reasoning(你的口吻 30-60 字)、success_criteria(你自己的命中標準)
-2. 必須符合你的流派 — {school} 的人不會挑跟流派矛盾的標的
-3. confidence 分布要合理(不是全 80,也不是全 60)
-4. 不准全部看多或全部看空,要有混合(看你的個性是傾向哪邊)
-5. reasoning 要寫得像當下做的判斷(用當天可見的資料,不要事後諸葛)
-6. 不准「以上僅供參考」「投資有風險」「資料不足」這類話術
-7. JSON only,不要 markdown 代碼塊包裹
-8. **嚴格 {n_picks} 筆**(違反就失敗)
+## 鐵律(v2 全盤架構)
+1. **每筆 reasoning 必須提到至少 2 個面向**(從技術/基本面/籌碼/量化/題材/消息中挑),不能只講單一面向
+2. 但**側重要符合你的個性權重** — 你是 {trait_label},reasoning 應該看得出你的偏好
+3. 必須包含:symbol、name、direction(bullish/bearish/neutral)、target_price、current_price_at_prediction、deadline_days(<= {max_deadline_days},整數)、confidence(50-90)、reasoning(你的口吻 40-80 字,展現多面向)、success_criteria
+4. confidence 分布要合理(不全 80,不全 60)
+5. 不准全部看多或全部看空,要有混合(看你的個性傾向哪邊)
+6. reasoning 要寫得像當下做的判斷(用當天可見的資料,不要事後諸葛)
+7. 不准「以上僅供參考」「投資有風險」「資料不足」這類話術
+8. JSON only,不要 markdown 代碼塊包裹
+9. **嚴格 {n_picks} 筆**(違反就失敗)
+
+## reasoning 範例(展現多面向)
+- 辰旭(激進):「2330 突破月線量增 30%(技術),外資連買 4 日(籌碼),AI 題材熱度延續(題材),雖然估值偏高但我看短線動能」
+- 靜遠(保守):「2454 PE 18 低於 5 年中位 22(基本面),股息殖利率 3.2%(基本面),量縮整理蹲底(技術)
+,我等財報前再加碼」
+- 觀棋(跟隨):「3231 投信連 5 日買超(籌碼),分點主力進場(籌碼),題材落在 AI 伺服器(題材),技術面突破在即」
+- 守拙(紀律):「2308 過去 5 年類似訊號 N=23 勝率 71%(量化),目前財務指標符合(基本面),技術上量價結構乾淨(技術)」
+- 明川(靈活):「2330 多頭市況下偏向技術+籌碼權重(技術突破+外資買),基本面不弱(基本面),題材有 AI(題材),整合下進」
 
 ## 輸出 schema
 {{
@@ -242,7 +256,7 @@ SYSTEM_PROMPT_BACKFILL = """你是「{display_name}」({school}),代號 {fronten
       "current_price_at_prediction": 1020,
       "deadline_days": 7,
       "confidence": 75,
-      "reasoning": "你個性化的當下理由",
+      "reasoning": "你個性化的當下理由,提到至少 2 個面向(40-80 字)",
       "success_criteria": "你自己定義的命中標準"
     }}
   ]
@@ -321,13 +335,17 @@ def generate_predictions_for_day(
     對 RemoteProtocolError / overloaded / json decode 失敗做指數退避重試。
     """
     profile = ANALYSTS[agent_id]
+    decision_quirks = profile.get("decision_quirks") or []
+    decision_quirks_str = "\n".join(f"  - {q}" for q in decision_quirks) if decision_quirks else "  - (依個性權重判斷)"
     system = SYSTEM_PROMPT_BACKFILL.format(
         display_name=profile["display_name"],
         frontend_name=profile["frontend_name"],
+        trait_label=profile.get("trait_label", profile.get("school", "全盤派")),
         school=profile["school"],
         weights=profile["weights"],
         personality=profile["personality"],
         catchphrase="、".join(profile["catchphrase"]),
+        decision_quirks_str=decision_quirks_str,
         timeframe_short_days=profile["timeframe_short_days"],
         timeframe_long_days=profile["timeframe_long_days"],
         max_position_pct=profile["max_position_pct"],
@@ -384,6 +402,7 @@ def insert_historical_predictions(
     predict_date: date_type,
     predictions: list[dict],
     backfill_marker: str = "BACKFILL_008d1",
+    architecture_version: str = "v1",
 ) -> list[int]:
     """把產生的預測寫入 quack_predictions(status=active,等 settle 階段判定)。回傳 inserted ids。"""
     sb = _sb()
@@ -434,6 +453,8 @@ def insert_historical_predictions(
                 "deadline_days": deadline_days,
                 "school": profile["school"],
                 "backfill_marker": backfill_marker,
+                "architecture_version": architecture_version,
+                "trait_label": profile.get("trait_label"),
             },
             "status": "active",
             "created_at": created_dt.isoformat() + "+08:00",
@@ -593,19 +614,23 @@ def settle_prediction(pred: dict, today: date_type) -> Optional[dict]:
 
 
 def settle_all_pending(today: date_type, backfill_marker: str = "BACKFILL_008d1") -> dict:
-    """結算所有 backfill 標記的 active 歷史預測。回傳統計。"""
+    """結算所有 backfill 標記的 active 歷史預測。回傳統計。
+
+    避免 pagination + 結算同時改 status 造成漏掉 — 每次都從 offset=0 重新撈
+    (because 結算後 status 從 active 變 hit/missed,該筆不再符合 .eq('status','active'))。
+    """
     sb = _sb()
-    # 撈所有 active 且帶 backfill_marker 的(從 evidence JSONB 過濾)
-    PAGE = 500
+    PAGE = 300
     total = {"settled": 0, "hit": 0, "missed": 0, "skipped": 0}
-    offset = 0
-    while True:
+    iterations = 0
+    while iterations < 20:  # 安全上限
+        iterations += 1
         rows = (
             sb.table("quack_predictions")
             .select("id,agent_id,target_symbol,direction,target_price,current_price_at_prediction,deadline,created_at,evidence,status")
             .eq("status", "active")
             .filter("evidence->>backfill_marker", "eq", backfill_marker)
-            .range(offset, offset + PAGE - 1)
+            .limit(PAGE)
             .execute()
         )
         batch = rows.data or []
@@ -613,6 +638,7 @@ def settle_all_pending(today: date_type, backfill_marker: str = "BACKFILL_008d1"
             break
 
         updates: list[dict] = []
+        skipped_in_batch = 0
         for pred in batch:
             try:
                 u = settle_prediction(pred, today)
@@ -622,11 +648,12 @@ def settle_all_pending(today: date_type, backfill_marker: str = "BACKFILL_008d1"
                     total[u["status"]] = total.get(u["status"], 0) + 1
                 else:
                     total["skipped"] += 1
+                    skipped_in_batch += 1
             except Exception as e:
                 log.exception(f"settle {pred.get('id')} failed: {e}")
                 total["skipped"] += 1
+                skipped_in_batch += 1
 
-        # 一筆一筆 update(supabase-py 沒 batch update,但筆數可控)
         for u in updates:
             try:
                 sb.table("quack_predictions").update({
@@ -638,9 +665,9 @@ def settle_all_pending(today: date_type, backfill_marker: str = "BACKFILL_008d1"
             except Exception as e:
                 log.warning(f"update {u['id']} failed: {e}")
 
-        if len(batch) < PAGE:
+        # 若整批都 skipped(都還沒到 deadline),就停止避免無限迴圈
+        if skipped_in_batch == len(batch):
             break
-        offset += PAGE
 
     return total
 
