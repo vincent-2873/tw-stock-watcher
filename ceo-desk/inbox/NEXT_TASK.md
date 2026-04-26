@@ -1,127 +1,80 @@
-# NEXT_TASK — STAGE1-T1-PRICE-DIAGNOSIS（股價資料層診斷）
+# NEXT_TASK — STAGE1-T2-FULL-AUDIT（資料寫入鏈全面深度盤查）
 
-**授權等級**：🔒 READ-ONLY（只診斷不修）
-**建立時間**：2026-04-26（CEO 寫入）
-**接手者**：Claude Code（第三任 CTO 派任）
-**範圍**：純診斷 — 0 LLM 呼叫、不修任何東西、不動 prompt/agent/IP
+**授權等級**：🔒 READ-ONLY（純診斷不修）
+**建立時間**：2026-04-26 17:38 TPE（CEO 寫入）
+**接手者**：Claude Code
+**前置依賴**：基於 STAGE1-T1（commit bde8de7）的 5 層全綠驗證
 
 ---
 
 ## 背景
 
-2026-04-25 中午 Vincent 發現股價全錯：
-- Yahoo 台積電 2330 = 2,185（真實）
-- 系統前台顯示 ~1,050-1,100（錯）
-- 比例約 0.47×，整整錯一半
+STAGE1-T1 已驗證：
+- FinMind / DB stock_price / Backend API / 前台 / Yahoo 5 層全綠（2330=2185 全部一致）
+- 美股 AAPL/NVDA/MSFT 全綠
+- 歪的只有 quack_predictions 表 04-25 11:43 那場 HOLDINGS 會議的 125 筆 current_price_at_prediction
+- 偏差 -3% 到 -97% 不固定、同場同股票 5 位 analyst 拿到不同 entry
+- v2 / v1 BACKFILL_008d1 / v1 04-24 早場「看起來健康」、只 04-25 11:43 大爆
 
-前 CTO 沒抓到這個被換掉。第三任 CTO 接手第一個 task = 找根因。
-
-注意：04-25 凌晨 SESSION_SUMMARY 寫「FinMind 2026-04-24 實收 2,185 元吻合 AI 回答」=> 04-24 還是對的，04-25 中午後才歪。
+這次不重驗已驗過的東西。徹底搞清楚「為什麼 + 盤查所有可能也歪掉的地方」。
 
 ---
 
 ## 任務目標
 
-搞清楚股價在哪一層歪——source / fetch / cache / DB / 顯示層——並提出證據。**只診斷不修。**
+13 個盤查方向全部做完、給結論、給證據。寧願慢、不要漏。仍然只診斷不修。
 
----
+## 13 個盤查方向
 
-## 核心原則（違反任一條 = 任務失敗）
+1. Prompt 注入鏈完整 trace（會議生成器入口、5 位 analyst LLM 呼叫、prompt template、current_price 注入機制）
+2. 5 位 analyst 個人 prompt 差異（共用 base 還是獨立、差異點）
+3. 股票級差異（2382 全對 / 2308 與 2383 全錯，找 symbol-by-symbol pattern）
+4. 過去「健康」紀錄真實性（v2/v1 BACKFILL/v1 04-24 各抽 10 筆，算真健康率）
+5. 其他 LLM 寫入路徑（daily_recommendations / market_view / cross_market_view / 個人持倉 / learning_notes / 呱呱對話）
+6. 純資料 cron 寫入正確性（FinMind/yfinance/籌碼/基本面/技術指標/19 個資料源 transform code）
+7. agent_stats / 勝率計算路徑（hit/miss 判定基於 entry_price 還是 stock_price）
+8. 顯示層讀的是哪一份資料（前台首頁/個人頁/RPG/預測詳情/會議詳情/大盤觀點）
+9. DB schema 是否有 source 紀錄（能不能區分 LLM vs cron 寫入）
+10. Prompt 構造是否有共用 base template
+11. 寫入前 sanity check 機制（有沒有「entry vs stock_price 差太多就擋」）
+12. 環境變數 / hardcoded / fixture 殘留（grep 1050/1100/test_price/mock_price）
+13. /watchdog 商業級儀表板數字真假（19 源完整度、cron 健康度算法）
 
-1. 先驗證再修：這個 task 只診斷，不准順手修任何東西
-2. 不准放棄：工具不能用換工具、endpoint 不通讀 DB、DB 進不去看 log
-3. 商業級數字化：寫「2330 系統 1050.5 / Yahoo 2185.0 / 誤差 51.9%」，不准寫「差不多」「應該」
-4. 證據要求：每步驟附完整證據（curl 結果、SQL 結果、對照表），不附 = 沒做
-5. 時間錨點：outbox 第一行寫從 /api/time/now 取的時間
+## 綜合判斷 6 題
 
----
-
-## 階段 0：環境前置
-
-- curl https://vsis-api.zeabur.app/api/time/now（權威時鐘）
-- curl https://vsis-api.zeabur.app/health
-- curl https://vsis-api.zeabur.app/watchdog
-- curl -i 任一 FinMind endpoint 看 header 確認 plan = sponsor
-
-任一條紅 → 停下、寫 outbox 報卡點、不繼續。
-
----
-
-## 階段 1：5 檔台股 4 層對照
-
-標的：2330 台積電、2317 鴻海、2454 聯發科、2308 台達電、2882 國泰金
-
-每檔抓 5 個值：
-- 前台顯示值（從 https://tw-stock-watcher.zeabur.app/ 抓 HTML）
-- 系統 API 值（curl https://vsis-api.zeabur.app/api/stock/{symbol}）
-- DB 存值（query Supabase stock_price 相關表）
-- FinMind raw 值（直接打 https://api.finmindtrade.com/api/v4/data）
-- Yahoo 真實值（https://tw.stock.yahoo.com/）
-
-判定邏輯：
-- 前台 ≠ API → 前端 cache/stale build
-- API ≠ DB → backend 邏輯
-- DB ≠ FinMind raw → cron/寫入問題
-- FinMind raw ≠ Yahoo → 源頭問題
-
----
-
-## 階段 2：3 檔美股 4 層對照
-
-標的：AAPL、NVDA、MSFT
-- 系統 API、DB、yfinance raw、Yahoo Finance
-
----
-
-## 階段 3：歷史預測基準診斷
-
-從 predictions 表抽樣 5 筆 v1 + 5 筆 v2，比對當時 entry_price vs FinMind 真實 close。
-
----
-
-## 階段 4：根因分析（4 題）
-
-- Q1：哪一層歪？
-- Q2：系統性還是隨機？
-- Q3：台股美股是否一致歪？
-- Q4：歷史預測基準也歪嗎？
-
----
-
-## 階段 5：寫 outbox
-
-覆蓋 ceo-desk/outbox/LATEST_REPORT.md。
+A. 主根因是什麼？（一句話）
+B. 受污染範圍多大？（哪些表、多少筆、哪些時段）
+C. 過去「健康」紀錄真的健康嗎？真健康率 %？
+D. 系統還有沒有其他「同一個破口模式」的地方？
+E. 修復順序建議：先修哪、再修哪、最後修哪、為什麼
+F. 修復後驗證機制建議
 
 ---
 
 ## 禁止事項（違反 = 任務失敗）
 
-1. ❌ 不准修任何東西
+1. ❌ 不准修任何東西（純診斷）
 2. ❌ 不准跳過驗證直接寫結論
-3. ❌ 不准說「endpoint 200 所以資料對」
+3. ❌ 不准說「應該」「大概」「差不多」
 4. ❌ 不准說「我看不到」「做不到」
-5. ❌ 不准用模糊詞
-6. ❌ 不准呼叫 Claude API（這個 task 0 成本）
-7. ❌ 不准跑 5 位分析師預測
-8. ❌ 不准動 prompt、agent 設定、IP
-9. ❌ 不准 archive / 刪除 / 隱藏過去 v1/v2 預測（鐵律）
+5. ❌ 不准呼叫 Claude API
+6. ❌ 不准跑 5 位 analyst 預測
+7. ❌ 不准動 prompt、agent 設定、IP
+8. ❌ 不准 archive/刪除/隱藏過去預測
+9. ❌ 不准跳過 13 方向中任何一個
 10. ❌ Vincent 不在現場時不准順手做別的 task
-
----
 
 ## 完成條件
 
-1. ✅ 階段 0 三條前置全綠
-2. ✅ 階段 1 完整 5 檔台股對照表
-3. ✅ 階段 2 完整 3 檔美股對照表
-4. ✅ 階段 3 完整 10 筆歷史預測對照表
-5. ✅ 階段 4 四題根因都有答案 + 證據
-6. ✅ outbox 寫進 ceo-desk/outbox/LATEST_REPORT.md
-7. ✅ outbox 第一行有系統時間
-8. ✅ 工具使用紀錄完整（含失敗繞道）
-9. ✅ 未動任何修改、未呼叫 Claude API
-10. ✅ 卡點誠實列出
+1. ✅ 13 個方向每個都有答案 + 證據
+2. ✅ 綜合判斷 6 題都有答案
+3. ✅ outbox 寫進 ceo-desk/outbox/LATEST_REPORT.md
+4. ✅ outbox 第一行有系統時間（從 /api/time/now）
+5. ✅ 工具紀錄完整（含失敗繞道）
+6. ✅ 卡點誠實列出
+7. ✅ 未動任何修改、未呼叫 Claude API
+8. ✅ 範圍宣告完整
 
 ---
 
-Task ID: STAGE1-T1-PRICE-DIAGNOSIS
+Task ID: STAGE1-T2-FULL-AUDIT
