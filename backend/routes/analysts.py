@@ -543,7 +543,7 @@ def get_analyst_deep_profile(slug: str) -> dict[str, Any]:
     try:
         r = (
             sb.table("quack_predictions")
-            .select("id,date,target_symbol,target_name,direction,target_price,confidence,status,settled_result,evidence,reasoning")
+            .select("id,date,target_symbol,target_name,direction,target_price,confidence,status,hit_or_miss,evidence,reasoning")
             .eq("agent_id", agent_id)
             .order("date", desc=True)
             .limit(200)

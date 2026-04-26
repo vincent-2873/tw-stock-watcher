@@ -219,6 +219,47 @@ async def list_agents():
     }
 
 
+@router.get("/agents/_status_all")
+async def get_all_agents_status():
+    """
+    NEXT_TASK_009 階段 2:一次回所有 12 位 agent 的當前 status
+    (辦公室首頁輪詢用,省去 12 次請求)。
+
+    註:此路由必須放在 /agents/{agent_id} 之前,否則會被通用路由攔截。
+    """
+    sb = get_service_client()
+    recent_map: dict[str, dict[str, str]] = {}
+    try:
+        r = (
+            sb.table("quack_predictions")
+            .select("agent_id,target_symbol,target_name,created_at")
+            .order("created_at", desc=True)
+            .limit(200)
+            .execute()
+        )
+        for row in r.data or []:
+            aid = row.get("agent_id")
+            if aid and aid not in recent_map:
+                recent_map[aid] = {
+                    "symbol": row.get("target_symbol"),
+                    "name": row.get("target_name"),
+                }
+    except Exception:
+        pass
+
+    out = []
+    for agent_id in AGENT_PROFILES.keys():
+        info = recent_map.get(agent_id, {})
+        out.append(
+            _compute_agent_status(
+                agent_id=agent_id,
+                recent_symbol=info.get("symbol"),
+                recent_symbol_name=info.get("name"),
+            )
+        )
+    return {"count": len(out), "statuses": out}
+
+
 @router.get("/agents/{agent_id}")
 async def get_agent(agent_id: str):
     """取得單一 agent 的完整資訊(未來可加近期預測列表)"""
@@ -296,42 +337,3 @@ async def get_agent_status(agent_id: str):
         recent_symbol=recent_symbol,
         recent_symbol_name=recent_symbol_name,
     )
-
-
-@router.get("/agents/_status_all")
-async def get_all_agents_status():
-    """
-    一次回所有 12 位 agent 的當前 status(辦公室首頁輪詢用,省去 12 次請求)。
-    """
-    sb = get_service_client()
-    # 一次抓所有 agent 的最近一筆 prediction
-    recent_map: dict[str, dict[str, str]] = {}
-    try:
-        r = (
-            sb.table("quack_predictions")
-            .select("agent_id,target_symbol,target_name,created_at")
-            .order("created_at", desc=True)
-            .limit(200)
-            .execute()
-        )
-        for row in r.data or []:
-            aid = row.get("agent_id")
-            if aid and aid not in recent_map:
-                recent_map[aid] = {
-                    "symbol": row.get("target_symbol"),
-                    "name": row.get("target_name"),
-                }
-    except Exception:
-        pass
-
-    out = []
-    for agent_id in AGENT_PROFILES.keys():
-        info = recent_map.get(agent_id, {})
-        out.append(
-            _compute_agent_status(
-                agent_id=agent_id,
-                recent_symbol=info.get("symbol"),
-                recent_symbol_name=info.get("name"),
-            )
-        )
-    return {"count": len(out), "statuses": out}
