@@ -17,6 +17,7 @@ import { HeroDate } from "@/components/hero/HeroDate";
 import { HeroFloats } from "@/components/hero/HeroFloats";
 import { FloatingGuagua } from "@/components/hero/FloatingGuagua";
 import { HeroHeadline } from "@/components/hero/HeroHeadline";
+import { NavAuthButton } from "@/components/NavAuthButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -110,6 +111,9 @@ export default function Home() {
             <Link className={styles.navLink} href="/chat">AI 對話</Link>
             <Link className={styles.navLink} href="/intel">情報</Link>
           </nav>
+          <div style={{ marginLeft: "auto" }}>
+            <NavAuthButton size="compact" />
+          </div>
         </div>
       </div>
 

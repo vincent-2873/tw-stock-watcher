@@ -28,6 +28,8 @@ import Image from "next/image";
 import { use, useEffect, useState } from "react";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceLine } from "recharts";
 import { ANALYSTS, AnalystSlug, AnalystAvatar } from "@/components/AnalystAvatar";
+import { NavAuthButton } from "@/components/NavAuthButton";
+import { FollowAnalystButton } from "@/components/FollowAnalystButton";
 import { ANALYST_INTROS } from "./intros";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "https://vsis-api.zeabur.app";
@@ -281,24 +283,7 @@ export default function AnalystDetailPage({
               <KeyStat label="近 30 日勝率" value={stats?.last_30d_win_rate != null ? `${Math.round(stats.last_30d_win_rate * 100)}%` : "—"} />
             </div>
 
-            <button
-              type="button"
-              disabled
-              title="即將開放 — 樣本累積到一定數量後解鎖訂閱"
-              style={{
-                marginTop: 18,
-                padding: "10px 20px",
-                background: "#bbb",
-                color: "#fff",
-                border: "none",
-                borderRadius: 6,
-                fontSize: 14,
-                cursor: "not-allowed",
-                fontFamily: "var(--font-serif, serif)",
-              }}
-            >
-              訂閱(即將開放)
-            </button>
+            <FollowAnalystButton agentId={ANALYSTS[slug as AnalystSlug].agentId} primaryColor={a.primary} />
           </div>
         </section>
 
@@ -828,9 +813,13 @@ function TopNav() {
           <Link href="/" style={navLink}>今日重點</Link>
           <Link href="/pond" style={navLink}>題材熱度</Link>
           <Link href="/analysts" style={{ ...navLink, color: "#C84B3C", fontWeight: 600 }}>分析師團隊</Link>
+          <Link href="/meetings" style={navLink}>會議記錄</Link>
+          <Link href="/speeches" style={navLink}>關鍵發言</Link>
           <Link href="/chat" style={navLink}>AI 對話</Link>
-          <Link href="/intel" style={navLink}>情報</Link>
         </nav>
+        <div style={{ marginLeft: "auto" }}>
+          <NavAuthButton size="compact" />
+        </div>
       </div>
     </div>
   );
