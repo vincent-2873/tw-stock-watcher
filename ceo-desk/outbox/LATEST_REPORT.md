@@ -1,230 +1,262 @@
-System time: 2026-04-26T00:35+08:00
+System time: 2026-04-26T12:08:52+08:00
 
-# REPORT #008d-2 — 分析師架構修正 + 後 30 天 v2
+# REPORT #009 — 0 AI 成本純工程大改造
 
 ## 摘要
 
-NEXT_TASK_008d-2 完整 8 階段執行完成。
-依 Vincent 中途指示「練 30 天就好」,範圍從原計畫 60 trading days 縮減為 **30 trading days**(2025-12-08 ~ 2026-01-23,在 008d-1 之前的時段)。
+NEXT_TASK_009 在單一 session 內完成階段 1-5 + 階段 4 stub + 階段 6 跳過 polish。
+總計 **+4509 行程式碼 / 31 檔案**(2 commits:`98b48e5` 主 + `9effecb` fix),
+新增 **5 個 backend endpoint / 14 個前台 + 辦公室頁面 / 8 個共用 UI 元件 /
+3 個 migration SQL 檔**,**0 次 LLM API 呼叫**(純規則 + 模板 + 既有 DB 資料)。
 
-5 位分析師架構從「單一面向派(技術派/基本面派/籌碼派/量化派/綜合派)」全面改為 **「全盤分析 + 個性差異」**:
-- 5 位都看技術 + 基本面 + 籌碼 + 量化 + 題材 + 消息(6 面向)
-- 差異是個性主軸:辰旭(激進)/ 靜遠(保守)/ 觀棋(跟隨)/ 守拙(紀律)/ 明川(靈活)
-- reasoning 強制提到至少 2 個面向
+線上驗證:三站 HTTP 200,14 個新頁面全部 200,4 個新 endpoint 全部 200 + JSON 結構正確。
+規則式 status engine 在週日上午 12:08 TPE 正確回 `resting` + 個性化模板;
+deep_profile 回 200 筆預測 + 25 筆 learning_notes;辦公室首頁 12 位 agent 即時動態 30 秒輪詢。
 
-v1 資料 1,589 筆 + 187 筆 learning_notes 全部保留並標記 `evidence.architecture_version='v1'`(無破壞性)。
-v2 新產 **1,050 筆預測**(5 × 30 days × 7 picks,5 process 全部 0 errors),settle 後 **550 hit / 500 missed / 0 active**,寫 **125 筆 v2 learning_notes**。
-timeline 擴展到 180 天(5 × 88 = 440 筆),前後台全部接通 v1/v2 對比視覺。
+主要決策:
+- 視覺系統採 facade 模式 — design tokens 對應現有 CSS variables,不重新發明。
+- migration 沿用 008d-2 模式 — 寫成 SQL 檔讓 Vincent 套上線,不擅改線上 schema(紅線 14.7)。
+- Auth 接通卡 Vincent 設 dashboard + frontend env,先做 stub 頁讓骨架就位。
+- 階段 6 watchdog polish 跳過(時間考量)+ 階段 1.4 套用 tokens 到所有既有頁也跳過 — 兩項都是純美化,留下棒安全做。
 
-**關鍵工程發現**:
-- v2 prompt 強制多面向 reasoning 後,觀棋 v2 勝率比 v1 大降 **-16.0%**(74.1% → 58.1%),證實 v1 觀棋的高勝率部分來自「單一面向 + 寬鬆判定」的虛胖。
-- 守拙 v2 反而微升(+1.1%),量化派本來就嚴格,新架構對它無大影響。
-- normalized_winrate(× strictness coefficient)反映「公平比較」實力:**靜遠 63.6% > 觀棋 54.0% > 明川 51.3% > 辰旭 38.0% > 守拙 36.0%**。
-- Migration 0014 已寫成 SQL 檔(待 Vincent 套用至 Supabase Studio);系統當前透過 evidence JSONB + API 動態計算運作正常,migration 套上線後 index 加速 + 欄位查詢更便利。
+## 階段 1:視覺系統
 
-## 階段 1:v1 資料標記
+- ✅ frontend/src/styles/tokens.ts(112 行)— color/spacing/fontSize/radius/shadow/duration tokens,facade 對應 CSS vars
+- ✅ office/src/styles/tokens.ts(91 行)— 對齊版
+- ✅ 8 個共用元件(frontend + office 各一份):
+  - Button(4 variants × 3 sizes,hover/active 微動畫)
+  - Card(hoverable 含 translateY 動畫)
+  - Badge(6 tones × 2 sizes)
+  - Modal(ESC 關閉 + backdrop blur + pop 動畫)
+  - Tooltip(fixed 定位、placement top/bottom)
+  - LoadingSpinner(三點跳動意象「呱呱踏池塘」)
+  - EmptyState(侘寂風 🪷 圖示)
+  - ErrorState(含 retry 按鈕)
+- ✅ office globals.css 補齊缺的 CSS variables + 6 個 status keyframes
+- ✅ frontend tsc 過、office tsc 過、frontend next build 全綠 17 頁
 
-- ✅ 1,719 筆 quack_predictions 全數標 `evidence.architecture_version = 'v1'`(1,556 新標 + 163 已是)
-- ✅ Migration 0014 SQL 檔寫進 `supabase/migrations/0014_architecture_v2.sql`(內含 ALTER TABLE 4 個 + index)
-- agent_learning_notes 透過 prediction_id join 推導 v1/v2(無需直接 ALTER)
+## 階段 2:辦公室 RPG-化
 
-## 階段 2:5 位分析師人設更新
+- ✅ migration 0015_agent_dynamic_status.sql:agent_stats 加 current_status / status_detail / status_updated_at(可選 — 系統不依賴)
+- ✅ backend/services/agent_status.py(308 行):
+  - `compute_status_by_time` 純規則時段表(平日 8 時段 + 週六 learning + 週日 resting)
+  - 7 status:thinking / meeting / writing / predicting / debating / learning / resting
+  - 模板庫:通用 8 個 status × 5-10 句 + 5 投資分析師個性化 + 7 部門 agent 特殊化
+  - 5 分鐘 hash bucket 讓同一 agent 在同窗口顯示同句(穩定可預測)
+- ✅ backend endpoints:
+  - GET /api/agents/{agent_id}/status — 單一 agent
+  - GET /api/agents/_status_all — 12 位一次回(辦公室輪詢省請求)
+- ✅ AnalystAvatar 升級 7 status 視覺(光暈 + 動畫 pulse/shake/write/glow/debate/learn)
+- ✅ 新建 office AgentBadge(263 行):統一處理 5 投資分析師 + 7 部門 agent emoji avatar
+- ✅ 辦公室首頁 AgentStatusBoard:12 位即時動態 + 30 秒輪詢
 
-- ✅ `backend/services/analyst_brain.py` ANALYSTS dict 5 位全部 v2 化:
-  - 加 `trait_label`(激進/保守/跟隨/紀律/靈活)
-  - 加 `decision_quirks`(3 條決策怪癖,展現個性差異)
-  - 加 `strictness_coefficient`(1.0 / 0.95 / 0.8 / 0.9 / 0.7)
-  - 改 `school` 為「XX派(全盤)」
-  - 改 `weights` 為 5-6 維權重(技術/籌碼/題材/基本面/量化)
-  - 調 `timeframe`、`stop_loss_pct` 對應新個性
-- ✅ `backend/services/historical_backtest.py` SYSTEM_PROMPT_BACKFILL 全面 v2 化:
-  - 加「我是誰(全盤分析師)」開場
-  - 鐵律 #1:每筆 reasoning 必須提到至少 2 個面向
-  - 加 5 位 reasoning 範例展現多面向
-  - insert_historical_predictions 寫入 `evidence.architecture_version='v2'` + `trait_label`
-- ✅ 5 份 `ceo-desk/context/agents/analyst_*_MEMORY.md` 加新章節「⚡ v2 架構(全盤分析 + 個性差異)」,v1 章節保留為歷史對照
-- ✅ `backend/routes/agents.py` AGENT_PROFILES 5 位 v2 化(office /agents 用)
-- ✅ `frontend/src/components/AnalystAvatar.tsx` 5 位 school + personality + oneLine 改為新個性主軸
+## 階段 3:詳情頁系統
 
-## 階段 3:v2 預測產生(30 trading days)
+- ✅ backend GET /api/predictions/{id}:回 prediction + learning_notes + meeting
+- ✅ backend GET /api/analysts/{slug}/learning_notes:enriched(含 prediction summary)
+- ✅ backend GET /api/analysts/{slug}/deep_profile:profile + stats + 200 預測 + 25 notes + meetings
+- ✅ frontend /predictions/[id]:預測詳情頁(360 行,含結算狀態、reasoning、learning notes、會議連結)
+- ✅ frontend /meetings:列表頁(198 行,可篩選類型)
+- ✅ frontend /meetings/[id]:詳情頁(193 行,含 markdown 全文、產出預測連結)
+- ✅ frontend 分析師個人頁學習筆記區升級:可點擊跳對應 prediction
+- ✅ office /agents/[slug]:agent 深度檔案頁(504 行,5 投資 + 7 部門全部支援,含即時 status / v1/v2 篩選 / 學習時間線)
 
-- 期間:2025-12-08 ~ 2026-01-23(實際 33 個交易日,跑 30 個)
-- 抓 FinMind:63 檔 × 49 rows = **3,087 rows** 寫入 `stock_prices_historical`,85s
-- 5 process 平行(獨立 Python 進程,避免 HTTP/2 GOAWAY):
-  - analyst_a: 30 days / 210 preds / 0 errors / 30 calls
-  - analyst_b: 30 days / 210 preds / 0 errors / 30 calls
-  - analyst_c: 30 days / 210 preds / 0 errors / 30 calls
-  - analyst_d: 30 days / 210 preds / 0 errors / 30 calls
-  - analyst_e: 30 days / 210 preds / 0 errors / 30 calls
-- 總計:**1,050 筆 v2 預測**(target 1,500-2,500 因縮 30 天故落到 1,050,落在合理範圍)
-- AI 呼叫:**150 calls**(5 × 30)
-- 平行模式:multi-process(每位 analyst 獨立 Python 進程,各自 sequential)
-- reasoning 抽查 5 位各 2 筆,**全部展現多面向**(2-4 個面向標註):
-  - 辰旭:「近 5 日暴漲 6.43% 突破 200 大關(技術),12/1 單日量能爆出高點 201(籌碼),搭上 AI PCB 題材熱度(題材),短線動能強勁直接進」
-  - 靜遠:「PE 18 低於 5 年中位 22(基本面),股息殖利率 3.2%(基本面),量縮整理蹲底(技術),我等財報前再加碼」
-  - 觀棋:「12/1 單日爆量突破 190 關卡後連 3 日站穩(技術面),PCB 題材隨 AI 伺服器出貨升溫(題材面),等分點資料確認是否有大戶跟進」
-  - 守拙:「過去 5 年類似突破+連續上漲型態樣本 N=31 勝率 74%(量化),近 5 日漲幅 7.19% 且價量齊揚突破 990 阻力(技術),電源管理題材搭 AI 伺服器需求,財務 ROE 穩定 18% 以上(基本面)」
-  - 明川:「市況多頭時我偏向技術+題材權重(技術突破+外資買),基本面不弱(基本面),題材有 AI(題材),整合下進」
-- 個性化 ✅ / 多面向 ✅ / 不重複 ✅
+## 階段 4:使用者系統(stub + migrations)
 
-## 階段 4:hit/miss 判定 + v2 learning_notes
+- ✅ migration 0016_user_profiles_l1_to_l5.sql:user_profiles 表 + L1-L5 tier + auto profile trigger + RLS
+- ✅ migration 0017_user_followed_analysts.sql:追蹤分析師表 + RLS
+- ✅ frontend stub 頁:/login(70 行) /signup(39 行) /forgot-password(33 行) /profile(77 行)
+- ✅ profile 頁顯示 L1-L5 tier 規劃(完整資訊架構)
+- 🟡 Auth 真正接通卡 Vincent dashboard 設定 + frontend env(下方「給 CTO」清單)
 
-**結算**:
-- 1,050 筆 v2 全數結算(0 active),分兩批跑(第一次 settle 因 pagination + active 變動 bug 漏 500 筆,修補 settle_all_pending 後第二次補回)
-- 結果:**550 hit / 500 missed / 0 skipped**
-- 5 位 v2 hit/miss:
-  - 辰旭(strict):64 hit / 146 miss → **30.5% v2 wr**
-  - 靜遠(strict_window):135 hit / 75 miss → **64.3% v2 wr**
-  - 觀棋(loose):122 hit / 88 miss → **58.1% v2 wr**
-  - 守拙(quant):85 hit / 125 miss → **40.5% v2 wr**
-  - 明川(segmented):144 hit / 66 miss → **68.6% v2 wr**
+## 階段 5:首頁優化 + 3 個新頁面
 
-**learning_notes**:
-- 5 × 25 = **125 筆 v2 learning_notes** 寫入(每位 4 batches,~135s/分析師)
-- 抽查反思品質(每位 1 筆):
-  - 辰旭:「爆量突破後的第二天才是關鍵,不是當下就無腦追,要等回測不破才加碼」(自省追高 ✅)
-  - 靜遠:「單一產業股票破底後,要先確認是『產業逆風』還是『個股落後補跌』,不能只看技術面單兵突進」(基本面+技術面 ✅)
-  - 觀棋:「量縮下跌但收平盤,代表空方不夠力或有隱形買盤,不能只看投信明牌」(籌碼+技術 ✅)
-  - 守拙:「類似 K 棒比對要先做『漲幅分層』,14%+ 的 extreme cases 可能只有 3-5 筆,74% 勝率是全樣本平均會稀釋極端值特性」(量化反省 ✅)
-  - 明川:「『量縮下跌』不等於『籌碼崩潰』,PCB 族群分化時更要看個股基本面夠不夠力撐」(個股+族群+技術+基本面 ✅)
-- 5 位口吻一致 / 具體修正方案 / 多面向反思 ✅
+- ✅ 首頁 nav 加會議記錄 + 關鍵發言(同時拿掉產業地圖 / 設定讓主導航更聚焦)
+- ✅ 呱呱這週挑的 → /weekly_picks 「完整列表」
+- ✅ 今日重點 → /news 「新聞時間線」
+- ✅ frontend /weekly_picks(138 行):本週推薦完整列表(穩健/進攻/逆勢/題材分類)
+- ✅ frontend /news(156 行):AI 利多利空標註 + 影響度 + AI 摘要
+- ✅ frontend /speeches(199 行):關鍵發言完整列表 + 影響度篩選 + 受影響股票
+- 🟡 階段 5.1 區塊重排跳過(影響首頁主結構,風險高,留下棒)
 
-## 階段 5:agent_stats v1/v2/normalized
+## 階段 6:watchdog polish(跳過詳細 polish)
 
-| 分析師 | 個性 | total | 合併 wr | v1 wr (n) | v2 wr (n) | normalized | coef |
-|---|---|---|---|---|---|---|---|
-| **辰旭** | 激進 strict | 614 | 38.0% | 42.3% (404) | **30.5% (210)** | 38.0% | 1.00 |
-| **靜遠** | 保守 strict_window | 600 | 66.9% | 68.4% (390) | **64.3% (210)** | **63.6%** | 0.95 |
-| **觀棋** | 跟隨 loose | 551 | 67.5% | 74.1% (341) | **58.1% (210)** | 54.0% | 0.80 |
-| **守拙** | 紀律 quant | 502 | 40.0% | 39.4% (292) | **40.5% (210)** | 36.0% | 0.90 |
-| **明川** | 靈活 segmented | 502 | 73.3% | 78.2% (292) | **68.6% (210)** | 51.3% | 0.70 |
+決定:純美化工作,既有功能能用,留下棒在「樣本累積期」做更安全(不會打到 v2 樣本累積)。
+階段 1 的 design tokens 系統已就位,下棒可以直接 import 套用。
 
-**v1 vs v2 差異**:
-- 辰旭 -11.8%(嚴格 strict + 動能優先,新架構迫使多面向,動能單押難命中)
-- 靜遠 -4.1%(保守派穩定)
-- **觀棋 -16.0%**(loose 寬鬆 + 單一面向 = v1 虛胖,v2 多面向曝光真實水準)
-- 守拙 +1.1%(紀律派本來就嚴,新架構對它無大影響)
-- 明川 -9.6%(綜合派,新架構去除「動態權重亂選」的紅利)
+## 線上驗證
 
-**Normalized winrate(公平比較)排序變化**:
-- 原 win_rate:明川 73 > 觀棋 67 > 靜遠 66 > 守拙 40 > 辰旭 38
-- normalized:**靜遠 63.6% > 觀棋 54.0% > 明川 51.3% > 辰旭 38.0% > 守拙 36.0%**
-- 結論:**靜遠保守派的「真實實力」在公平標準下最高**;明川的高 wr 是 segmented 寬鬆的紅利
+部署:`98b48e5` 主 commit + `9effecb` fix commit,push 到 main 後 Zeabur 自動 build,
+backend 最新 endpoint 上線時間 ~2 分鐘。
 
-**Migration 0014 套用狀態**:
-- agent_stats 新欄位(v1_winrate / v2_winrate / normalized_winrate / strictness_coefficient 等)寫入失敗 — schema cache miss
-- 系統不受影響:API `/api/analysts` 透過 evidence JSONB 動態計算 v1/v2/normalized,前後台正常顯示
-- Vincent 可選擇:套 Migration 0014(可選,僅效能/查詢便利),或永遠用 API 動態計算
+### 三站 HTTP 200
+- `https://vsis-api.zeabur.app/health` → 200
+- `https://tw-stock-watcher.zeabur.app` → 200
+- `https://quack-office.zeabur.app` → 200
 
-## 階段 6:timeline 180 天
+### 14 個新頁面 HTTP 200
+前台 10 頁:`/predictions/38` `/meetings` `/meetings/test` `/weekly_picks` `/news` `/speeches`
+`/login` `/signup` `/profile` `/forgot-password`
 
-- 5 × 88 trading days = **440 timeline 筆** 寫入 `analyst_winrate_timeline`(2025-12-08 ~ 2026-04-25)
-- API `/api/analysts/{slug}/winrate_timeline?days=240` 加 `architecture_version` 標記 + `architecture_transitions`
-- 前台勝率走勢圖加垂直參考線:
-  - 2026-01-26:v2 → v1(008d-1 開始)
-  - 2026-04-26:v1 → v2(架構修正啟用)
+辦公室 4 頁(代表性):`/agents/chenxu` `/agents/analyst_a` `/agents/owl_fundamentalist` `/agents/guagua`
 
-## 階段 7:前後台更新
+### 5 個新 backend endpoint JSON 結構正確
 
-**前台**:
-- ✅ `frontend/src/app/analysts/page.tsx`:5 卡片加 trait_label + Strict/Loose 模式徽章 + v1/v2 勝率對比 + normalized hover
-- ✅ `frontend/src/app/analysts/[slug]/page.tsx`:
-  - Hero 加 trait + strict mode 徽章 + v2 已啟用標記
-  - 4 卡片改為「總預測 / v1+v2 勝率 / normalized hover / 近 30 日」
-  - 新增「**架構演進 · v1 → v2**」區塊(2 欄對比 + 決策怪癖 list)
-  - 績效報告改名「180 天歷史回溯」
-  - 勝率走勢圖加架構切換點垂直線
-- ✅ `frontend/src/components/AnalystAvatar.tsx` 5 位 school 與 oneLine v2 化
+```bash
+$ curl https://vsis-api.zeabur.app/api/agents/_status_all
+count: 12
+  guagua                    | resting    | 閉目養神,讓直覺發酵
+  owl_fundamentalist        | resting    | 讀盤後新聞
+  hedgehog_technical        | resting    | 暫離戰場
+  squirrel_chip             | resting    | 閉目養神,讓直覺發酵
+  meerkat_quant             | resting    | 閉目養神,讓直覺發酵
+  fox_skeptic               | resting    | 今日收盤,沉澱中
+  ...
 
-**辦公室**:
-- ✅ `backend/routes/analysts.py` 加 _v1v2_split_stats / _normalized,API 回 architecture_evolution + transitions
-- ✅ `backend/routes/agents.py` AGENT_PROFILES 5 位投資分析師 v2 化(school/role/personality/timeframe/risk/catchphrase)
-- ✅ `backend/routes/quack.py` /quack/predictions 加 limit param + days 上限拉到 365
-- ✅ `office/src/app/predictions/page.tsx`:加 v1/v2 篩選 + 卡片 v1/v2 徽章 + 250 天選項
-- ✅ `office/src/app/watchdog/page.tsx` ⑨ 區塊重做:9 欄表格(個性 / total / v1 wr / v2 wr / 合併 / normalized / 30 日 / 持倉)
+$ curl https://vsis-api.zeabur.app/api/agents/analyst_a/status
+{"agent_id":"analyst_a","status":"resting","status_detail":"讀盤後新聞","status_updated_at":"2026-04-26T12:03:58+08:00"}
+# 驗證:週日 12:03 → resting 規則 ✅,模板選到通用 resting ✅
 
-## 階段 8:部署
+$ curl https://vsis-api.zeabur.app/api/analysts/chenxu/deep_profile
+predictions_count: 200
+learning_notes: 25
+meetings: 0
+sample pred: id=38 4958 臻鼎-KY status=active hit_or_miss=None
 
-- **Commit**:`3ca44e0 feat(agents): NEXT_TASK_008d-2 - architecture v2 + back 30d backtest`
-- **Diff**:23 files changed, 2,040 insertions, 517 deletions
-- **Push**:`6c9ed92..3ca44e0  main -> main` ✅
-- **Zeabur build**:後端 / 前端 / 辦公室 all green(~5 min)
+$ curl https://vsis-api.zeabur.app/api/predictions/38
+id=38 agent=analyst_a 4958 臻鼎-KY status=active
+reasoning: 技術 15 但基本面只有 8,KY 股量能不足我不追
 
-線上驗證(curl):
-- ✅ `/api/analysts` 回 5 位完整 v2 stats(trait_label / v1_winrate / v2_winrate / normalized_winrate)
-- ✅ `/api/analysts/chenxu` 回 architecture_evolution + decision_quirks + strictness_coefficient
-- ✅ `/api/analysts/chenxu/winrate_timeline?days=240` 回 88 筆 + architecture_transitions(2 切換點)
-- ✅ `/api/agents` 5 位投資分析師 role/school 全 v2 化
-- ✅ 6 個前台頁(/analysts + 5 個 [slug])HTTP 200
-- ✅ 3 個辦公室頁(/agents /predictions /watchdog)HTTP 200
+$ curl https://vsis-api.zeabur.app/api/analysts/chenxu/learning_notes?limit=3
+3 筆 notes,每筆含 mistake / lesson / correction_plan / prediction_id ✅
+```
 
-## 改動的檔案
+### 規則式 status 引擎本機 smoke test
+
+```
+Mon 07:45 -> meeting | 聆聽其他分析師意見
+Mon 08:30 -> writing | 把停損設在 -9% 寫清楚
+Mon 11:00 -> thinking | 看哪檔今天有強勢動能
+Mon 14:15 -> meeting | 聽風險管理師複盤
+Sat 10:00 -> learning | 檢討昨日失敗的 2330 台積電
+Sun 14:00 -> resting | 閉目養神,讓直覺發酵
+```
+
+時段切換 ✅、個性化模板覆蓋 ✅、symbol placeholder 替換 ✅、5 分鐘 hash bucket 穩定 ✅。
+
+## 改動的檔案(31 檔)
 
 新增:
-- `scripts/run_008d2.py`(orchestration,可分階段)
-- `scripts/run_008d2_one.py`(單分析師獨立 process)
-- `supabase/migrations/0014_architecture_v2.sql`(可選 DDL,系統已可運作)
+- `backend/services/agent_status.py`
+- `frontend/src/styles/tokens.ts` + `frontend/src/components/ui/index.tsx`
+- `office/src/styles/tokens.ts` + `office/src/components/ui/index.tsx`
+- `office/src/components/AgentBadge.tsx`
+- `frontend/src/app/predictions/[id]/page.tsx`
+- `frontend/src/app/meetings/page.tsx` + `meetings/[id]/page.tsx`
+- `frontend/src/app/weekly_picks/page.tsx`
+- `frontend/src/app/news/page.tsx`
+- `frontend/src/app/speeches/page.tsx`
+- `frontend/src/app/login/page.tsx` + `signup/page.tsx` + `forgot-password/page.tsx` + `profile/page.tsx`
+- `office/src/app/agents/[slug]/page.tsx`
+- `supabase/migrations/0015_agent_dynamic_status.sql`
+- `supabase/migrations/0016_user_profiles_l1_to_l5.sql`
+- `supabase/migrations/0017_user_followed_analysts.sql`
 
 修改:
-- `backend/services/analyst_brain.py`(ANALYSTS dict 5 位 v2 化 + 新欄位)
-- `backend/services/historical_backtest.py`(SYSTEM_PROMPT_BACKFILL v2 化 + insert v2 marker + settle pagination 修補)
-- `backend/routes/analysts.py`(_v1v2_split_stats / _normalized / architecture_evolution / timeline transitions)
-- `backend/routes/agents.py`(5 位投資分析師 AGENT_PROFILES v2 化)
-- `backend/routes/quack.py`(predictions endpoint 拉大 limit)
-- `frontend/src/app/analysts/page.tsx`(list 卡片 v2 視覺)
-- `frontend/src/app/analysts/[slug]/page.tsx`(個人頁 v2 + 架構演進區塊 + 切換點)
-- `frontend/src/components/AnalystAvatar.tsx`(5 位 v2 文案)
-- `office/src/app/predictions/page.tsx`(v1/v2 篩選 + 徽章)
-- `office/src/app/watchdog/page.tsx`(⑨ 表格 v2 化)
-- `scripts/run_historical_backtest.py`(_run_agent_backfill 加 backfill_marker / architecture_version 參數)
-- `ceo-desk/context/agents/analyst_a..e_MEMORY.md`(5 份加 v2 架構新章節,v1 保留)
+- `backend/routes/agents.py`(+82,加 _status_all + {id}/status,順序修)
+- `backend/routes/analysts.py`(+126,加 learning_notes + deep_profile)
+- `backend/routes/quack.py`(+63,加 /predictions/{id})
+- `frontend/src/app/page.tsx`(+12,nav + 查看更多 link)
+- `frontend/src/app/analysts/[slug]/page.tsx`(+71,學習筆記區升級可點擊)
+- `frontend/src/components/AnalystAvatar.tsx`(+144,7 status 視覺)
+- `office/src/app/page.tsx`(+163,AgentStatusBoard 12 位輪詢)
+- `office/src/app/globals.css`(+53,補齊 vars + keyframes)
+- `office/src/components/AnalystAvatar.tsx`(+129,7 status 視覺)
 
-## 線上驗證(待 push 後 Zeabur build green 後補)
+## 改動的 DB
 
-待補:12 張截圖
-- /api/analysts JSON v1/v2/normalized 顯示
-- /api/analysts/{slug}/winrate_timeline 含 transitions
-- 前台 /analysts 列表 5 卡 v2 視覺
-- 5 個 [slug] 個人頁 + 架構演進區塊
-- 辦公室 /predictions v1/v2 篩選
-- 辦公室 /watchdog ⑨ 區塊 v2 表格
+**0 個 ALTER TABLE 直接套上線**(沿用 0014 模式):
+
+- migration 0015:agent_stats 動態 status 欄位 — **可選**(系統不依賴,API 動態算)
+- migration 0016:user_profiles + L1-L5 tier + auto trigger + RLS — **必套**(Auth 啟用前提)
+- migration 0017:user_followed_analysts + RLS — **必套**(追蹤功能前提)
+
+## 假資料 / 占位符位置(更新)
+
+### 已清(009)
+- ✅ /signup /login /profile /forgot-password 從不存在 → stub 化(等 Auth 啟用)
+- ✅ /weekly_picks 從首頁區塊唯一存在 → 獨立完整頁
+- ✅ /news 從沒有列表頁 → 新聞時間線完整頁
+- ✅ /speeches 從首頁區塊唯一存在 → 含影響度篩選的完整頁
+- ✅ /meetings 列表 + 詳情從不存在 → 完整路徑
+- ✅ /predictions/[id] 從不存在 → 完整詳情頁
+- ✅ office /agents/[slug] 從不存在 → 12 位深度檔案頁
+
+### 還在(009 沒處理,留下棒)
+- 🟡 office `/agents` 7 部門/監督仍是列表狀態(深度頁已有,但列表本身未升級套 tokens)
+- 🟡 前台 `market/page.tsx`「尚無資料」(009 未碰)
+- 🟡 前台 `quack-journal/page.tsx`「尚無驗證結果」(009 未碰)
+- 🟡 前台 `InstitutionalBanner.tsx`「無資料」(009 未碰)
+- 🟡 office /watchdog 視覺仍是 008b 工程師美感(009 跳過詳細 polish)
 
 ## 給 CTO 的關鍵訊息
 
-### 架構效果觀察(v1 vs v2)
+### 🔴 必須做才能讓使用者系統真正啟用
 
-1. **觀棋 -16.0% 是最大訊號** — v1 觀棋 74.1% 是「loose 80% 判定 + 單一籌碼面 reasoning」的紅利,v2 多面向後降到 58.1%。如果系統正式運作,觀棋的真實水準應該在 50-60% 區間,不是 70%+。
+Vincent 需要做以下 6 件事讓階段 4 從 stub 變真:
 
-2. **靜遠勝率最穩** — v1 → v2 只跌 -4.1%,顯示保守派 + 多面向驗證本來就 align,新架構對它影響最小。
+1. **Supabase Studio SQL Editor 套用 migration 0015 / 0016 / 0017**
+   - `supabase/migrations/0015_agent_dynamic_status.sql`(可選,為 audit 預留)
+   - `supabase/migrations/0016_user_profiles_l1_to_l5.sql`(**必套**)
+   - `supabase/migrations/0017_user_followed_analysts.sql`(**必套**)
 
-3. **守拙 +1.1% 微升** — 紀律派量化思維本來就要看多個指標,新架構強迫多面向反而與其本性更契合。
+2. **Supabase Dashboard → Authentication → Providers → Email** 啟用
 
-4. **辰旭 -11.8%** — 激進派短線動能優先,v2 強迫多面向後,動能單押的高頻交易勝率下降是合理的。
+3. **Supabase Dashboard → Authentication → URL Configuration**
+   - Site URL:`https://tw-stock-watcher.zeabur.app`
+   - Redirect URLs(可選):`https://tw-stock-watcher.zeabur.app/profile`
 
-### Normalized winrate 顛覆原 ranking
+4. **Frontend env(Zeabur)**新增:
+   - `NEXT_PUBLIC_SUPABASE_URL`(已有 SUPABASE_URL,給 frontend 用 NEXT_PUBLIC_ prefix)
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`(同上)
 
-公平比較下,**靜遠 63.6% > 觀棋 54.0% > 明川 51.3% > 辰旭 38.0% > 守拙 36.0%**。
-明川 78.2% v1 → 51.3% normalized 顯示 segmented 66% 太寬鬆,實質排名跌 3 名。
+5. **下一棒裝套件**:`cd frontend && pnpm add @supabase/supabase-js`
 
-### AI 成本實際消耗
+6. **Vincent 自己用 email 註冊一次後設 L1**:
+   - 找到 auth.users.id(Supabase Studio)
+   - SQL:`UPDATE user_profiles SET tier='L1' WHERE id='<uuid>';`
 
-- Phase 2(預測產生):150 calls × ~5,500 tokens(in+out)= ~825K tokens
-- Phase 4(learning_notes):20 batches × ~3,500 tokens = ~70K tokens
-- 估算 Sonnet 4.5:**~$5-7 USD**(比 008d-1 ~$8-12 略低,因為範圍縮 30 天)
+### 🟢 觀察期注意
 
-### 008e(戰情室即時運作)建議
+- **規則 status engine 是純前端可見成果** — Vincent 進辦公室就能看到 12 位 agent 各自有狀態 + 個性化文案,30 秒輪詢自動更新。週日 12:08 大家都在 resting 是正常的。
+- **deep_profile 對 v1+v2 都展示**(v1/v2 篩選按鈕),不會破壞既有 v2 樣本累積流。
+- **0 LLM 呼叫**徹底守住 — agent_status.py 是純 Python 模板,沒打 Anthropic / OpenAI 任何 endpoint。
 
-1. **每日早盤會議**自然累積 v2 資料(不需再 backfill),~3-6 個月後 v2 樣本足以蓋過 v1
-2. **觀棋的 success_criteria 建議從 loose 80% 緊到 strict 100%**(因為 normalize 後它真實水準也只 54%)
-3. **明川的 segmented 66% 建議改 80%**(避免「分段命中紅利」)
-4. **辰旭/守拙保留 strict** — 已是嚴格判定,呈現流派差異
+### 🟡 下一棒可優先
+
+- **階段 1.4 套用 tokens 到既有頁面**(非新頁,既有 8+6 頁)— 純樣式工作,設計系統已就位
+- **階段 5.1 首頁區塊重排**(高使用者價值)
+- **階段 6 watchdog visual polish**(套 tokens + 加圖表動畫)
+- **0014 / 0015 / 0016 / 0017 migration 套上線**(看 Vincent 願意何時做)
+- **Auth 接通**(Supabase JS SDK 整合)— 把 stub 頁換成真表單
+
+### 🔍 一些後續路線思考
+
+- 008e(戰情室即時運作)還沒做。每日早盤會議 cron 上線後,自然會有 v2 預測累積 + 會議記錄填充本次新建的 /meetings 列表頁。
+- 008g(供應鏈金字塔)是 NEXT_TASK_009 階段 5「最熱題材」明確「暫保留現況」未做,留給 008g 重做。
 
 ### 待解卡點
 
-- Migration 0014 需要 Vincent 在 Supabase Studio 套用(可選,系統當前用 evidence JSONB + API 動態計算正常運作)
-- settle_all_pending 已修補 pagination bug(改成 LIMIT-only,每次都從 status=active 重新撈)
+- **office build 本機失敗**:tailwindcss missing(next 15 預設要)。Zeabur 上 build 正常(quack-office 線上 200 為證),office 沒裝 tailwind 也沒 postcss config — 推測 Zeabur 用 npm install --include=dev 拉不同 deps 結果跟 pnpm 不同。**不阻塞**,但下棒若要本機 dev office 需自行加 `postcss.config.js` 顯式 disable tailwind plugin 或 `pnpm add -D tailwindcss`。
+- **office /agents/[slug] 抓 deep_profile fail 時**(部門 agent 不在 ANALYSTS dict)會 fallback 到 /api/agents/{id} — 已在 page.tsx isAnalyst 邏輯處理。
+
+## AI 成本
+
+**0 USD**。本任務全程沒有任何 LLM 呼叫。所有「動態內容」都是:
+- 規則時段表(agent_status.compute_status_by_time)
+- 模板庫(COMMON_TEMPLATES + ANALYST_PERSONAL_TEMPLATES + DEPARTMENT_PERSONAL_TEMPLATES)
+- 既有 DB 資料(quack_predictions / agent_learning_notes / meetings / agent_stats)
 
 ---
-
-Task ID: NEXT_TASK_008d-2
-Completed at: 2026-04-26T00:35+08:00
+Task ID: NEXT_TASK_009
+Completed at: 2026-04-26T12:08:52+08:00
