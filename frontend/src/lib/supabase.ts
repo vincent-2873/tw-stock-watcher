@@ -7,21 +7,18 @@ import { createBrowserClient, type SupabaseClient } from "@supabase/ssr";
 
 let _client: ReturnType<typeof createBrowserClient> | null = null;
 
-/** 取得(或建立)瀏覽器端的 singleton Supabase client */
+/**
+ * 取得(或建立)瀏覽器端的 singleton Supabase client
+ * SSR / build time 不會 throw — 只會回 lazy instance,實際 await call 時
+ * 才會用 fetch(SSR 階段不會呼叫 await,只會 import + instantiate)
+ */
 export function getSupabase() {
-  if (typeof window === "undefined") {
-    // SSR / build time — 不應該在這裡呼叫
-    throw new Error("getSupabase() must be called in the browser");
-  }
   if (!_client) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    if (!url || !anon) {
-      throw new Error(
-        "Supabase env not configured: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY missing",
-      );
-    }
-    _client = createBrowserClient(url, anon);
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+    // build time 若 env 沒設,給空字串建 dummy client(實際 call 才會 fail,
+    // 但這樣 build 不會炸,SSR prerender 也能走完)
+    _client = createBrowserClient(url || "https://placeholder.supabase.co", anon || "placeholder-anon-key");
   }
   return _client;
 }
