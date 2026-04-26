@@ -95,7 +95,11 @@ def _profile_summary(agent_id: str) -> dict:
 def _v1v2_split_stats(agent_id: str) -> dict:
     """從 quack_predictions 動態計算 v1 / v2 分別的勝率(架構切換對比用)。
     透過 evidence->>'architecture_version' 判定。
+
+    T3a Defense 4: 統計類 — 套 quality filter,排除升級前 / sanity 拒絕的資料。
     """
+    from backend.services.quality_filter import apply_quality_filter
+
     sb = _sb()
     out = {
         "v1": {"total": 0, "hits": 0, "misses": 0, "active": 0, "winrate": None},
@@ -104,13 +108,14 @@ def _v1v2_split_stats(agent_id: str) -> dict:
     PAGE = 500
     offset = 0
     while True:
-        r = (
+        q = (
             sb.table("quack_predictions")
             .select("status,evidence")
             .eq("agent_id", agent_id)
             .range(offset, offset + PAGE - 1)
-            .execute()
         )
+        q = apply_quality_filter(q)
+        r = q.execute()
         batch = r.data or []
         if not batch:
             break
@@ -162,17 +167,21 @@ def list_analysts() -> dict[str, Any]:
     items = []
     today = now_tpe().date().isoformat()
 
+    from backend.services.quality_filter import apply_quality_filter
+
     for agent_id in analyst_brain.ANALYSTS_ORDER:
         profile = _profile_summary(agent_id)
         stats = _agent_stats(agent_id)
         try:
-            holdings_r = (
+            # T3a Defense 4: holdings_count 是統計顯示 → 排除髒資料
+            q = (
                 sb.table("quack_predictions")
                 .select("id", count="exact")
                 .eq("agent_id", agent_id)
                 .eq("status", "active")
-                .execute()
             )
+            q = apply_quality_filter(q)
+            holdings_r = q.execute()
             holdings_count = len(holdings_r.data or [])
         except Exception:
             holdings_count = 0
@@ -229,16 +238,20 @@ def get_analyst(slug: str) -> dict[str, Any]:
     stats = _agent_stats(agent_id)
 
     # active holdings(回前 25 筆)— 008c-cleanup 後 reasoning 欄位獨立(migration 0012)
+    # T3a Defense 4: 分析師頁顯示「目前持倉」是統計面 → 排除升級前 / sanity reject
+    from backend.services.quality_filter import apply_quality_filter
+
     try:
-        h = (
+        q = (
             sb.table("quack_predictions")
             .select("id,target_symbol,target_name,direction,target_price,current_price_at_prediction,deadline,confidence,reasoning,success_criteria,status,supporting_departments,meeting_id,created_at,prediction,evidence")
             .eq("agent_id", agent_id)
             .eq("status", "active")
             .order("confidence", desc=True)
             .limit(30)
-            .execute()
         )
+        q = apply_quality_filter(q)
+        h = q.execute()
         holdings = h.data or []
         # 對於 reasoning 是 NULL 的舊紀錄(008a seed)從 prediction 文字嘗試拉
         for hd in holdings:

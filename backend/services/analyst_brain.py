@@ -27,6 +27,10 @@ from typing import Any
 
 import anthropic
 
+from backend.services.data_quality import (
+    enrich_evidence_with_quality,
+    validate_prediction_entry_price,
+)
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import get_service_client
 from backend.utils.time_utils import now_tpe
@@ -358,6 +362,25 @@ def simulate_holdings_meeting(today: date_type) -> dict:
             # 008c-cleanup: reasoning 欄位獨立(migration 0012 ADD COLUMN)
             # evidence JSONB 保留 reasoning 副本作為附加 metadata
             pred_text = f"{h.get('symbol','')} {h.get('name','')},{h.get('direction','bullish')} 目標 {h.get('target_price')}"
+            base_evidence = {
+                "deadline_days": deadline_days,
+                "school": profile["school"],
+            }
+            # T3a Defense 2: sanity check entry_price before insert
+            cur_price = h.get("current_price_at_prediction")
+            passed, reason, basis_ev = validate_prediction_entry_price(
+                str(h.get("symbol", "")), cur_price, today,
+            )
+            if not passed and reason == "deviation_too_large":
+                log.warning(
+                    "T3a sanity REJECT %s %s: entry=%s real_close=%s dev=%.2f%% (still inserted, marked rejected_by_sanity)",
+                    agent_id, h.get("symbol"), cur_price,
+                    basis_ev.get("real_close"), basis_ev.get("deviation_pct") or 0,
+                )
+            evidence = enrich_evidence_with_quality(
+                base_evidence, source="llm_holdings",
+                passed=passed, reason=reason, basis_evidence=basis_ev,
+            )
             row = {
                 "date": today.isoformat(),
                 "prediction_type": "stock_pick",
@@ -377,10 +400,7 @@ def simulate_holdings_meeting(today: date_type) -> dict:
                 "reasoning": reasoning_text,
                 "success_criteria": (h.get("success_criteria") or profile["success_criteria_style"])[:500],
                 "supporting_departments": _infer_departments(profile["school"]),
-                "evidence": {
-                    "deadline_days": deadline_days,
-                    "school": profile["school"],
-                },
+                "evidence": evidence,
                 "status": "active",
                 "meeting_id": meeting_id,
             }

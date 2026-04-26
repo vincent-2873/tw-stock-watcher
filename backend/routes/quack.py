@@ -294,6 +294,11 @@ async def get_prediction_by_id(prediction_id: int):
         except Exception:
             pass
 
+    # T3a Defense 4: 詳情頁不過濾、但加標註讓前台顯示「升級前 / sanity 拒絕」
+    from backend.services.quality_filter import annotate_row
+
+    pred = annotate_row(pred)
+
     return {
         "prediction": pred,
         "learning_notes": learning_notes,
@@ -305,18 +310,30 @@ async def get_prediction_by_id(prediction_id: int):
 async def list_predictions(
     days: int = Query(30, ge=1, le=365),
     limit: int = Query(2000, ge=50, le=5000),
+    include_polluted: bool = Query(
+        False, description="T3a: 設 true 才回傳升級前 / sanity 拒絕的髒資料"
+    ),
 ):
+    """呱呱日誌列表 + hit_rate 計算。
+
+    T3a Defense 4: 預設過濾 pre_upgrade_2026_04_25 + rejected_by_sanity。
+    /quack-journal 統計面預設用此預設值,確保命中率不被髒資料污染。
+    """
+    from backend.services.quality_filter import apply_quality_filter
+
     since = (now_tpe().date() - timedelta(days=days)).isoformat()
     sb = get_service_client()
     try:
-        r = (
+        q = (
             sb.table("quack_predictions")
             .select("*")
             .gte("date", since)
             .order("date", desc=True)
             .limit(limit)
-            .execute()
         )
+        if not include_polluted:
+            q = apply_quality_filter(q)
+        r = q.execute()
         rows = r.data or []
     except Exception as e:
         if _is_missing_table(e):
@@ -332,6 +349,7 @@ async def list_predictions(
         "evaluated_count": len(evaluated),
         "hit_rate": hit_rate,
         "predictions": rows,
+        "filtered": not include_polluted,
     }
 
 

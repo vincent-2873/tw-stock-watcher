@@ -51,6 +51,11 @@ type Prediction = {
   learning_note?: string;
   meeting_id?: string;
   evidence?: { architecture_version?: string; trait_label?: string; [key: string]: unknown };
+  _quality_annotation?: {
+    label: string;
+    detail: string;
+    level: "warn" | "error";
+  };
 };
 
 type LearningNote = {
@@ -183,6 +188,27 @@ export default function PredictionDetailPage() {
         <span style={{ margin: "0 6px" }}>›</span>
         <span>預測 #{p.id}</span>
       </div>
+
+      {/* T3a Defense 4: 升級前 / sanity 拒絕資料的標註(詳情頁仍可訪問) */}
+      {p._quality_annotation && (
+        <Card
+          padded
+          style={{
+            marginBottom: spacing.md,
+            borderLeft: `4px solid ${
+              p._quality_annotation.level === "error" ? color.danger : color.warning ?? "#c79b3a"
+            }`,
+            background: p._quality_annotation.level === "error" ? "rgba(199,80,80,0.06)" : "rgba(199,155,58,0.06)",
+          }}
+        >
+          <div style={{ fontSize: fontSize.caption.size, fontWeight: 600, color: color.primaryText, marginBottom: 4 }}>
+            ⚠️ {p._quality_annotation.label}
+          </div>
+          <div style={{ fontSize: fontSize.micro.size, color: color.secondaryText, lineHeight: 1.5 }}>
+            {p._quality_annotation.detail}
+          </div>
+        </Card>
+      )}
 
       {/* Hero */}
       <Card padded style={{ marginBottom: spacing.lg }}>

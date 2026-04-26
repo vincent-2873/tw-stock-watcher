@@ -226,17 +226,22 @@ async def get_all_agents_status():
     (辦公室首頁輪詢用,省去 12 次請求)。
 
     註:此路由必須放在 /agents/{agent_id} 之前,否則會被通用路由攔截。
+
+    T3a Defense 4: 統計面端點 — 排除 pre_upgrade / rejected_by_sanity 資料。
     """
+    from backend.services.quality_filter import apply_quality_filter
+
     sb = get_service_client()
     recent_map: dict[str, dict[str, str]] = {}
     try:
-        r = (
+        q = (
             sb.table("quack_predictions")
-            .select("agent_id,target_symbol,target_name,created_at")
+            .select("agent_id,target_symbol,target_name,created_at,evidence")
             .order("created_at", desc=True)
             .limit(200)
-            .execute()
         )
+        q = apply_quality_filter(q)
+        r = q.execute()
         for row in r.data or []:
             aid = row.get("agent_id")
             if aid and aid not in recent_map:

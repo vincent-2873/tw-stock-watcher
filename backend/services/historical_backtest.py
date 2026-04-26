@@ -27,6 +27,10 @@ import anthropic
 import httpx
 
 from backend.services import analyst_brain
+from backend.services.data_quality import (
+    enrich_evidence_with_quality,
+    validate_prediction_entry_price,
+)
 from backend.services.finmind_service import FinMindService
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import get_service_client
@@ -459,6 +463,20 @@ def insert_historical_predictions(
             "status": "active",
             "created_at": created_dt.isoformat() + "+08:00",
         }
+        # T3a Defense 2: sanity check entry_price for BACKFILL too
+        passed, reason, basis_ev = validate_prediction_entry_price(
+            symbol, cur_price, predict_date,
+        )
+        row["evidence"] = enrich_evidence_with_quality(
+            row["evidence"], source="llm_backfill",
+            passed=passed, reason=reason, basis_evidence=basis_ev,
+        )
+        if not passed and reason == "deviation_too_large":
+            log.warning(
+                "T3a sanity REJECT BACKFILL %s %s: entry=%s real_close=%s dev=%.2f%%",
+                agent_id, symbol, cur_price,
+                basis_ev.get("real_close"), basis_ev.get("deviation_pct") or 0,
+            )
         rows.append(row)
 
     inserted_ids: list[int] = []
