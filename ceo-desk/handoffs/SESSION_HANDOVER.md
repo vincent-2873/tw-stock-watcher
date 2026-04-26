@@ -89,14 +89,30 @@ ORDER BY table_name;
 
 ## 部署紀錄
 
-- **Commit**:`d2f2833 feat(auth): NEXT_TASK_009-finish - Supabase Auth fully integrated`
-- **Push**:`e676590..d2f2833 main -> main` ✅
-- **Zeabur frontend service**:Vincent 手動點「重新部署」trigger build
-  (push 後 webhook 沒自動觸發,需手動)
-- **Zeabur backend / office**:不受此 commit 影響(都只改 frontend)
+- **Commits 全部 push 到 main**:
+  - `d2f2833 feat(auth): NEXT_TASK_009-finish - Supabase Auth fully integrated`
+  - `8565ed3 docs(ceo-desk): NEXT_TASK_009-finish 結案`
+  - `fcc0a12 fix(009-finish): supabase client SSR-safe fallback`
+  - `176f3a3 docs(ceo-desk): outbox 反映 Zeabur build 失敗實況`
+- **Zeabur backend / office**:不受影響(都只改 frontend)
 
-⚠️ **注意**:截至 outbox 寫完時,frontend 部署仍在進行中。線上 /login 仍顯示
-009 stub「登入功能即將開放」— 等部署完成後會自動切到新版表單。
+🔴 **Frontend service Zeabur build 連續 5+ 輪失敗**(d2f2833 / fcc0a12 / 重新部署多次)
+
+Build log 觀察:Docker step `#10` 持續 `Retrying 3/3...` 22+ 秒,3 次 retry
+abort。step #10 在 Next.js Docker build 通常是 `pnpm install` 或 `next build`
+內部 fetch step。可能原因:Google Fonts API 對 Zeabur build 容器網路超時,或
+某個 npm/pnpm dependency 拉不下來。
+
+線上 /login /signup /profile **仍是 009 stub 版本**(「登入功能即將開放」)。
+009-finish 的 frontend 改動未上線。
+
+**下棒第一件事**:用 Vincent 帳號去 Zeabur dashboard 看 build log 完整 trace
+(Claude Code Chrome MCP 抓不到 virtualized log 內容,只看到 #10 retry)。然後
+依錯誤類型修復:
+- 若是 Google Fonts ETIMEDOUT → 改 layout.tsx 用 next/font/local 或 system font
+  (但會破壞禪風 v3 字體配置,需評估)
+- 若是 npm registry 暫時不通 → 等網路自癒
+- 若是 transitive dep 衝突 → pnpm-lock.yaml 重生
 
 ---
 
