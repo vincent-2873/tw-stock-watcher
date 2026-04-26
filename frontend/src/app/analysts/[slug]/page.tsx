@@ -115,7 +115,15 @@ type AnalystResponse = {
   latest_market_view: MarketView | null;
   daily_picks: DailyPick[];
   meetings_attended: MeetingMeta[];
-  learning_notes: Array<{ note_id: number; date: string; lesson: string; context?: string; mistake?: string; correction_plan?: string }>;
+  learning_notes: Array<{
+    note_id: number;
+    date: string;
+    lesson: string;
+    context?: string;
+    mistake?: string;
+    correction_plan?: string;
+    prediction_id?: number | null;
+  }>;
   architecture_evolution?: ArchitectureEvolution;
 };
 
@@ -519,15 +527,62 @@ export default function AnalystDetailPage({
           )}
         </Section>
 
-        {/* 8. 學習筆記 */}
-        <Section title="失敗檢討與修正">
+        {/* 8. 學習筆記公開區(NEXT_TASK_009 階段 3.3:可點擊跳對應 prediction) */}
+        <Section title="失敗檢討與修正 · 學習筆記">
           {data?.learning_notes && data.learning_notes.length > 0 ? (
             <div style={{ display: "grid", gap: 8 }}>
-              {data.learning_notes.slice(0, 10).map((n) => (
-                <div key={n.note_id} style={{ padding: 12, background: "rgba(255,255,255,0.5)", borderRadius: 6, fontSize: 12 }}>
-                  <span style={{ color: "#888" }}>{n.date?.slice(0, 10)}</span> · {n.lesson}
-                </div>
-              ))}
+              {data.learning_notes.slice(0, 10).map((n) => {
+                const inner = (
+                  <div
+                    style={{
+                      padding: 12,
+                      background: "rgba(255,255,255,0.5)",
+                      border: `1px solid ${a.primary}22`,
+                      borderRadius: 6,
+                      fontSize: 12,
+                      lineHeight: 1.7,
+                      cursor: n.prediction_id ? "pointer" : "default",
+                      transition: "background 200ms ease, transform 200ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (n.prediction_id) {
+                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.8)";
+                        (e.currentTarget as HTMLElement).style.transform = "translateX(2px)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.5)";
+                      (e.currentTarget as HTMLElement).style.transform = "translateX(0)";
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ color: "#888" }}>{n.date?.slice(0, 10)}</span>
+                      {n.prediction_id && (
+                        <span style={{ fontSize: 11, color: a.primary }}>
+                          → 預測 #{n.prediction_id}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ color: "#5d4a3e" }}>{n.lesson}</div>
+                    {n.mistake && (
+                      <div style={{ marginTop: 4, fontSize: 11, color: "#888", fontStyle: "italic" }}>
+                        失誤:{n.mistake}
+                      </div>
+                    )}
+                  </div>
+                );
+                return n.prediction_id ? (
+                  <Link
+                    key={n.note_id}
+                    href={`/predictions/${n.prediction_id}`}
+                    style={{ textDecoration: "none", color: "inherit", display: "block" }}
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={n.note_id}>{inner}</div>
+                );
+              })}
             </div>
           ) : (
             <CenteredHint>

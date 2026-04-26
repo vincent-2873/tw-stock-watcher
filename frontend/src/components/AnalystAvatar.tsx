@@ -24,7 +24,16 @@ import React from "react";
 
 export type AnalystSlug = "chenxu" | "jingyuan" | "guanqi" | "shouzhuo" | "mingchuan";
 export type AvatarSize = "sm" | "md" | "lg";
-export type AvatarStatus = "thinking" | "meeting" | "resting" | "predicting";
+// NEXT_TASK_009 階段 2.3:status 從 4 個擴充為 7 個(thinking / meeting /
+// writing / predicting / debating / learning / resting)
+export type AvatarStatus =
+  | "thinking"
+  | "meeting"
+  | "writing"
+  | "predicting"
+  | "debating"
+  | "learning"
+  | "resting";
 
 const SIZE_PX: Record<AvatarSize, number> = {
   sm: 48,
@@ -206,35 +215,96 @@ const GEOMETRY: Record<AnalystSlug, React.FC<{ primary: string; secondary: strin
   mingchuan: GeometryMingchuan,
 };
 
+// NEXT_TASK_009 階段 2.3:7 種 status 各自的視覺效果
+//
+// thinking    白色脈動光暈
+// meeting     橘色邊框 + 跳動
+// writing     金色筆觸動畫
+// predicting  金色光暈
+// debating    朱紅閃爍
+// learning    紫色柔光
+// resting     灰階低透明度
+
 function statusBoxShadow(status?: AvatarStatus, primary?: string): string | undefined {
   if (!status) return undefined;
-  if (status === "thinking") return `0 0 0 2px ${primary ?? "#888"}33`;
-  if (status === "meeting") return `0 0 0 3px #E89B4D`;
-  if (status === "resting") return undefined;
-  if (status === "predicting") return `0 0 12px 2px #D4A574`;
-  return undefined;
+  switch (status) {
+    case "thinking":
+      return `0 0 0 2px ${primary ?? "#888"}33, 0 0 12px 2px rgba(245, 239, 224, 0.5)`;
+    case "meeting":
+      return `0 0 0 3px #E89B4D`;
+    case "writing":
+      return `0 0 0 2px #B8893D55, 0 0 14px 2px rgba(212, 165, 116, 0.4)`;
+    case "predicting":
+      return `0 0 16px 3px #D4A574`;
+    case "debating":
+      return `0 0 0 2px #B85450, 0 0 14px 2px rgba(184, 84, 80, 0.5)`;
+    case "learning":
+      return `0 0 0 2px #8B6BB8, 0 0 14px 2px rgba(139, 107, 184, 0.4)`;
+    case "resting":
+    default:
+      return undefined;
+  }
 }
 
 function statusFilter(status?: AvatarStatus): string | undefined {
-  if (status === "resting") return "grayscale(0.6)";
+  if (status === "resting") return "grayscale(0.55) opacity(0.85)";
   return undefined;
+}
+
+function statusAnimation(status?: AvatarStatus): string | undefined {
+  switch (status) {
+    case "thinking":
+      return "vsis-status-pulse 2.6s ease-in-out infinite";
+    case "meeting":
+      return "vsis-status-shake 1.8s ease-in-out infinite";
+    case "writing":
+      return "vsis-status-write 1.4s ease-in-out infinite";
+    case "predicting":
+      return "vsis-status-glow 2.2s ease-in-out infinite";
+    case "debating":
+      return "vsis-status-debate 1.2s ease-in-out infinite";
+    case "learning":
+      return "vsis-status-learn 3.2s ease-in-out infinite";
+    default:
+      return undefined;
+  }
+}
+
+const STATUS_LABEL: Record<AvatarStatus, string> = {
+  thinking: "思考中",
+  meeting: "會議中",
+  writing: "寫報告中",
+  predicting: "下預測中",
+  debating: "辯論中",
+  learning: "學習中",
+  resting: "休息中",
+};
+
+export function statusLabel(s: AvatarStatus): string {
+  return STATUS_LABEL[s] ?? s;
 }
 
 export function AnalystAvatar({
   slug,
   size = "md",
   status,
+  statusDetail,
   showLabel = false,
 }: {
   slug: AnalystSlug;
   size?: AvatarSize;
   status?: AvatarStatus;
+  statusDetail?: string;
   showLabel?: boolean;
 }) {
   const meta = ANALYSTS[slug];
   if (!meta) return null;
   const px = SIZE_PX[size];
   const Geometry = GEOMETRY[slug];
+
+  const tooltipText = status
+    ? `${meta.name} · ${meta.school}\n${statusLabel(status)}${statusDetail ? `:${statusDetail}` : ""}`
+    : `${meta.name} · ${meta.school}`;
 
   return (
     <div
@@ -256,9 +326,10 @@ export function AnalystAvatar({
           filter: statusFilter(status),
           position: "relative",
           overflow: "hidden",
-          transition: "box-shadow 280ms ease",
+          transition: "box-shadow 360ms ease, filter 360ms ease",
+          animation: statusAnimation(status),
         }}
-        title={`${meta.name} · ${meta.school}${status ? ` · ${status}` : ""}`}
+        title={tooltipText}
         aria-label={`${meta.name}（${meta.school}）`}
       >
         <svg
@@ -270,18 +341,6 @@ export function AnalystAvatar({
         >
           <Geometry primary={meta.primary} secondary={meta.secondary} />
         </svg>
-        {status === "thinking" && (
-          <span
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: 8,
-              boxShadow: `inset 0 0 ${px * 0.18}px ${meta.primary}44`,
-              animation: "analyst-pulse 2.6s ease-in-out infinite",
-              pointerEvents: "none",
-            }}
-          />
-        )}
         {size !== "sm" && (
           <span
             style={{
@@ -304,12 +363,47 @@ export function AnalystAvatar({
             <span style={{ color: "#888", fontSize: "0.85em", marginLeft: 4 }}>{meta.pinyin}</span>
           </div>
           <div style={{ fontSize: size === "lg" ? 12 : 10, color: "#888" }}>{meta.school}</div>
+          {status && statusDetail && (
+            <div
+              style={{
+                fontSize: 10,
+                color: "var(--sumi-mist)",
+                fontStyle: "italic",
+                marginTop: 2,
+                maxWidth: px + 40,
+              }}
+            >
+              {statusDetail}
+            </div>
+          )}
         </div>
       )}
-      <style jsx>{`
-        @keyframes analyst-pulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
+      <style jsx global>{`
+        @keyframes vsis-status-pulse {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.08); }
+        }
+        @keyframes vsis-status-shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-1px); }
+          75% { transform: translateX(1px); }
+        }
+        @keyframes vsis-status-write {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(0.6deg); }
+          75% { transform: rotate(-0.6deg); }
+        }
+        @keyframes vsis-status-glow {
+          0%, 100% { filter: brightness(1) saturate(1); }
+          50% { filter: brightness(1.15) saturate(1.2); }
+        }
+        @keyframes vsis-status-debate {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+        }
+        @keyframes vsis-status-learn {
+          0%, 100% { filter: brightness(1) hue-rotate(0deg); }
+          50% { filter: brightness(1.05) hue-rotate(8deg); }
         }
       `}</style>
     </div>

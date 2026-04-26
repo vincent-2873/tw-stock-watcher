@@ -16,27 +16,20 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  AnalystAvatar,
-  ANALYSTS,
-  ANALYST_SLUGS,
-  type AvatarStatus,
-} from "../components/AnalystAvatar";
+import { type AvatarStatus, STATUS_LABEL } from "../components/AnalystAvatar";
+import { AgentBadge, ALL_AGENT_IDS, getAgentDisplayName } from "../components/AgentBadge";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "https://vsis-api.zeabur.app";
 
-// NEXT_TASK_007 Stage 4.3: 規則式 status（之後接真實預測 / 會議 lifecycle）
-function statusForNow(): AvatarStatus {
-  const tpe = new Date(Date.now() + (8 * 60 + new Date().getTimezoneOffset()) * 60_000);
-  const day = tpe.getDay(); // 0=日 6=六
-  const hm = tpe.getHours() * 60 + tpe.getMinutes();
-  const isTradingDay = day >= 1 && day <= 5;
-  if (!isTradingDay) return "resting";
-  if (hm >= 8 * 60 && hm < 8 * 60 + 45) return "meeting";
-  if (hm >= 14 * 60 && hm < 14 * 60 + 30) return "meeting";
-  if (hm >= 9 * 60 && hm < 13 * 60 + 30) return "thinking";
-  return "resting";
-}
+// NEXT_TASK_009 階段 2.4:status 已改打 backend /api/agents/_status_all
+// (規則引擎 + 模板,30 秒輪詢)。前端不再自己算時段。
+
+type AgentStatusItem = {
+  agent_id: string;
+  status: AvatarStatus;
+  status_detail: string;
+  status_updated_at: string;
+};
 
 type HealthCheck = {
   time_ok: boolean;
@@ -109,8 +102,8 @@ export default function OfficeHome() {
         </p>
       </header>
 
-      {/* NEXT_TASK_007 Stage 4.3: 5 位投資分析師當前狀態 */}
-      <AnalystStatusBoard />
+      {/* NEXT_TASK_009 階段 2.4: 12 位 agent 即時動態(30 秒輪詢) */}
+      <AgentStatusBoard />
 
       <section style={{ marginBottom: 36 }}>
         <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, marginBottom: 14 }}>
@@ -273,69 +266,113 @@ function OfficeLink({
   );
 }
 
-function AnalystStatusBoard() {
-  const [status, setStatus] = useState<AvatarStatus>("resting");
-  useEffect(() => {
-    setStatus(statusForNow());
-    const t = setInterval(() => setStatus(statusForNow()), 60_000);
-    return () => clearInterval(t);
-  }, []);
+function AgentStatusBoard() {
+  const [statuses, setStatuses] = useState<Record<string, AgentStatusItem>>({});
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
-  const statusLabel: Record<AvatarStatus, string> = {
-    thinking: "思考中（盤中）",
-    meeting: "會議中",
-    resting: "休息",
-    predicting: "下預測中",
-  };
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await fetch(`${API}/api/agents/_status_all`);
+        if (!r.ok) return;
+        const data = await r.json();
+        if (cancelled) return;
+        const map: Record<string, AgentStatusItem> = {};
+        for (const s of data.statuses || []) map[s.agent_id] = s;
+        setStatuses(map);
+        setUpdatedAt(new Date().toLocaleTimeString("zh-TW", { hour12: false }));
+      } catch {
+        /* silent — 保留上一輪 status */
+      }
+    };
+    load();
+    const t = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
 
   return (
     <section style={{ marginBottom: 36 }}>
-      <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, marginBottom: 14 }}>
-        👥 分析師動態
-      </h2>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 14 }}>
+        <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 500, margin: 0 }}>
+          👥 招待所即時動態 · 12 位 agent
+        </h2>
+        <span style={{ fontSize: 11, color: "var(--muted-fg)" }}>
+          {updatedAt ? `更新 ${updatedAt}` : "連線中…"} · 每 30 秒
+        </span>
+      </div>
       <div
         style={{
-          display: "flex",
-          gap: 18,
-          padding: "18px 20px",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))",
+          gap: 14,
+          padding: "20px 20px",
           background: "var(--card)",
           border: "1px solid var(--border)",
-          borderRadius: 6,
-          flexWrap: "wrap",
+          borderRadius: 8,
+          boxShadow: "var(--shadow-sm)",
         }}
       >
-        {ANALYST_SLUGS.map((slug) => {
-          const a = ANALYSTS[slug];
+        {ALL_AGENT_IDS.map((agentId) => {
+          const s = statuses[agentId];
+          const status = s?.status as AvatarStatus | undefined;
+          const detail = s?.status_detail;
+          const name = getAgentDisplayName(agentId);
           return (
             <Link
-              key={slug}
-              href="/agents"
-              style={{ textDecoration: "none", color: "inherit", display: "block" }}
-              title={`${a.name} · ${a.school} · ${statusLabel[status]}`}
+              key={agentId}
+              href={`/agents/${agentId}`}
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                display: "block",
+                padding: 8,
+                borderRadius: 6,
+                transition: "background 200ms ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "var(--bg-raised)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "transparent";
+              }}
+              title={`${name}${status ? ` · ${STATUS_LABEL[status]}` : ""}${detail ? `:${detail}` : ""}`}
             >
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                <AnalystAvatar slug={slug} size="sm" status={status} />
-                <div style={{ fontSize: 11, color: "var(--muted-fg)", textAlign: "center" }}>
-                  <div style={{ fontWeight: 500 }}>{a.name}</div>
-                  <div style={{ fontSize: 10 }}>{a.school}</div>
+                <AgentBadge agentId={agentId} size="sm" status={status} statusDetail={detail} />
+                <div style={{ fontSize: 11, color: "var(--fg)", textAlign: "center", fontWeight: 500 }}>
+                  {name}
                 </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: status === "resting" ? "var(--muted-fg)" : "var(--accent-red)",
+                    textAlign: "center",
+                    fontStyle: status === "resting" ? "italic" : undefined,
+                  }}
+                >
+                  {status ? STATUS_LABEL[status] : "—"}
+                </div>
+                {detail && (
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: "var(--muted-fg)",
+                      textAlign: "center",
+                      lineHeight: 1.4,
+                      minHeight: "2.6em",
+                    }}
+                  >
+                    {detail}
+                  </div>
+                )}
               </div>
             </Link>
           );
         })}
-        <div
-          style={{
-            marginLeft: "auto",
-            alignSelf: "center",
-            fontSize: 11,
-            color: "var(--muted-fg)",
-            fontStyle: "italic",
-          }}
-        >
-          ⓘ status 為規則式（08:00-08:45 會議 / 09:00-13:30 思考 / 14:00-14:30 會議 / 其他休息），
-          <br />
-          第二波接真實 lifecycle。
-        </div>
       </div>
     </section>
   );

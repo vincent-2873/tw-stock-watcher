@@ -468,6 +468,132 @@ def get_analyst_winrate_timeline(slug: str, days: int = Query(180, ge=7, le=365)
     }
 
 
+@router.get("/analysts/{slug}/learning_notes")
+def get_analyst_learning_notes(slug: str, limit: int = Query(10, ge=1, le=50)) -> dict[str, Any]:
+    """
+    NEXT_TASK_009 階段 3.3:該分析師最近的學習筆記(公開區用)。
+
+    每筆含:date / context / mistake / lesson / correction_plan / 對應 prediction_id
+    讓前台可從筆記跳到該 prediction 詳情。
+    """
+    agent_id = _resolve(slug)
+    sb = _sb()
+    notes: list[dict[str, Any]] = []
+    try:
+        r = (
+            sb.table("agent_learning_notes")
+            .select("*")
+            .eq("agent_id", agent_id)
+            .order("date", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        notes = r.data or []
+    except Exception as e:
+        return {"slug": slug, "agent_id": agent_id, "count": 0, "notes": [], "error": str(e)[:200]}
+
+    # 補上 prediction 摘要(target_symbol / direction / settled_result)
+    pred_ids = [n["prediction_id"] for n in notes if n.get("prediction_id")]
+    pred_map: dict[int, dict[str, Any]] = {}
+    if pred_ids:
+        try:
+            pr = (
+                sb.table("quack_predictions")
+                .select("id,target_symbol,target_name,direction,status,settled_result,date")
+                .in_("id", pred_ids)
+                .execute()
+            )
+            for p in pr.data or []:
+                pred_map[p["id"]] = p
+        except Exception:
+            pass
+
+    enriched = []
+    for n in notes:
+        pid = n.get("prediction_id")
+        enriched.append({**n, "prediction": pred_map.get(pid) if pid else None})
+
+    return {
+        "slug": slug,
+        "agent_id": agent_id,
+        "count": len(enriched),
+        "notes": enriched,
+    }
+
+
+@router.get("/analysts/{slug}/deep_profile")
+def get_analyst_deep_profile(slug: str) -> dict[str, Any]:
+    """
+    NEXT_TASK_009 階段 3.4:辦公室 agent 深度檔案頁用。
+
+    回應整合:
+      - profile(human-readable persona)
+      - stats(v1/v2/normalized/total)
+      - 所有歷史預測摘要(分頁,前 200 筆)
+      - 最近 25 筆 learning_notes
+      - 出席過的會議(若有)
+    """
+    agent_id = _resolve(slug)
+    sb = _sb()
+
+    profile = _profile_summary(agent_id)
+    stats = _agent_stats(agent_id)
+
+    predictions: list[dict[str, Any]] = []
+    try:
+        r = (
+            sb.table("quack_predictions")
+            .select("id,date,target_symbol,target_name,direction,target_price,confidence,status,settled_result,evidence,reasoning")
+            .eq("agent_id", agent_id)
+            .order("date", desc=True)
+            .limit(200)
+            .execute()
+        )
+        predictions = r.data or []
+    except Exception:
+        pass
+
+    learning_notes: list[dict[str, Any]] = []
+    try:
+        r = (
+            sb.table("agent_learning_notes")
+            .select("*")
+            .eq("agent_id", agent_id)
+            .order("date", desc=True)
+            .limit(25)
+            .execute()
+        )
+        learning_notes = r.data or []
+    except Exception:
+        pass
+
+    meetings: list[dict[str, Any]] = []
+    try:
+        # 該 agent 主持過的會議(若有 chair_agent_id)
+        r = (
+            sb.table("meetings")
+            .select("meeting_id,meeting_type,scheduled_at,chair_agent_id")
+            .eq("chair_agent_id", agent_id)
+            .order("scheduled_at", desc=True)
+            .limit(20)
+            .execute()
+        )
+        meetings = r.data or []
+    except Exception:
+        pass
+
+    return {
+        "slug": slug,
+        "agent_id": agent_id,
+        "profile": profile,
+        "stats": stats,
+        "predictions": predictions,
+        "predictions_count": len(predictions),
+        "learning_notes": learning_notes,
+        "meetings": meetings,
+    }
+
+
 @router.get("/analysts/{slug}/meetings")
 def get_analyst_meetings(slug: str, limit: int = Query(10, ge=1, le=30)) -> dict[str, Any]:
     """該分析師出席的會議記錄。"""

@@ -238,6 +238,69 @@ async def _claude_reasoning(snapshot: dict) -> dict:
 # =========================================================================
 # GET /api/quack/predictions — 近 30 天預測與命中率
 # =========================================================================
+@router.get("/predictions/{prediction_id}")
+async def get_prediction_by_id(prediction_id: int):
+    """
+    NEXT_TASK_009 階段 3.1:單一預測詳情頁用。
+
+    回 prediction 全欄位 + 該 agent profile + 來自會議(若有 meeting_id)。
+    """
+    sb = get_service_client()
+    try:
+        r = (
+            sb.table("quack_predictions")
+            .select("*")
+            .eq("id", prediction_id)
+            .single()
+            .execute()
+        )
+        pred = r.data
+    except Exception as e:
+        msg = str(e)[:200]
+        if "0 rows" in msg.lower() or "no rows" in msg.lower() or "PGRST116" in msg:
+            raise HTTPException(404, f"prediction {prediction_id} not found")
+        raise HTTPException(500, f"db error: {msg}")
+
+    if not pred:
+        raise HTTPException(404, f"prediction {prediction_id} not found")
+
+    # 找學習筆記(若 settled 後寫了 note)
+    learning_notes = []
+    try:
+        ln = (
+            sb.table("agent_learning_notes")
+            .select("*")
+            .eq("prediction_id", prediction_id)
+            .order("date", desc=True)
+            .execute()
+        )
+        learning_notes = ln.data or []
+    except Exception:
+        pass
+
+    # 找來自的會議
+    meeting = None
+    meeting_id = pred.get("meeting_id")
+    if meeting_id:
+        try:
+            mt = (
+                sb.table("meetings")
+                .select("meeting_id, meeting_type, scheduled_at, chair_agent_id")
+                .eq("meeting_id", meeting_id)
+                .single()
+                .execute()
+            )
+            meeting = mt.data
+        except Exception:
+            pass
+
+    return {
+        "prediction": pred,
+        "learning_notes": learning_notes,
+        "meeting": meeting,
+    }
+
+
 @router.get("/quack/predictions")
 async def list_predictions(
     days: int = Query(30, ge=1, le=365),

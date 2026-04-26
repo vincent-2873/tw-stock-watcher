@@ -104,11 +104,11 @@ export default function Home() {
             <Link className={cx(styles.navLink, styles.active)} href="/">今日重點</Link>
             <Link className={styles.navLink} href="/pond">題材熱度</Link>
             <Link className={styles.navLink} href="/analysts">分析師團隊</Link>
+            <Link className={styles.navLink} href="/meetings">會議記錄</Link>
+            <Link className={styles.navLink} href="/speeches">關鍵發言</Link>
             <Link className={styles.navLink} href="/stocks">自選股</Link>
-            <Link className={styles.navLink} href="/map">產業地圖</Link>
             <Link className={styles.navLink} href="/chat">AI 對話</Link>
             <Link className={styles.navLink} href="/intel">情報</Link>
-            <Link className={styles.navLink} href="/settings">設定</Link>
           </nav>
         </div>
       </div>
@@ -207,8 +207,9 @@ export default function Home() {
             呱呱這週挑的
           </h2>
           <div className={styles.divider}></div>
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>
-            呱呱中樞 AI · 10 檔精準推薦(穩健 / 進攻 / 逆勢 / 題材)
+          <Link className={styles.moreLink} href="/weekly_picks">完整列表 →</Link>
+          <span style={{ color: "var(--text-muted)", fontSize: 12, marginLeft: 12 }}>
+            呱呱中樞 AI · 精準推薦(穩健 / 進攻 / 逆勢 / 題材)
           </span>
         </div>
         <div style={{ padding: "12px 0" }}>
@@ -219,7 +220,8 @@ export default function Home() {
         <div className={styles.sectionTitle}>
           <h2>📰 今日重點</h2>
           <div className={styles.divider}></div>
-          <span style={{ color: "var(--text-muted)", fontSize: 12 }}>AI 分類 · 近 24 小時</span>
+          <Link className={styles.moreLink} href="/news">新聞時間線 →</Link>
+          <span style={{ color: "var(--text-muted)", fontSize: 12, marginLeft: 12 }}>AI 分類 · 近 24 小時</span>
         </div>
         <div
           style={{

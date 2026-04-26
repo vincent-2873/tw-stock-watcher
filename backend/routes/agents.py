@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from backend.services.agent_status import get_agent_status as _compute_agent_status
 from backend.utils.supabase_client import get_service_client
 
 router = APIRouter()
@@ -255,3 +256,82 @@ async def get_agent(agent_id: str):
         "stats": stats,
         "recent_predictions": recent_predictions,
     }
+
+
+@router.get("/agents/{agent_id}/status")
+async def get_agent_status(agent_id: str):
+    """
+    NEXT_TASK_009 階段 2:agent 動態 status(規則式 + 模板,0 LLM 呼叫)
+
+    依台北時間規則推算當前 status(thinking/meeting/writing/predicting/
+    debating/learning/resting),並從該 agent 最近預測抽 target_symbol
+    填入模板讓 status_detail 帶有具體標的感。
+    """
+    if agent_id not in AGENT_PROFILES:
+        raise HTTPException(404, f"Unknown agent_id: {agent_id}")
+
+    # 抓最近 5 筆預測,隨機抽一檔當 status_detail 的 symbol
+    recent_symbol = None
+    recent_symbol_name = None
+    try:
+        sb = get_service_client()
+        r = (
+            sb.table("quack_predictions")
+            .select("target_symbol,target_name")
+            .eq("agent_id", agent_id)
+            .order("created_at", desc=True)
+            .limit(5)
+            .execute()
+        )
+        rows = r.data or []
+        if rows:
+            # 取最新一筆(穩定可預測)
+            recent_symbol = rows[0].get("target_symbol")
+            recent_symbol_name = rows[0].get("target_name")
+    except Exception:
+        pass
+
+    return _compute_agent_status(
+        agent_id=agent_id,
+        recent_symbol=recent_symbol,
+        recent_symbol_name=recent_symbol_name,
+    )
+
+
+@router.get("/agents/_status_all")
+async def get_all_agents_status():
+    """
+    一次回所有 12 位 agent 的當前 status(辦公室首頁輪詢用,省去 12 次請求)。
+    """
+    sb = get_service_client()
+    # 一次抓所有 agent 的最近一筆 prediction
+    recent_map: dict[str, dict[str, str]] = {}
+    try:
+        r = (
+            sb.table("quack_predictions")
+            .select("agent_id,target_symbol,target_name,created_at")
+            .order("created_at", desc=True)
+            .limit(200)
+            .execute()
+        )
+        for row in r.data or []:
+            aid = row.get("agent_id")
+            if aid and aid not in recent_map:
+                recent_map[aid] = {
+                    "symbol": row.get("target_symbol"),
+                    "name": row.get("target_name"),
+                }
+    except Exception:
+        pass
+
+    out = []
+    for agent_id in AGENT_PROFILES.keys():
+        info = recent_map.get(agent_id, {})
+        out.append(
+            _compute_agent_status(
+                agent_id=agent_id,
+                recent_symbol=info.get("symbol"),
+                recent_symbol_name=info.get("name"),
+            )
+        )
+    return {"count": len(out), "statuses": out}
