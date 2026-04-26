@@ -29,7 +29,8 @@ import anthropic
 
 from backend.services.data_quality import (
     enrich_evidence_with_quality,
-    validate_prediction_entry_price,
+    log_sanity_result,
+    validate_prediction_entry_price_v2,
 )
 from backend.utils.logger import get_logger
 from backend.utils.supabase_client import get_service_client
@@ -366,20 +367,22 @@ def simulate_holdings_meeting(today: date_type) -> dict:
                 "deadline_days": deadline_days,
                 "school": profile["school"],
             }
-            # T3a Defense 2: sanity check entry_price before insert
+            # T3a-cleanup Defense 2: graded sanity check before insert
             cur_price = h.get("current_price_at_prediction")
-            passed, reason, basis_ev = validate_prediction_entry_price(
-                str(h.get("symbol", "")), cur_price, today,
+            symbol_str = str(h.get("symbol", ""))
+            status, reason, basis_ev = validate_prediction_entry_price_v2(
+                symbol_str, cur_price, today,
             )
-            if not passed and reason == "deviation_too_large":
-                log.warning(
-                    "T3a sanity REJECT %s %s: entry=%s real_close=%s dev=%.2f%% (still inserted, marked rejected_by_sanity)",
-                    agent_id, h.get("symbol"), cur_price,
-                    basis_ev.get("real_close"), basis_ev.get("deviation_pct") or 0,
-                )
+            log_sanity_result(
+                status, reason,
+                agent_id=agent_id, symbol=symbol_str,
+                entry_price=cur_price, real_close=basis_ev.get("real_close"),
+                deviation_pct=basis_ev.get("deviation_pct"),
+                source="llm_holdings",
+            )
             evidence = enrich_evidence_with_quality(
                 base_evidence, source="llm_holdings",
-                passed=passed, reason=reason, basis_evidence=basis_ev,
+                status=status, reason=reason, basis_evidence=basis_ev,
             )
             row = {
                 "date": today.isoformat(),

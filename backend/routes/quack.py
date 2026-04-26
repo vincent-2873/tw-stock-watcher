@@ -319,7 +319,7 @@ async def list_predictions(
     T3a Defense 4: 預設過濾 pre_upgrade_2026_04_25 + rejected_by_sanity。
     /quack-journal 統計面預設用此預設值,確保命中率不被髒資料污染。
     """
-    from backend.services.quality_filter import apply_quality_filter
+    from backend.services.quality_filter import annotate_row, apply_quality_filter
 
     since = (now_tpe().date() - timedelta(days=days)).isoformat()
     sb = get_service_client()
@@ -339,6 +339,9 @@ async def list_predictions(
         if _is_missing_table(e):
             return {"count": 0, "hit_rate": None, "predictions": [], "note": "migration 0003 未執行"}
         raise HTTPException(500, f"db error: {e}")
+
+    # T3a-cleanup: 對 flagged_minor 仍顯示但加標註(precise+acceptable 不加標註)
+    rows = [annotate_row(r) for r in rows]
 
     evaluated = [p for p in rows if p.get("hit_or_miss")]
     hits = sum(1 for p in evaluated if p["hit_or_miss"] == "hit")

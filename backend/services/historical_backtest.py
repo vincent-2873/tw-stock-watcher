@@ -29,7 +29,8 @@ import httpx
 from backend.services import analyst_brain
 from backend.services.data_quality import (
     enrich_evidence_with_quality,
-    validate_prediction_entry_price,
+    log_sanity_result,
+    validate_prediction_entry_price_v2,
 )
 from backend.services.finmind_service import FinMindService
 from backend.utils.logger import get_logger
@@ -463,20 +464,21 @@ def insert_historical_predictions(
             "status": "active",
             "created_at": created_dt.isoformat() + "+08:00",
         }
-        # T3a Defense 2: sanity check entry_price for BACKFILL too
-        passed, reason, basis_ev = validate_prediction_entry_price(
+        # T3a-cleanup Defense 2: graded sanity check for BACKFILL
+        status, reason, basis_ev = validate_prediction_entry_price_v2(
             symbol, cur_price, predict_date,
+        )
+        log_sanity_result(
+            status, reason,
+            agent_id=agent_id, symbol=symbol,
+            entry_price=cur_price, real_close=basis_ev.get("real_close"),
+            deviation_pct=basis_ev.get("deviation_pct"),
+            source="llm_backfill",
         )
         row["evidence"] = enrich_evidence_with_quality(
             row["evidence"], source="llm_backfill",
-            passed=passed, reason=reason, basis_evidence=basis_ev,
+            status=status, reason=reason, basis_evidence=basis_ev,
         )
-        if not passed and reason == "deviation_too_large":
-            log.warning(
-                "T3a sanity REJECT BACKFILL %s %s: entry=%s real_close=%s dev=%.2f%%",
-                agent_id, symbol, cur_price,
-                basis_ev.get("real_close"), basis_ev.get("deviation_pct") or 0,
-            )
         rows.append(row)
 
     inserted_ids: list[int] = []

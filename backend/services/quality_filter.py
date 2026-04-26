@@ -22,59 +22,86 @@ from __future__ import annotations
 from typing import Any
 
 
-# 隱藏的 statuses
+# 統計面隱藏的 statuses(T3a-cleanup 後加上 flagged_minor 進警示但仍顯示)
 HIDDEN_STATUSES = ("pre_upgrade_2026_04_25", "rejected_by_sanity")
+# 帶警示標但仍顯示的 statuses
+WARNING_STATUSES = ("flagged_minor",)
 
 
-def apply_quality_filter(query: Any) -> Any:
+def apply_quality_filter(query: Any, *, hide_flagged: bool = False) -> Any:
     """在 supabase-py 的 select query 上加 quality filter。
 
     Args:
         query: supabase-py query builder(已 .from_().select() 之後)
+        hide_flagged: 若 True 把 flagged_minor 也排除(預設 False — 顯示但警示)
 
     Returns:
         加了 quality filter 的 query。
-
-    範例:
-        sb = get_service_client()
-        q = sb.table("quack_predictions").select("*").eq("agent_id", "analyst_a")
-        q = apply_quality_filter(q)
-        rows = q.execute().data
     """
-    hidden = ",".join(HIDDEN_STATUSES)
-    # PostgREST or filter:status NULL 或 status 不在隱藏清單
+    hidden = list(HIDDEN_STATUSES)
+    if hide_flagged:
+        hidden = hidden + list(WARNING_STATUSES)
+    hidden_str = ",".join(hidden)
     return query.or_(
         f"evidence->>data_quality_status.is.null,"
-        f"evidence->>data_quality_status.not.in.({hidden})"
+        f"evidence->>data_quality_status.not.in.({hidden_str})"
     )
 
 
-def is_hidden_row(row: dict[str, Any]) -> bool:
+def is_hidden_row(row: dict[str, Any], *, hide_flagged: bool = False) -> bool:
     """In-memory 用:判斷單筆 row 是否該被統計面隱藏。"""
     ev = row.get("evidence") or {}
     status = ev.get("data_quality_status")
-    return status in HIDDEN_STATUSES
+    if status in HIDDEN_STATUSES:
+        return True
+    if hide_flagged and status in WARNING_STATUSES:
+        return True
+    return False
 
 
-def filter_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def filter_rows(
+    rows: list[dict[str, Any]], *, hide_flagged: bool = False,
+) -> list[dict[str, Any]]:
     """In-memory 用:對 list of rows 做 quality filter。"""
-    return [r for r in rows if not is_hidden_row(r)]
+    return [r for r in rows if not is_hidden_row(r, hide_flagged=hide_flagged)]
 
 
 def annotate_row(row: dict[str, Any]) -> dict[str, Any]:
-    """詳情頁用:在 row 加上 _quality_annotation 欄位讓前台顯示標註。"""
+    """詳情頁 + 統計面 flagged 警示用:在 row 加上 _quality_annotation 欄位。
+
+    T3a-cleanup 後支援 4 種 status:
+      pre_upgrade_2026_04_25 → warn
+      rejected_by_sanity     → error
+      flagged_minor          → warn(列表也會帶,給前台畫橘色警示框)
+      unverified             → 無 annotation(撈不到 close 不算品質問題)
+    """
     ev = row.get("evidence") or {}
     status = ev.get("data_quality_status")
+    deviation = ev.get("basis_accuracy_pct")
     if status == "pre_upgrade_2026_04_25":
         row["_quality_annotation"] = {
             "label": "系統升級前紀錄",
-            "detail": "此筆為 2026-04-26 系統防線升級前產生的預測,entry_price 基準偏差,僅供演進史參考",
+            "detail": "此筆為 2026-04-26 防線升級前產生的預測、entry_price 基準偏差、僅供演進史參考",
             "level": "warn",
         }
     elif status == "rejected_by_sanity":
         row["_quality_annotation"] = {
-            "label": "Sanity check 未通過",
-            "detail": "此筆 entry_price 跟同日真實 close 偏差 ≥ 5%,被防線標記為不可信",
+            "label": "Sanity check 拒絕",
+            "detail": (
+                f"此筆 entry_price 偏差 {deviation}% (≥25%),被防線判定為訓練記憶污染、不可信"
+                if deviation is not None
+                else "此筆 entry_price 嚴重偏離當日真實 close,被防線判定為訓練記憶污染、不可信"
+            ),
             "level": "error",
+        }
+    elif status == "flagged_minor":
+        row["_quality_annotation"] = {
+            "label": "中度偏差警示",
+            "detail": (
+                f"此筆 entry_price 偏差 {deviation}% (5-25%),仍可參考但建議人工複核"
+                if deviation is not None
+                else "此筆 entry_price 偏差 5-25%,仍可參考但建議人工複核"
+            ),
+            "level": "warn",
         }
     return row
