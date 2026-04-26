@@ -102,13 +102,49 @@ NavAuthButton(reactive 監聽 onAuthStateChange)+ FollowAnalystButton。
 - 已追蹤 → 顯示「✓ 已追蹤(點擊取消)」+ 點擊 DELETE
 - 用 RLS policy 保護:每個使用者只能 INSERT/DELETE 自己的 follows
 
-## 階段 4:部署 ✅
+## 階段 4:部署 ⚠️ BUILD 失敗待 Vincent 排查
 
-- **Commit**:`d2f2833 feat(auth): NEXT_TASK_009-finish - Supabase Auth fully integrated`
-- **9 檔 / +958 行**(2 新檔:NavAuthButton.tsx / FollowAnalystButton.tsx)
-- **Push**:`e676590..d2f2833 main -> main`
-- **Zeabur build**:正在 build 中(寫 outbox 時尚未完成,本地 next build 因
-  Google Fonts ETIMEDOUT 失敗 — Zeabur 環境網路正常,build 預期成功)
+### Commits
+- `d2f2833 feat(auth): NEXT_TASK_009-finish - Supabase Auth fully integrated`(主要改動)
+- `8565ed3 docs(ceo-desk): NEXT_TASK_009-finish 結案`(outbox + handover)
+- `fcc0a12 fix(009-finish): supabase client SSR-safe fallback (no throw on build)`
+  (build 失敗排查嘗試)
+- 全部已 push 到 `main`
+
+### Zeabur build 失敗現況
+
+🔴 **Frontend service 連續 4 輪 build 失敗**:
+- 16m 前(d2f2833):FAILED
+- 8m 前(d2f2833 重新部署):FAILED
+- 2m 前(d2f2833 第 3 次):FAILED
+- 1m 前(fcc0a12 supabase 修復後):**BUILD 中**(寫 outbox 時)
+
+**Build log 觀察**:Docker step `#10` 持續 `Retrying 3/3...` 至少 22 秒
+反覆,3 次 retry 後 abort。step #10 在 Next.js Docker build 通常是 `pnpm
+install` 或 `next build` 內部 fetch step。
+
+**疑似原因**(尚未 100% 確認):
+1. Zeabur build 容器網路對某 npm registry 暫時不通
+2. next/font/google 的 Google Fonts API 在 Zeabur build 環境也 ETIMEDOUT
+   (本機 next build 也是 Google Fonts ETIMEDOUT)
+3. supabase-js / supabase-ssr 某個 transitive dep 拉不下來
+
+**已嘗試修復**:
+- supabase.ts SSR-safe fallback(避免 prerender 階段 throw)
+- 多次「重新部署」希望網路問題自癒
+
+**未嘗試**(下棒可考慮):
+- 把 layout.tsx 的 `next/font/google` 換成 `next/font/local` 或 system font
+- Dockerfile 加 npm registry mirror
+- 暫時 revert NavAuthButton import,讓 layout 純 server component(但 root cause 不確定)
+
+### 線上現況
+
+- ✅ Supabase Auth 後台都設好(migration / providers / URL / env)
+- ✅ Backend / Office service 不受影響
+- 🔴 Frontend service 仍跑 008d-2 版本 — /login /signup /profile 顯示 009 stub
+- 待 Vincent 親自看 build log 完整錯誤(Claude Code Chrome MCP 抓不到完整 log,
+  只看到 step #10 retry,沒抓到 step description)
 
 ## 階段 5:Vincent 親自做的清單(必須親自做,不能代勞)
 
