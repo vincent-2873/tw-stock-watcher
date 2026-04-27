@@ -31,6 +31,9 @@ WARNING_STATUSES = ("flagged_minor",)
 def apply_quality_filter(query: Any, *, hide_flagged: bool = False) -> Any:
     """在 supabase-py 的 select query 上加 quality filter。
 
+    T3a-cleanup 收尾 2:migration 0018 套用後,改用正規 column `data_quality_status`
+    取代 `evidence->>'data_quality_status'`(後者 1) 沒 index、慢、2) 寫法囉嗦)。
+
     Args:
         query: supabase-py query builder(已 .from_().select() 之後)
         hide_flagged: 若 True 把 flagged_minor 也排除(預設 False — 顯示但警示)
@@ -43,15 +46,21 @@ def apply_quality_filter(query: Any, *, hide_flagged: bool = False) -> Any:
         hidden = hidden + list(WARNING_STATUSES)
     hidden_str = ",".join(hidden)
     return query.or_(
-        f"evidence->>data_quality_status.is.null,"
-        f"evidence->>data_quality_status.not.in.({hidden_str})"
+        f"data_quality_status.is.null,"
+        f"data_quality_status.not.in.({hidden_str})"
     )
 
 
 def is_hidden_row(row: dict[str, Any], *, hide_flagged: bool = False) -> bool:
-    """In-memory 用:判斷單筆 row 是否該被統計面隱藏。"""
-    ev = row.get("evidence") or {}
-    status = ev.get("data_quality_status")
+    """In-memory 用:判斷單筆 row 是否該被統計面隱藏。
+
+    T3a-cleanup 後優先讀 row['data_quality_status']column,fallback 到 evidence JSONB
+    (向下相容沒套 0018 migration 的環境)。
+    """
+    status = row.get("data_quality_status")
+    if status is None:
+        ev = row.get("evidence") or {}
+        status = ev.get("data_quality_status")
     if status in HIDDEN_STATUSES:
         return True
     if hide_flagged and status in WARNING_STATUSES:
@@ -74,10 +83,15 @@ def annotate_row(row: dict[str, Any]) -> dict[str, Any]:
       rejected_by_sanity     → error
       flagged_minor          → warn(列表也會帶,給前台畫橘色警示框)
       unverified             → 無 annotation(撈不到 close 不算品質問題)
+
+    優先讀正規 column,fallback 到 evidence JSONB(向下相容)。
     """
-    ev = row.get("evidence") or {}
-    status = ev.get("data_quality_status")
-    deviation = ev.get("basis_accuracy_pct")
+    status = row.get("data_quality_status")
+    deviation = row.get("basis_accuracy_pct")
+    if status is None:
+        ev = row.get("evidence") or {}
+        status = ev.get("data_quality_status")
+        deviation = deviation if deviation is not None else ev.get("basis_accuracy_pct")
     if status == "pre_upgrade_2026_04_25":
         row["_quality_annotation"] = {
             "label": "系統升級前紀錄",

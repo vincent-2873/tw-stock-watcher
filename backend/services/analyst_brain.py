@@ -406,6 +406,11 @@ def simulate_holdings_meeting(today: date_type) -> dict:
                 "evidence": evidence,
                 "status": "active",
                 "meeting_id": meeting_id,
+                # T3a-cleanup migration 0018: 寫進正規 column(同時保留 evidence JSONB 副本當演進史)
+                "source": "llm_holdings",
+                "data_quality_status": evidence.get("data_quality_status"),
+                "basis_accuracy_pct": evidence.get("basis_accuracy_pct"),
+                "basis_quality": evidence.get("basis_quality"),
             }
             inserted_predictions.append(row)
             pred_ids.append(pid)

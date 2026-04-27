@@ -479,6 +479,11 @@ def insert_historical_predictions(
             row["evidence"], source="llm_backfill",
             status=status, reason=reason, basis_evidence=basis_ev,
         )
+        # T3a-cleanup migration 0018: 寫正規 column(evidence JSONB 副本保留作演進史)
+        row["source"] = "llm_backfill"
+        row["data_quality_status"] = row["evidence"].get("data_quality_status")
+        row["basis_accuracy_pct"] = row["evidence"].get("basis_accuracy_pct")
+        row["basis_quality"] = row["evidence"].get("basis_quality")
         rows.append(row)
 
     inserted_ids: list[int] = []

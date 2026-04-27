@@ -47,7 +47,8 @@ def _dsn_candidates() -> list[str]:
 
     # env 指定的 pooler host(最高優先)
     pooler = os.getenv("SUPABASE_POOLER_HOST", "").strip()
-    region = os.getenv("SUPABASE_REGION", "ap-northeast-1").strip() or "ap-northeast-1"
+    # T3a-cleanup: 預設 region 改成 ap-south-1(專案所在地);prefix 改成 aws-1(supavisor)
+    region = os.getenv("SUPABASE_REGION", "ap-south-1").strip() or "ap-south-1"
 
     candidates: list[str] = []
     # 1. pooler — transaction mode(6543)— IPv4,Zeabur 通
@@ -56,11 +57,10 @@ def _dsn_candidates() -> list[str]:
             f"host={pooler} port=6543 dbname=postgres "
             f"user=postgres.{ref} password={password} sslmode=require"
         )
-    # 2. pooler — 依 region 拼 aws-0-{region}.pooler.supabase.com
-    #    用列表輪流試(Supabase Cloud project 會在某一個 region),
-    #    主要:ap-southeast-1 / ap-northeast-1 / us-east-1 / eu-west-1 / us-west-1
+    # 2. pooler — supavisor(aws-1)優先,fallback 到 pgbouncer(aws-0)
     regions_to_try = [region] + [
         r for r in (
+            "ap-south-1",         # tw-stock-watcher 在這
             "ap-southeast-1",
             "ap-northeast-1",
             "ap-northeast-2",
@@ -75,10 +75,11 @@ def _dsn_candidates() -> list[str]:
         ) if r != region
     ]
     for r in regions_to_try:
-        candidates.append(
-            f"host=aws-0-{r}.pooler.supabase.com port=6543 dbname=postgres "
-            f"user=postgres.{ref} password={password} sslmode=require"
-        )
+        for prefix in ("aws-1", "aws-0"):
+            candidates.append(
+                f"host={prefix}-{r}.pooler.supabase.com port=6543 dbname=postgres "
+                f"user=postgres.{ref} password={password} sslmode=require"
+            )
     # 4. direct 最後試 — 多數情況會 IPv6 fail,但本機跑 backend 時可用
     candidates.append(
         f"host=db.{ref}.supabase.co port=5432 dbname=postgres user=postgres "
